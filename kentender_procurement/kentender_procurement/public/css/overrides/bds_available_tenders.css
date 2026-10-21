@@ -1,0 +1,284 @@
+/* Available Tenders — customer-facing list. Layers over bid_portal.css. */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] {
+	--kt-ink: #183b38;
+	--kt-muted: #5c706c;
+	--kt-line: #e2eae7;
+	--kt-soft: #f6f9f8;
+	--kt-accent: #1f7a6c;
+	--kt-accent-hover: #186559;
+	--kt-accent-soft: #e8f4f1;
+	--kt-shadow: 0 1px 2px rgb(24 59 56 / 4%), 0 4px 16px rgb(24 59 56 / 6%);
+	--kt-radius: 14px;
+}
+
+/* Header — clear value proposition */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-page-head {
+	margin: 0 0 28px;
+	padding: 0 0 22px;
+	border-bottom: 1px solid var(--kt-line);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-page-title {
+	margin: 0;
+	color: var(--kt-ink);
+	font-size: 32px;
+	font-weight: 700;
+	letter-spacing: -0.04em;
+	line-height: 1.15;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-page-desc {
+	margin: 8px 0 0;
+	max-width: 58ch;
+	color: var(--kt-muted);
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+/* Filters — light toolbar, not a heavy form */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-filter-bar {
+	display: grid;
+	grid-template-columns: minmax(200px, 1.4fr) 1fr 1fr 1fr auto;
+	gap: 12px 14px;
+	align-items: end;
+	margin-bottom: 20px;
+	padding: 16px 18px;
+	background: var(--kt-soft);
+	border: 1px solid var(--kt-line);
+	border-radius: var(--kt-radius);
+}
+
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.kt-filter-bar
+	.field
+	> label {
+	display: block;
+	margin-bottom: 5px;
+	color: var(--kt-muted);
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-filter-bar .input,
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-filter-bar select.input {
+	width: 100%;
+	height: 40px;
+	padding: 0 12px;
+	border: 1px solid #cfd9d6;
+	border-radius: 10px;
+	background: #fff;
+	color: var(--kt-ink);
+	font-size: 14px;
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.kt-filter-bar
+	.input:focus-visible,
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.kt-filter-bar
+	select.input:focus-visible {
+	border-color: var(--kt-accent);
+	outline: none;
+	box-shadow: 0 0 0 3px rgb(31 122 108 / 18%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-filter-bar .btn {
+	height: 40px;
+	padding: 0 16px;
+	border-radius: 10px;
+	font-size: 14px;
+	font-weight: 600;
+	border: 1px solid #cfd9d6;
+	background: #fff;
+	color: var(--kt-ink);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-filter-bar .btn:hover {
+	background: #fff;
+	border-color: #b5c4c0;
+}
+
+/* Table → opportunity cards */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 10px;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table thead {
+	display: none; /* hide classic headers for card look; data is self-describing */
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody tr {
+	display: grid;
+	grid-template-columns: 2.2fr 1.2fr 1fr 1fr 1.3fr auto;
+	align-items: center;
+	gap: 16px;
+	padding: 18px 20px;
+	background: #fff;
+	border: 1px solid var(--kt-line);
+	border-radius: var(--kt-radius);
+	box-shadow: var(--kt-shadow);
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody tr:hover {
+	border-color: #c5d6d2;
+	box-shadow:
+		0 2px 4px rgb(24 59 56 / 5%),
+		0 8px 24px rgb(24 59 56 / 8%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td {
+	padding: 0;
+	border: 0;
+	vertical-align: middle;
+}
+
+/* Tender title + reference */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-tender-cell {
+	font-size: 16.5px;
+	font-weight: 650;
+	color: var(--kt-ink);
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-tender-ref {
+	display: inline-block;
+	margin-top: 4px;
+	padding: 2px 8px;
+	background: var(--kt-soft);
+	color: var(--kt-muted);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+	border-radius: 6px;
+}
+
+/* Secondary cells — lighter weight */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td:nth-child(2),
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td:nth-child(3),
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td:nth-child(4),
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td:nth-child(5) {
+	color: var(--kt-ink);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+/* Deadline emphasis */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td:nth-child(5) {
+	font-weight: 600;
+	color: var(--kt-accent);
+}
+
+/* Primary CTA */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 112px;
+	height: 38px;
+	padding: 0 16px;
+	background: var(--kt-accent);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	text-decoration: none;
+	border-radius: 10px;
+	border: 0;
+	transition: background 0.15s;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td a:hover {
+	background: var(--kt-accent-hover);
+	color: #fff;
+}
+
+/* Count */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-pager {
+	margin-top: 8px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-pager-count {
+	color: var(--kt-muted);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+/* Responsive — stack into true cards on smaller screens */
+@media (max-width: 1100px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-filter-bar {
+		grid-template-columns: 1fr 1fr;
+	}
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.kt-filter-bar
+		.field:first-child,
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.kt-filter-bar
+		> div:last-child {
+		grid-column: 1 / -1;
+	}
+}
+
+@media (max-width: 760px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody tr {
+		grid-template-columns: 1fr;
+		gap: 10px;
+		padding: 16px;
+	}
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.table
+		td:nth-child(2)::before {
+		content: "Entity: ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.table
+		td:nth-child(3)::before {
+		content: "Method: ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.table
+		td:nth-child(4)::before {
+		content: "Reservation: ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.table
+		td:nth-child(5)::before {
+		content: "Closes: ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table td a {
+		width: 100%;
+		margin-top: 4px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-page-title {
+		font-size: 26px;
+	}
+}

@@ -67,26 +67,41 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 					{%- endfor %}
 				</nav>
 				{%- if kt_portal.shell.identity %}
-				<div
-					class="kt-portal-identity"
-					data-testid="kt-portal-identity"
-					title="{{ kt_portal.shell.identity.name }}{% if kt_portal.shell.identity.detail %} · {{ kt_portal.shell.identity.detail }}{% endif %}"
-				>
-					<span class="kt-portal-avatar" aria-hidden="true"
-						>{{ kt_portal.shell.identity.initials }}</span
+				<div class="kt-portal-identity-wrap">
+					<div
+						class="kt-portal-identity"
+						data-testid="kt-portal-identity"
+						title="{{ kt_portal.shell.identity.name }}{% if kt_portal.shell.identity.detail %} · {{ kt_portal.shell.identity.detail }}{% endif %}"
 					>
-					<span class="kt-portal-identity-text">
-						<span class="kt-portal-identity-name" data-testid="kt-portal-identity-name"
-							>{{ kt_portal.shell.identity.name }}</span
+						<span class="kt-portal-avatar" aria-hidden="true"
+							>{{ kt_portal.shell.identity.initials }}</span
 						>
-						{%- if kt_portal.shell.identity.detail %}
-						<span
-							class="kt-portal-identity-detail"
-							data-testid="kt-portal-identity-detail"
-							>{{ kt_portal.shell.identity.detail }}</span
-						>
-						{%- endif %}
-					</span>
+						<span class="kt-portal-identity-text">
+							<span
+								class="kt-portal-identity-name"
+								data-testid="kt-portal-identity-name"
+								>{{ kt_portal.shell.identity.name }}</span
+							>
+							{%- if kt_portal.shell.identity.detail %}
+							<span
+								class="kt-portal-identity-detail"
+								data-testid="kt-portal-identity-detail"
+								>{{ kt_portal.shell.identity.detail }}</span
+							>
+							{%- endif %}
+						</span>
+					</div>
+					<button
+						type="button"
+						class="kt-portal-logout"
+						data-testid="kt-portal-logout"
+						onclick="
+							ktPortalLogout();
+							return false;
+						"
+					>
+						{{ _("Log out") }}
+					</button>
 				</div>
 				{%- endif %}
 			</div>
@@ -157,9 +172,20 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		<script>
 			frappe.boot = {{ frappe.utils.orjson_dumps(boot, default=frappe.json_handler) }};
 			frappe.sys_defaults = frappe.boot.sysdefaults;
+			function ktPortalLogout() {
+				if (typeof frappe.logout === "function") {
+					frappe.logout();
+					return;
+				}
+				if (frappe.app && typeof frappe.app.logout === "function") {
+					frappe.app.logout();
+					return;
+				}
+				window.location.href = "/login";
+			}
 		</script>
-		{{ include_script('frappe-web.bundle.js') }}
-		{# Before the surface bundles: a screen that posts as it mounts (the emailed verification link) reads this token at once. #}
+		{{ include_script('frappe-web.bundle.js') }} {# Before the surface bundles: a screen that
+		posts as it mounts (the emailed verification link) reads this token at once. #}
 		<!-- csrf_token -->
 		<script>
 			(function () {

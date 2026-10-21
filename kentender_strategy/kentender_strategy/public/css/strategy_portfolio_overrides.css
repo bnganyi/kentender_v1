@@ -1,0 +1,215 @@
+/* Page-specific refinements for Strategy Alignment > Strategic plans.
+   Scoped to the portfolio list so other Strategy screens are unaffected. */
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.card.blueprint {
+	background: var(--color-surface);
+	border: 1px solid var(--color-divider);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.card.blueprint
+	> header {
+	align-items: center !important;
+	padding: 24px 24px 8px !important;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.card.blueprint
+	> header
+	h1 {
+	color: var(--color-heading);
+	font-size: clamp(26px, 3vw, 32px) !important;
+	letter-spacing: -0.025em;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.card.blueprint
+	> header
+	p {
+	margin-bottom: 12px !important;
+	line-height: 1.55;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.kt-tabs {
+	padding: 0 24px !important;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.kt-tabs
+	.kt-tab[aria-selected="true"] {
+	color: var(--color-accent-800);
+	font-weight: 600;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.kt-tabs
+	.kt-tab[aria-selected="true"]::after {
+	background: var(--color-accent);
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	div:has(> [data-testid="str-search"]) {
+	display: grid !important;
+	grid-template-columns: minmax(220px, 1fr) minmax(170px, 200px) minmax(150px, 180px);
+	gap: 12px !important;
+	padding: 16px 24px !important;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	[data-testid="str-search"],
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	[data-testid="str-role-filter"],
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	[data-testid="str-status-filter"] {
+	width: 100% !important;
+	min-width: 0;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	[data-testid="str-plans-table"],
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	[data-testid="str-my-work-table"] {
+	width: calc(100% - 48px) !important;
+	margin: 0 24px !important;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.table
+	thead
+	th {
+	background: var(--color-neutral-100);
+	color: var(--color-neutral-700);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.035em;
+	text-transform: uppercase;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.table
+	th,
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.table
+	td {
+	padding: 13px 14px;
+	vertical-align: middle;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.table
+	tbody
+	tr:last-child
+	td {
+	border-bottom: 0;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	[data-testid="str-plan-row"]
+	td:first-child
+	> div:first-child {
+	color: var(--color-heading);
+	font-weight: 600;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-plan-row"]
+	.kt-muted {
+	font-size: 12px;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	.table
+	.btn-ghost {
+	white-space: nowrap;
+}
+
+.kt-industry
+	[data-testid="str-shell"][data-screen="portfolio"]
+	[data-testid="str-portfolio"][data-mode="list"]
+	:is(input, select, button, a):focus-visible {
+	outline: 2px solid var(--color-accent-500);
+	outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+	.kt-industry
+		[data-testid="str-shell"][data-screen="portfolio"]
+		[data-testid="str-portfolio"][data-mode="list"]
+		.card.blueprint
+		> header {
+		align-items: flex-start !important;
+		flex-direction: column;
+		padding: 20px 18px 8px !important;
+	}
+
+	.kt-industry
+		[data-testid="str-shell"][data-screen="portfolio"]
+		[data-testid="str-portfolio"][data-mode="list"]
+		.kt-tabs {
+		padding: 0 18px !important;
+	}
+
+	.kt-industry
+		[data-testid="str-shell"][data-screen="portfolio"]
+		[data-testid="str-portfolio"][data-mode="list"]
+		div:has(> [data-testid="str-search"]) {
+		grid-template-columns: 1fr;
+		padding: 14px 18px !important;
+	}
+
+	.kt-industry
+		[data-testid="str-shell"][data-screen="portfolio"]
+		[data-testid="str-portfolio"][data-mode="list"]
+		[data-testid="str-plans-table"],
+	.kt-industry
+		[data-testid="str-shell"][data-screen="portfolio"]
+		[data-testid="str-portfolio"][data-mode="list"]
+		[data-testid="str-my-work-table"] {
+		display: block;
+		max-width: calc(100% - 36px);
+		overflow-x: auto;
+		margin: 0 18px !important;
+	}
+}

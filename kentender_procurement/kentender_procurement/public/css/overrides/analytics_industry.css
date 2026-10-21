@@ -1,0 +1,359 @@
+/* Procurement Analytics — structure only. No chart or graph styling. */
+.kt-industry.kt-analytics {
+	--kt-ink: #0f2e2b !important;
+	--kt-muted: #5a6f6b !important;
+	--kt-line: #e3ebe8 !important;
+	--kt-soft: #f4f8f6 !important;
+	--kt-accent: #187a6b !important;
+	--kt-accent-soft: #e7f4f1 !important;
+	--kt-white: #fff !important;
+	--kt-shadow: 0 2px 8px rgb(15 46 43 / 5%), 0 8px 24px rgb(15 46 43 / 6%) !important;
+	--kt-radius: 14px !important;
+	width: 100% !important;
+	max-width: none !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-frame {
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	padding: 16px 20px 40px !important;
+	box-sizing: border-box !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-sheet {
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	background: #fff !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: 16px !important;
+	box-shadow: var(--kt-shadow) !important;
+	padding: 24px 28px !important;
+	box-sizing: border-box !important;
+}
+
+/* Header */
+.kt-industry.kt-analytics .kt-ap-header {
+	display: flex !important;
+	align-items: flex-start !important;
+	justify-content: space-between !important;
+	gap: 20px !important;
+	margin: 0 0 20px !important;
+	padding: 22px 24px !important;
+	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%) !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: var(--kt-radius) !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-title {
+	margin: 0 !important;
+	color: var(--kt-ink) !important;
+	font-size: 28px !important;
+	font-weight: 750 !important;
+	letter-spacing: -0.035em !important;
+	line-height: 1.15 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-sub {
+	margin: 6px 0 0 !important;
+	max-width: 52ch !important;
+	color: var(--kt-muted) !important;
+	font-size: 15px !important;
+	line-height: 1.5 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-meta {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 14px 18px !important;
+	margin-top: 12px !important;
+	color: var(--kt-muted) !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-meta span {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 6px !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-header .btn {
+	flex-shrink: 0 !important;
+	height: 38px !important;
+	padding: 0 14px !important;
+	border-radius: 10px !important;
+	font-weight: 600 !important;
+	font-size: 14px !important;
+	border: 1px solid #d4e0dc !important;
+	background: var(--kt-white) !important;
+	color: var(--kt-ink) !important;
+}
+
+/* Tabs */
+.kt-industry.kt-analytics .kt-tabs {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 4px !important;
+	margin: 0 0 18px !important;
+	padding: 4px !important;
+	background: var(--kt-soft) !important;
+	border-radius: 12px !important;
+}
+
+.kt-industry.kt-analytics .kt-tab {
+	display: inline-flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	padding: 8px 14px !important;
+	border-radius: 8px !important;
+	color: var(--kt-muted) !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	cursor: pointer !important;
+}
+
+.kt-industry.kt-analytics .kt-tab:hover {
+	background: #e8efed !important;
+	color: var(--kt-ink) !important;
+}
+
+.kt-industry.kt-analytics .kt-tab:has(input:checked) {
+	background: var(--kt-white) !important;
+	color: var(--kt-ink) !important;
+	box-shadow: 0 1px 3px rgb(15 46 43 / 8%) !important;
+}
+
+/* Filters */
+.kt-industry.kt-analytics .kt-ap-filters-wrap {
+	margin: 0 0 20px !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-filters {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: end !important;
+	gap: 12px 14px !important;
+	padding: 14px 16px !important;
+	background: #f8fbfa !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: 12px !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-filters .field {
+	min-width: 180px !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-filters label {
+	display: block !important;
+	margin-bottom: 5px !important;
+	color: var(--kt-muted) !important;
+	font-size: 12px !important;
+	font-weight: 650 !important;
+	letter-spacing: 0.03em !important;
+	text-transform: uppercase !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-filters .input {
+	width: 100% !important;
+	height: 40px !important;
+	padding: 0 12px !important;
+	border: 1px solid #d4e0dc !important;
+	border-radius: 10px !important;
+	background: var(--kt-white) !important;
+	color: var(--kt-ink) !important;
+	font-size: 14.5px !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-filters .btn {
+	height: 40px !important;
+	padding: 0 16px !important;
+	border-radius: 10px !important;
+	font-weight: 600 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-clear {
+	color: var(--kt-accent) !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	text-decoration: none !important;
+	padding-bottom: 8px !important;
+}
+
+/* KPI strip cards only — no chart internals */
+.kt-industry.kt-analytics .kt-ap-strip {
+	display: grid !important;
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+	gap: 14px !important;
+	margin-bottom: 12px !important;
+}
+
+.kt-industry.kt-analytics .kt-kpi-card.kt-ap-kpi {
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 10px !important;
+	padding: 16px 18px !important;
+	background: var(--kt-white) !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: var(--kt-radius) !important;
+	box-shadow: 0 1px 3px rgb(15 46 43 / 4%) !important;
+}
+
+.kt-industry.kt-analytics .kt-kpi-card.kt-ap-kpi:hover {
+	border-color: #c8dad5 !important;
+	box-shadow: 0 4px 12px rgb(15 46 43 / 6%) !important;
+}
+
+.kt-industry.kt-analytics .kt-kpi-head {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	color: var(--kt-muted) !important;
+	font-size: 13px !important;
+	font-weight: 650 !important;
+}
+
+.kt-industry.kt-analytics .kt-icon-chip {
+	display: inline-flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 26px !important;
+	height: 26px !important;
+	background: var(--kt-accent-soft) !important;
+	border-radius: 7px !important;
+	color: var(--kt-accent) !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-kpi-line {
+	display: flex !important;
+	align-items: baseline !important;
+	gap: 6px !important;
+}
+
+.kt-industry.kt-analytics .kt-kpi-value {
+	color: var(--kt-ink) !important;
+	font-size: 26px !important;
+	font-weight: 750 !important;
+	letter-spacing: -0.03em !important;
+	line-height: 1 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-kpi-unit,
+.kt-industry.kt-analytics .kt-ap-out {
+	color: var(--kt-muted) !important;
+	font-size: 13px !important;
+	font-weight: 500 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-out.has-matters {
+	color: #b45309 !important;
+	font-weight: 600 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-link {
+	margin-top: auto !important;
+	color: var(--kt-accent) !important;
+	font-size: 13.5px !important;
+	font-weight: 650 !important;
+	text-decoration: none !important;
+}
+
+/* Regions — layout only */
+.kt-industry.kt-analytics .kt-ap-split {
+	display: grid !important;
+	grid-template-columns: 1.4fr 1fr !important;
+	gap: 20px !important;
+	margin: 8px 0 16px !important;
+	padding-top: 16px !important;
+	border-top: 1px solid var(--kt-line) !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-region {
+	background: transparent !important;
+	border: 0 !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-h2 {
+	display: flex !important;
+	align-items: center !important;
+	gap: 10px !important;
+	margin: 0 0 12px !important;
+	color: var(--kt-ink) !important;
+	font-size: 16.5px !important;
+	font-weight: 680 !important;
+	letter-spacing: -0.015em !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-text,
+.kt-industry.kt-analytics .kt-ap-text-md {
+	margin: 6px 0 !important;
+	color: var(--kt-ink) !important;
+	font-size: 14px !important;
+	line-height: 1.5 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-note {
+	margin: 6px 0 0 !important;
+	color: var(--kt-muted) !important;
+	font-size: 13px !important;
+	line-height: 1.45 !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-result-line {
+	display: flex !important;
+	align-items: baseline !important;
+	gap: 8px !important;
+	margin-bottom: 4px !important;
+}
+
+.kt-industry.kt-analytics .kt-result-value {
+	color: var(--kt-accent) !important;
+	font-size: 26px !important;
+	font-weight: 750 !important;
+	letter-spacing: -0.03em !important;
+}
+
+.kt-industry.kt-analytics .kt-ap-result-text {
+	color: var(--kt-ink) !important;
+	font-size: 14.5px !important;
+	font-weight: 500 !important;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+	.kt-industry.kt-analytics .kt-ap-split {
+		grid-template-columns: 1fr !important;
+		gap: 24px !important;
+	}
+	.kt-industry.kt-analytics .kt-ap-header {
+		flex-direction: column !important;
+		align-items: stretch !important;
+		padding: 18px 18px !important;
+	}
+	.kt-industry.kt-analytics .kt-ap-title {
+		font-size: 24px !important;
+	}
+}
+
+@media (max-width: 640px) {
+	.kt-industry.kt-analytics .kt-ap-sheet {
+		padding: 16px !important;
+	}
+	.kt-industry.kt-analytics .kt-ap-strip {
+		grid-template-columns: 1fr !important;
+	}
+	.kt-industry.kt-analytics .kt-tabs {
+		overflow-x: auto !important;
+		flex-wrap: nowrap !important;
+	}
+	.kt-industry.kt-analytics .kt-ap-filters {
+		flex-direction: column !important;
+		align-items: stretch !important;
+	}
+}

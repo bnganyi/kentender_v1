@@ -24,6 +24,7 @@ def _asset_version(abs_path: Path) -> int:
 
 
 _CORE_PUBLIC = Path(__file__).resolve().parent.parent.parent / "kentender_core" / "kentender_core" / "public"
+_STRATEGY_PUBLIC = Path(__file__).resolve().parent / "public"
 
 # Phase 8 (STR-CHG-001 v1.3) deleted the last app_include_css/app_include_js
 # entries this app owned (12 legacy strategy_alignment_*.css files, the
@@ -40,9 +41,12 @@ _CORE_PUBLIC = Path(__file__).resolve().parent.parent.parent / "kentender_core" 
 # canonical tokens and was deleted. Frappe serves every installed app's
 # static assets from one shared /assets/<app_name>/ namespace, so loading
 # kentender_core's file by URL here works the same way any of this app's
-# own app_include_css entries do.
+# own app_include_css entries do. The versioned URL is resolved when each
+# worker imports this module, so changing this stylesheet requires a hooks
+# reload before a page can receive its new cache-busting URL.
 app_include_css = [
 	f"/assets/kentender_core/css/kt_industry_tokens.css?v={_asset_version(_CORE_PUBLIC / 'css/kt_industry_tokens.css')}",
+	f"/assets/kentender_strategy/css/strategy_portfolio_overrides.css?v={_asset_version(_STRATEGY_PUBLIC / 'css/strategy_portfolio_overrides.css')}",
 ]
 
 app_include_js = []

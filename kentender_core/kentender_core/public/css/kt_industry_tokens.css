@@ -124,6 +124,7 @@
 .kt-industry *::before,
 .kt-industry *::after {
 	box-sizing: border-box;
+	border-radius: var(--kt-radius-lg); /* reset the artboards' rounded corners, which are not a system-wide rule */
 }
 
 .kt-industry {

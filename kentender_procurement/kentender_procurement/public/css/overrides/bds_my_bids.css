@@ -1,0 +1,314 @@
+/* My bids — customer-facing list. Layers over bid_portal.css. */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] {
+	--kt-ink: #0f2e2b;
+	--kt-muted: #5a6f6b;
+	--kt-line: #e3ebe8;
+	--kt-soft: #f4f8f6;
+	--kt-accent: #187a6b;
+	--kt-accent-hover: #136255;
+	--kt-white: #fff;
+	--kt-shadow: 0 2px 8px rgb(15 46 43 / 5%), 0 8px 24px rgb(15 46 43 / 6%);
+	--kt-radius: 14px;
+	max-width: 1080px;
+	margin: 0 24px 24px;
+	padding: 8px 0 32px;
+}
+
+/* Header */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-head {
+	margin: 0 24px 24px;
+	padding: 28px 32px;
+	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%);
+	border: 1px solid var(--kt-line);
+	border-radius: var(--kt-radius);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-title {
+	margin: 0;
+	color: var(--kt-ink);
+	font-size: 32px;
+	font-weight: 750;
+	letter-spacing: -0.04em;
+	line-height: 1.15;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-desc {
+	margin: 8px 0 0;
+	max-width: 50ch;
+	color: var(--kt-muted);
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+/* Filters */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
+	display: grid;
+	grid-template-columns: 1.6fr 1fr auto;
+	gap: 12px 14px;
+	align-items: end;
+	margin: 0 24px 20px;
+	padding: 0;
+	background: transparent;
+	border: 0;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .field > label {
+	display: block;
+	margin-bottom: 5px;
+	color: var(--kt-muted);
+	font-size: 11.5px;
+	font-weight: 650;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .input,
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar select.input {
+	width: 100%;
+	height: 42px;
+	padding: 0 12px;
+	border: 1px solid #d4e0dc;
+	border-radius: 10px;
+	background: var(--kt-white);
+	color: var(--kt-ink);
+	font-size: 14.5px;
+	box-shadow: 0 1px 2px rgb(15 46 43 / 4%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .input:focus-visible,
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-my-bids"]
+	.kt-filter-bar
+	select.input:focus-visible {
+	border-color: var(--kt-accent);
+	outline: none;
+	box-shadow: 0 0 0 3px rgb(24 122 107 / 15%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .btn {
+	height: 42px;
+	padding: 0 16px;
+	border-radius: 10px;
+	font-size: 14px;
+	font-weight: 600;
+	border: 1px solid #d4e0dc;
+	background: var(--kt-white);
+	color: var(--kt-ink);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .btn:hover {
+	background: #fafcfb;
+	border-color: #c5d4cf;
+}
+
+/* Bid cards */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0 12px;
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table thead {
+	display: none;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table tbody tr {
+	display: grid;
+	grid-template-columns: 2fr 1.3fr 1fr 1.2fr 1.2fr auto;
+	align-items: center;
+	gap: 16px 18px;
+	padding: 18px 20px;
+	background: var(--kt-white);
+	border: 1px solid var(--kt-line);
+	border-radius: var(--kt-radius);
+	box-shadow: var(--kt-shadow);
+	transition:
+		border-color 0.15s,
+		box-shadow 0.15s;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table tbody tr:hover {
+	border-color: #c8dad5;
+	box-shadow:
+		0 4px 12px rgb(15 46 43 / 6%),
+		0 12px 32px rgb(15 46 43 / 8%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td {
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+/* Tender cell */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-tender-cell {
+	font-size: 16px;
+	font-weight: 670;
+	color: var(--kt-ink);
+	line-height: 1.3;
+	letter-spacing: -0.01em;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-tender-ref {
+	display: inline-block;
+	margin-top: 5px;
+	padding: 2px 8px;
+	background: var(--kt-soft);
+	color: var(--kt-muted);
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.015em;
+	border-radius: 6px;
+}
+
+/* Bid reference */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-nowrap {
+	color: var(--kt-ink);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(2) .kt-label {
+	display: block;
+	margin-top: 3px;
+	color: var(--kt-muted);
+	font-size: 12.5px;
+	font-weight: 500;
+}
+
+/* Status */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-status {
+	display: inline-flex;
+	align-items: center;
+	padding: 4px 10px;
+	font-size: 12.5px;
+	font-weight: 650;
+	border-radius: 6px;
+	letter-spacing: 0.01em;
+	background: #eef2f1;
+	color: #52635f;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-status.is-draft {
+	background: #eef2f1;
+	color: #52635f;
+}
+
+/* Dates */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(4),
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(5) {
+	color: var(--kt-ink);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1.35;
+	white-space: nowrap;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(4) {
+	color: var(--kt-accent);
+	font-weight: 650;
+}
+
+/* Action */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-row-actions .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 120px;
+	height: 38px;
+	padding: 0 16px;
+	background: var(--kt-accent);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 650;
+	text-decoration: none;
+	border: 0;
+	border-radius: 10px;
+	white-space: nowrap;
+	transition: background 0.15s;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-row-actions .btn:hover {
+	background: var(--kt-accent-hover);
+	color: #fff;
+}
+
+/* Pager */
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-pager {
+	margin-top: 6px;
+	padding: 0 2px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-pager-count {
+	color: var(--kt-muted);
+	font-size: 14px;
+	font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] {
+		margin: 0 16px 20px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
+		grid-template-columns: 1fr 1fr;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar > div:last-child {
+		grid-column: 1 / -1;
+		justify-self: start;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table tbody tr {
+		grid-template-columns: 1.5fr 1fr 1fr auto;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(4),
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(5) {
+		white-space: normal;
+	}
+}
+
+@media (max-width: 680px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] {
+		margin: 0 12px 16px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-head {
+		padding: 22px 20px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-title {
+		font-size: 26px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
+		grid-template-columns: 1fr;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table tbody tr {
+		grid-template-columns: 1fr;
+		gap: 10px;
+		padding: 16px 18px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(2)::before {
+		content: "Bid · ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(3)::before {
+		content: "Status · ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(4)::before {
+		content: "Closes · ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td:nth-child(5)::before {
+		content: "Updated · ";
+		color: var(--kt-muted);
+		font-weight: 500;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-row-actions .btn {
+		width: 100%;
+		margin-top: 4px;
+	}
+}
