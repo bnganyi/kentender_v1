@@ -1,4 +1,11 @@
 /* Home page. Layers over desk styles. */
+.kt-industry.kt-home > .kt-rail {
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	box-sizing: border-box !important;
+}
+
 .kt-home-frame {
 	--kt-ink: #0f2e2b !important;
 	--kt-muted: #5a6f6b !important;
@@ -35,6 +42,7 @@
 	align-items: flex-start !important;
 	justify-content: space-between !important;
 	gap: 20px !important;
+	width: 100% !important;
 	margin: 0 !important;
 	padding: 22px 24px !important;
 	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%) !important;
@@ -117,6 +125,7 @@
 
 /* Empty state card */
 .kt-home-frame .kt-home-main {
+	width: 100% !important;
 	margin: 0 !important;
 	padding: 48px 32px !important;
 	background: var(--kt-white) !important;
