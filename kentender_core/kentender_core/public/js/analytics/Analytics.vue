@@ -28,6 +28,7 @@ import WaitingRegion from "./components/WaitingRegion.vue";
 import { regionId, useAnalytics } from "./composables/useAnalytics.js";
 import { buildUrl, useRouteState } from "./composables/useRouteState.js";
 import AccessDenied from "../access_shared/AccessDenied.vue";
+import PageRail from "../kt_industry/components/PageRail.vue";
 
 const { url, route, epoch, go, sync } = useRouteState();
 const analytics = useAnalytics({ getUrl: () => url.value });
@@ -43,13 +44,23 @@ const searchDraft = ref("");
 const FALLBACK_TABS = [
 	{ key: "overview", label: __("Overview"), icon: "" },
 	{ key: "needs", label: __("Needs"), icon: "needs" },
-	{ key: "departmental-planning", label: __("Departmental planning"), icon: "departmental-planning" },
+	{
+		key: "departmental-planning",
+		label: __("Departmental planning"),
+		icon: "departmental-planning",
+	},
 	{ key: "annual-planning", label: __("Annual planning"), icon: "annual-planning" },
 	{ key: "requisitions", label: __("Requisitions"), icon: "requisitions" },
 	{ key: "tender-proceedings", label: __("Tender proceedings"), icon: "tender-proceedings" },
 ];
 const TITLE = __("Procurement Analytics");
-const DESCRIPTION = __("See where procurement work stands, how long key steps take and how much planned value is covered.");
+const DESCRIPTION = __(
+	"See where procurement work stands, how long key steps take and how much planned value is covered.",
+);
+const railTrail = [
+	{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
+	{ label: __("Procurement Analytics") },
+];
 
 // Which of the board's states is drawn.
 const view = computed(() => {
@@ -65,8 +76,12 @@ const view = computed(() => {
 	if (payload.empty) return "empty";
 	return "ready";
 });
-const tabs = computed(() => (data.value && data.value.tabs && data.value.tabs.length ? data.value.tabs : FALLBACK_TABS));
-const filters = computed(() => (data.value && data.value.filters) || { fy_options: [], dept_options: [], messages: [] });
+const tabs = computed(() =>
+	data.value && data.value.tabs && data.value.tabs.length ? data.value.tabs : FALLBACK_TABS,
+);
+const filters = computed(
+	() => (data.value && data.value.filters) || { fy_options: [], dept_options: [], messages: [] },
+);
 const overview = computed(() => (data.value && data.value.overview) || null);
 const area = computed(() => (data.value && data.value.area) || null);
 const title = computed(() => (data.value && data.value.title) || TITLE);
@@ -145,18 +160,29 @@ const retryFailedFor = (id) => !!retryFailed[id];
 
 <template>
 	<div class="kt-industry kt-analytics" data-testid="kt-anl-root">
+		<PageRail :trail="railTrail" />
 		<div class="kt-ap-frame">
-			<main class="kt-ap-sheet" :aria-busy="view === 'loading' ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : null">
+			<main
+				class="kt-ap-sheet"
+				:aria-busy="view === 'loading' ? 'true' : 'false'"
+				:data-refreshing="refreshing ? 'true' : null"
+			>
 				<!-- ANL-DES-31G: loading. Title, description, tabs and one line; no counts, filter values, update time, charts or actions. -->
 				<template v-if="view === 'loading'">
 					<AnalyticsHeader :title="title" :description="description" :refresh="false" />
 					<AnalyticsTabs :tabs="tabs" :selected="url.tab" @select="openTab" />
-					<p class="kt-ap-loading" role="status" data-testid="kt-anl-loading">{{ __("Loading Analytics…") }}</p>
+					<p class="kt-ap-loading" role="status" data-testid="kt-anl-loading">
+						{{ __("Loading Analytics…") }}
+					</p>
 				</template>
 
 				<!-- ANL-DES-31H: no permitted area (and a user who may not open Analytics at all): the title and one line, nothing else. -->
 				<template v-else-if="view === 'denied'">
-					<AccessDenied :heading="__('You do not have access to Analytics')" :text="data.message" testid="kt-anl-denied" />
+					<AccessDenied
+						:heading="__('You do not have access to Analytics')"
+						:text="data.message"
+						testid="kt-anl-denied"
+					/>
 				</template>
 
 				<template v-else>
@@ -180,8 +206,19 @@ const retryFailedFor = (id) => !!retryFailed[id];
 					/>
 
 					<!-- ANL-DES-31D: all reads failed. -->
-					<StatePanel v-if="view === 'failed'" :text="(data && data.message) || __('Analytics could not be loaded.')" spot="error" icon="circle-x" data-testid="kt-anl-failed">
-						<button type="button" class="btn btn-primary" data-testid="kt-anl-retry-all" @click="analytics.load()">
+					<StatePanel
+						v-if="view === 'failed'"
+						:text="(data && data.message) || __('Analytics could not be loaded.')"
+						spot="error"
+						icon="circle-x"
+						data-testid="kt-anl-failed"
+					>
+						<button
+							type="button"
+							class="btn btn-primary"
+							data-testid="kt-anl-retry-all"
+							@click="analytics.load()"
+						>
 							<AnalyticsIcon name="refresh-cw" />{{ __("Try again") }}
 						</button>
 					</StatePanel>
@@ -190,8 +227,19 @@ const retryFailedFor = (id) => !!retryFailed[id];
 					<template v-else-if="view === 'invalid'" />
 
 					<!-- ANL-DES-31B: a permitted selection with no records. -->
-					<StatePanel v-else-if="view === 'empty'" :text="data.message" icon="inbox" data-testid="kt-anl-empty">
-						<a :href="clearHref" class="kt-ap-panel-link" data-testid="kt-anl-empty-clear" @click.prevent="clearFilters">{{ __("Clear filters") }}</a>
+					<StatePanel
+						v-else-if="view === 'empty'"
+						:text="data.message"
+						icon="inbox"
+						data-testid="kt-anl-empty"
+					>
+						<a
+							:href="clearHref"
+							class="kt-ap-panel-link"
+							data-testid="kt-anl-empty-clear"
+							@click.prevent="clearFilters"
+							>{{ __("Clear filters") }}</a
+						>
 					</StatePanel>
 
 					<div v-else :key="url.tab" class="kt-ap-content" :data-tab="url.tab">
@@ -218,7 +266,9 @@ const retryFailedFor = (id) => !!retryFailed[id];
 									/>
 								</div>
 							</section>
-							<section v-else class="kt-ap-section is-ruled"><WaitingRegion :waiting="overview.waiting" /></section>
+							<section v-else class="kt-ap-section is-ruled">
+								<WaitingRegion :waiting="overview.waiting" />
+							</section>
 							<StepsRegion v-if="overview.steps" :steps="overview.steps" />
 							<FundingRegion
 								v-if="overview.funding"
@@ -231,7 +281,10 @@ const retryFailedFor = (id) => !!retryFailed[id];
 
 						<!-- An area tab (ANL-DES-22 to 27, 30, 30B, 31A, 31F) -->
 						<template v-else-if="area">
-							<section v-if="area.status === 'unavailable'" class="kt-ap-section is-ruled">
+							<section
+								v-if="area.status === 'unavailable'"
+								class="kt-ap-section is-ruled"
+							>
 								<RegionMessage
 									:message="area.message"
 									:busy="!!busy[regionId.area]"
@@ -241,14 +294,29 @@ const retryFailedFor = (id) => !!retryFailed[id];
 							</section>
 							<template v-else>
 								<AreaResult :area="area" />
-								<section v-if="area.figures && area.figures.length" class="kt-ap-figures" data-testid="kt-anl-figures">
-									<div v-for="figure in area.figures" :key="figure.label" class="kt-kpi-card kt-ap-figure">
+								<section
+									v-if="area.figures && area.figures.length"
+									class="kt-ap-figures"
+									data-testid="kt-anl-figures"
+								>
+									<div
+										v-for="figure in area.figures"
+										:key="figure.label"
+										class="kt-kpi-card kt-ap-figure"
+									>
 										<span class="kt-kpi-head">{{ figure.label }}</span>
 										<span class="kt-kpi-value">{{ figure.value }}</span>
 									</div>
 								</section>
-								<OutstandingRows v-if="area.outstanding && area.outstanding.rows.length" :outstanding="area.outstanding" />
-								<AreaCharts :area="area" :selected-state="url.state" @select-state="selectState" />
+								<OutstandingRows
+									v-if="area.outstanding && area.outstanding.rows.length"
+									:outstanding="area.outstanding"
+								/>
+								<AreaCharts
+									:area="area"
+									:selected-state="url.state"
+									@select-state="selectState"
+								/>
 								<StepsRegion v-if="area.steps" :steps="area.steps" />
 								<RegisterRegion
 									v-if="area.register"

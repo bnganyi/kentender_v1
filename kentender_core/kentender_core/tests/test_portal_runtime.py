@@ -81,6 +81,10 @@ class TestPortalRuntime(IntegrationTestCase):
 		self.assertEqual(portal_runtime.identity("Administrator")["detail"], "Afya Digital Supplies Limited")  # the last non-empty answer wins
 		signed_in = self._render("/tenders", user="Administrator").get_data(as_text=True)
 		self.assertIn('data-testid="kt-portal-identity"', signed_in)
+		self.assertIn('aria-haspopup="menu"', signed_in)
+		self.assertIn('class="kt-portal-account-menu"', signed_in)
+		self.assertIn('href="/account"', signed_in)
+		self.assertIn('data-testid="kt-portal-logout"', signed_in)
 		self.assertIn("Afya Digital Supplies Limited", signed_in)
 		self.assertNotIn('data-testid="kt-portal-identity"', self._render("/tenders").get_data(as_text=True))
 		# a person whose name is the organisation's name is not shown it twice

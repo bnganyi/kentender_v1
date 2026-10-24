@@ -227,7 +227,7 @@
 /* Same column as every other module's `.kt-shell` (kt_industry_tokens.css):
    1200px, 16px below the rail, 40px side gutters. */
 .kt-industry .kt-setup-shell {
-	max-width: 1200px;
+	/* max-width: 1200px; */
 	width: 100%;
 	margin: 0 auto;
 	padding: 16px 40px 60px;

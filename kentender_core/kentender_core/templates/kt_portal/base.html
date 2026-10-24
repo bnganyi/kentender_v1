@@ -68,9 +68,12 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 				</nav>
 				{%- if kt_portal.shell.identity %}
 				<div class="kt-portal-identity-wrap">
-					<div
+					<button
+						type="button"
 						class="kt-portal-identity"
 						data-testid="kt-portal-identity"
+						aria-haspopup="menu"
+						aria-expanded="false"
 						title="{{ kt_portal.shell.identity.name }}{% if kt_portal.shell.identity.detail %} · {{ kt_portal.shell.identity.detail }}{% endif %}"
 					>
 						<span class="kt-portal-avatar" aria-hidden="true"
@@ -90,18 +93,41 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 							>
 							{%- endif %}
 						</span>
-					</div>
-					<button
-						type="button"
-						class="kt-portal-logout"
-						data-testid="kt-portal-logout"
-						onclick="
-							ktPortalLogout();
-							return false;
-						"
-					>
-						{{ _("Log out") }}
+						<svg class="kt-portal-chevron" viewBox="0 0 24 24" aria-hidden="true">
+							<path d="m6 9 6 6 6-6" />
+						</svg>
 					</button>
+					<div
+						class="kt-portal-account-menu"
+						role="menu"
+						aria-label="{{ _('Account menu') }}"
+						hidden
+					>
+						<a href="/account" class="kt-portal-account-menu-item" role="menuitem">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M20 21a8 8 0 0 0-16 0" />
+								<circle cx="12" cy="7" r="4" />
+							</svg>
+							<span>{{ _("Profile") }}</span>
+						</a>
+						<button
+							type="button"
+							class="kt-portal-account-menu-item danger"
+							role="menuitem"
+							data-testid="kt-portal-logout"
+							onclick="
+								ktPortalLogout();
+								return false;
+							"
+						>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+								<path d="M16 17l5-5-5-5" />
+								<path d="M21 12H9" />
+							</svg>
+							<span>{{ _("Log out") }}</span>
+						</button>
+					</div>
 				</div>
 				{%- endif %}
 			</div>
@@ -183,6 +209,36 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 				}
 				window.location.href = "/login";
 			}
+
+			(function () {
+				var wrap = document.querySelector(".kt-portal-identity-wrap");
+				var trigger = wrap && wrap.querySelector(".kt-portal-identity");
+				var menu = wrap && wrap.querySelector(".kt-portal-account-menu");
+				if (!wrap || !trigger || !menu) return;
+
+				function setOpen(open) {
+					menu.hidden = !open;
+					trigger.setAttribute("aria-expanded", open ? "true" : "false");
+				}
+
+				trigger.addEventListener("click", function (event) {
+					event.stopPropagation();
+					setOpen(menu.hidden);
+				});
+				document.addEventListener("click", function (event) {
+					if (!wrap.contains(event.target)) setOpen(false);
+				});
+				document.addEventListener("keydown", function (event) {
+					if (event.key === "Escape") {
+						setOpen(false);
+						trigger.focus();
+					}
+				});
+				menu.addEventListener("click", function (event) {
+					if (!event.target.closest(".kt-portal-account-menu-item")) return;
+					setOpen(false);
+				});
+			})();
 		</script>
 		{{ include_script('frappe-web.bundle.js') }} {# Before the surface bundles: a screen that
 		posts as it mounts (the emailed verification link) reads this token at once. #}

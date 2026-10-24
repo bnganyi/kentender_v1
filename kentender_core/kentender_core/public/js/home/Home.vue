@@ -9,12 +9,26 @@ import HomeIcon from "./components/HomeIcon.vue";
 import HomeRegion from "./components/HomeRegion.vue";
 import StatePanel from "./components/StatePanel.vue";
 import SummaryColumn from "./components/SummaryColumn.vue";
+import PageRail from "../kt_industry/components/PageRail.vue";
 import { REGION_IDS, useHomeWorkspace } from "./composables/useHomeWorkspace.js";
 import { useRouteState } from "./composables/useRouteState.js";
 
-const { phase, data, busy, failed, moreFailed, focusKey, announcement, layout, load, retry, showMore } = useHomeWorkspace();
+const {
+	phase,
+	data,
+	busy,
+	failed,
+	moreFailed,
+	focusKey,
+	announcement,
+	layout,
+	load,
+	retry,
+	showMore,
+} = useHomeWorkspace();
 const { epoch } = useRouteState();
 const root = ref(null);
+const railTrail = [{ label: __("Home") }];
 
 onMounted(() => load());
 // The page was shown again on the same route: revalidate in place, no skeleton (AGENTS.md §6.4).
@@ -38,32 +52,64 @@ watch(focusKey, async (key) => {
 
 <template>
 	<div ref="root" class="kt-industry kt-home" data-testid="kt-home-root">
+		<PageRail :trail="railTrail" />
 		<div class="kt-home-frame">
 			<main class="kt-home-sheet" :aria-busy="phase === 'loading'">
 				<template v-if="phase === 'loading'">
 					<h1 class="kt-home-title is-plain">{{ __("Home") }}</h1>
-					<p class="kt-home-loading" role="status" data-testid="kt-home-loading">{{ __("Loading your work…") }}</p>
+					<p class="kt-home-loading" role="status" data-testid="kt-home-loading">
+						{{ __("Loading your work…") }}
+					</p>
 				</template>
 
 				<template v-else-if="phase === 'denied'">
 					<h1 class="kt-home-title is-plain">{{ __("Home") }}</h1>
-					<StatePanel spot="neutral" icon="lock" :text="__('This page is for internal users.')" data-testid="kt-home-denied" />
+					<StatePanel
+						spot="neutral"
+						icon="lock"
+						:text="__('This page is for internal users.')"
+						data-testid="kt-home-denied"
+					/>
 				</template>
 
 				<template v-else-if="phase === 'failed'">
 					<h1 class="kt-home-title is-plain">{{ __("Home") }}</h1>
-					<StatePanel spot="error" icon="circle-x" :text="__('We could not load your work.')" data-testid="kt-home-failed">
-						<button type="button" class="btn btn-primary" data-testid="kt-home-retry-all" @click="load()">
+					<StatePanel
+						spot="error"
+						icon="circle-x"
+						:text="__('We could not load your work.')"
+						data-testid="kt-home-failed"
+					>
+						<button
+							type="button"
+							class="btn btn-primary"
+							data-testid="kt-home-retry-all"
+							@click="load()"
+						>
 							<HomeIcon name="refresh-cw" />{{ __("Try again") }}
 						</button>
 					</StatePanel>
 				</template>
 
 				<template v-else-if="data && layout">
-					<HomeHeader :viewer="data.viewer" :updated="data.updated" :analytics="data.analytics" />
+					<HomeHeader
+						:viewer="data.viewer"
+						:updated="data.updated"
+						:analytics="data.analytics"
+					/>
 
-					<div v-if="layout.columns.length" class="kt-home-summary" :style="{ '--kt-home-columns': layout.columns.length }" data-testid="kt-home-summary">
-						<SummaryColumn v-for="column in layout.columns" :key="column.region" :column="column" @focus-region="focusRegion" />
+					<div
+						v-if="layout.columns.length"
+						class="kt-home-summary"
+						:style="{ '--kt-home-columns': layout.columns.length }"
+						data-testid="kt-home-summary"
+					>
+						<SummaryColumn
+							v-for="column in layout.columns"
+							:key="column.region"
+							:column="column"
+							@focus-region="focusRegion"
+						/>
 					</div>
 
 					<StatePanel
@@ -74,14 +120,32 @@ watch(focusKey, async (key) => {
 						:text="__('Nothing needs your action right now.')"
 						data-testid="kt-home-empty"
 					/>
-					<div v-else-if="layout.panel === 'technical'" class="kt-home-main is-full" data-testid="kt-home-empty-technical">
-						<p class="kt-home-nothing"><HomeIcon name="circle-check" />{{ __("Nothing needs your action right now.") }}</p>
+					<div
+						v-else-if="layout.panel === 'technical'"
+						class="kt-home-main is-full"
+						data-testid="kt-home-empty-technical"
+					>
+						<p class="kt-home-nothing">
+							<HomeIcon name="circle-check" />{{
+								__("Nothing needs your action right now.")
+							}}
+						</p>
 					</div>
 
 					<template v-else>
-						<div class="kt-home-main" :class="{ 'is-full': layout.railEmpty }" data-testid="kt-home-main">
-							<p v-if="layout.mainEmpty" class="kt-home-nothing" data-testid="kt-home-nothing">
-								<HomeIcon name="circle-check" />{{ __("Nothing needs your action right now.") }}
+						<div
+							class="kt-home-main"
+							:class="{ 'is-full': layout.railEmpty }"
+							data-testid="kt-home-main"
+						>
+							<p
+								v-if="layout.mainEmpty"
+								class="kt-home-nothing"
+								data-testid="kt-home-nothing"
+							>
+								<HomeIcon name="circle-check" />{{
+									__("Nothing needs your action right now.")
+								}}
 							</p>
 							<HomeRegion
 								v-for="name in layout.main"
@@ -97,7 +161,12 @@ watch(focusKey, async (key) => {
 								@more="showMore"
 							/>
 						</div>
-						<aside v-if="!layout.railEmpty" class="kt-home-rail" :aria-label="__('Other work')" data-testid="kt-home-rail">
+						<aside
+							v-if="!layout.railEmpty"
+							class="kt-home-rail"
+							:aria-label="__('Other work')"
+							data-testid="kt-home-rail"
+						>
 							<HomeRegion
 								v-for="name in layout.rail"
 								:key="name"
@@ -115,7 +184,14 @@ watch(focusKey, async (key) => {
 					</template>
 				</template>
 
-				<div class="kt-home-sr" role="status" aria-live="polite" data-testid="kt-home-live">{{ announcement }}</div>
+				<div
+					class="kt-home-sr"
+					role="status"
+					aria-live="polite"
+					data-testid="kt-home-live"
+				>
+					{{ announcement }}
+				</div>
 			</main>
 		</div>
 	</div>

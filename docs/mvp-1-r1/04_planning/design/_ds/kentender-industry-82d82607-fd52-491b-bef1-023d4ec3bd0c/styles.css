@@ -1793,7 +1793,7 @@ figcaption,
 
 /* ── Page shell: the one sheet a page is drawn on ── */
 .kt-page {
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: var(--space-6) auto;
   padding: var(--space-6);
   background: var(--color-surface);

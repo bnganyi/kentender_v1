@@ -1596,7 +1596,7 @@
 }
 
 .kt-industry .kt-page {
-	max-width: 1200px;
+	/* max-width: 1200px; */
 	margin: var(--space-6) auto;
 	padding: var(--space-8);
 	background: var(--color-surface);
@@ -2669,7 +2669,7 @@
 }
 
 .kt-industry .kt-shell {
-	max-width: 1200px;
+	/* max-width: 1200px; */
 	width: 100%;
 	margin: 0 auto;
 	display: flex;

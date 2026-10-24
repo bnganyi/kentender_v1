@@ -72,6 +72,20 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/bid_opening_industry.css?v={_desk_asset_v('public/css/bid_opening_industry.css')}",
 	f"/assets/kentender_procurement/css/overrides/analytics_industry.css?v={_desk_asset_v('public/css/overrides/analytics_industry.css')}",
 	f"/assets/kentender_procurement/css/overrides/strategy_portfolio.css?v={_desk_asset_v('public/css/overrides/strategy_portfolio.css')}",
+	f"/assets/kentender_procurement/css/overrides/budget_workspace.css?v={_desk_asset_v('public/css/overrides/budget_workspace.css')}",
+	f"/assets/kentender_procurement/css/overrides/departmental_needs_workspace.css?v={_desk_asset_v('public/css/overrides/departmental_needs_workspace.css')}",
+	f"/assets/kentender_procurement/css/overrides/planning_workspace.css?v={_desk_asset_v('public/css/overrides/planning_workspace.css')}",
+	f"/assets/kentender_procurement/css/overrides/requisitions_workspace.css?v={_desk_asset_v('public/css/overrides/requisitions_workspace.css')}",
+	f"/assets/kentender_procurement/css/overrides/tenders_workspace.css?v={_desk_asset_v('public/css/overrides/tenders_workspace.css')}",
+    f"/assets/kentender_procurement/css/overrides/requisitions.css?v={_desk_asset_v('public/css/overrides/requisitions.css')}",
+    f"/assets/kentender_procurement/css/overrides/tenders.css?v={_desk_asset_v('public/css/overrides/tenders.css')}",
+	f"/assets/kentender_procurement/css/overrides/bid_evaluation_workspace.css?v={_desk_asset_v('public/css/overrides/bid_evaluation_workspace.css')}",
+ 	f"/assets/kentender_procurement/css/overrides/std_templates.css?v={_desk_asset_v('public/css/overrides/std_templates.css')}",
+ 	f"/assets/kentender_procurement/css/overrides/system_setup.css?v={_desk_asset_v('public/css/overrides/system_setup.css')}",
+   	f"/assets/kentender_procurement/css/overrides/home.css?v={_desk_asset_v('public/css/overrides/home.css')}",
+   	f"/assets/kentender_procurement/css/overrides/procurement_meetings.css?v={_desk_asset_v('public/css/overrides/procurement_meetings.css')}",
+   	f"/assets/kentender_procurement/css/overrides/award_workspace.css?v={_desk_asset_v('public/css/overrides/award_workspace.css')}",
+   	f"/assets/kentender_procurement/css/overrides/rail.css?v={_desk_asset_v('public/css/overrides/rail.css')}",
 
 ]
 app_include_js = [

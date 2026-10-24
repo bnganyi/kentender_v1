@@ -1,0 +1,124 @@
+/* Award workspace. Layers over desk styles. */
+.kt-shell[data-testid="awd-root"] {
+	--kt-ink: #0f2e2b !important;
+	--kt-muted: #5a6f6b !important;
+	--kt-line: #e3ebe8 !important;
+	--kt-soft: #f4f8f6 !important;
+	--kt-accent: #187a6b !important;
+	--kt-accent-hover: #136255 !important;
+	--kt-accent-soft: #e7f4f1 !important;
+	--kt-white: #fff !important;
+	--kt-shadow: 0 2px 8px rgb(15 46 43 / 5%), 0 8px 24px rgb(15 46 43 / 6%) !important;
+	--kt-radius: 14px !important;
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+}
+
+.kt-shell[data-testid="awd-root"] .awd-board {
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	padding: 16px 20px 40px !important;
+	background: none !important;
+	border: none !important;
+	box-sizing: border-box !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 20px !important;
+}
+
+/* Header */
+.kt-shell[data-testid="awd-root"] .kt-page-head {
+	margin: 0 !important;
+	padding: 22px 24px !important;
+	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%) !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: var(--kt-radius) !important;
+}
+
+.kt-shell[data-testid="awd-root"] .kt-page-title {
+	margin: 0 !important;
+	color: var(--kt-ink) !important;
+	font-size: 28px !important;
+	font-weight: 750 !important;
+	letter-spacing: -0.035em !important;
+	line-height: 1.15 !important;
+}
+
+/* Region */
+.kt-shell[data-testid="awd-root"] .kt-region {
+	margin: 0 !important;
+	padding: 20px 22px !important;
+	background: var(--kt-white) !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: var(--kt-radius) !important;
+	box-shadow: 0 1px 3px rgb(15 46 43 / 4%) !important;
+}
+
+.kt-shell[data-testid="awd-root"] .kt-region h2 {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	margin: 0 0 16px !important;
+	color: var(--kt-ink) !important;
+	font-size: 16.5px !important;
+	font-weight: 680 !important;
+	letter-spacing: -0.015em !important;
+	line-height: 1.2 !important;
+}
+
+.kt-shell[data-testid="awd-root"] .kt-region h2 svg {
+	stroke: var(--kt-accent) !important;
+	flex-shrink: 0 !important;
+}
+
+/* Empty state */
+.kt-shell[data-testid="awd-root"] .kt-empty {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: center !important;
+	justify-content: center !important;
+	gap: 12px !important;
+	padding: 40px 24px !important;
+	background: #f8fbfa !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: 12px !important;
+	text-align: center !important;
+}
+
+.kt-shell[data-testid="awd-root"] .kt-empty svg {
+	width: 32px !important;
+	height: 32px !important;
+	color: var(--kt-muted) !important;
+	stroke: var(--kt-muted) !important;
+}
+
+.kt-shell[data-testid="awd-root"] .kt-empty p {
+	margin: 0 !important;
+	color: var(--kt-muted) !important;
+	font-size: 15px !important;
+	font-weight: 500 !important;
+	line-height: 1.4 !important;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+	.kt-shell[data-testid="awd-root"] .awd-board {
+		padding: 12px 16px 32px !important;
+	}
+	.kt-shell[data-testid="awd-root"] .kt-page-head {
+		padding: 18px 18px !important;
+	}
+	.kt-shell[data-testid="awd-root"] .kt-page-title {
+		font-size: 24px !important;
+	}
+	.kt-shell[data-testid="awd-root"] .kt-region {
+		padding: 16px !important;
+	}
+	.kt-shell[data-testid="awd-root"] .kt-empty {
+		padding: 32px 16px !important;
+	}
+}
