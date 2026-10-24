@@ -1,0 +1,123 @@
+{
+ "actions": {},
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D23",
+ "dialogs": {},
+ "ev": [
+  "Appointment CM-TEST-BOARDS/APP/1"
+ ],
+ "id": "D23-P",
+ "name": "Appoint inspectors",
+ "next": {
+  "h": "Declare any interest before you act on this contract.",
+  "k": "wait",
+  "s": "Brian Wafula, Julia Njeri, Peter Mugo; assigned 2 Jul 2027, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Member",
+      "Role",
+      "Declaration"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Julia Njeri",
+       "Chair",
+       "Declaration pending"
+      ],
+      [
+       "Peter Mugo",
+       "Member",
+       "Declaration pending"
+      ],
+      [
+       "Brian Wafula",
+       "Member",
+       "Declaration pending"
+      ]
+     ]
+    }
+   ],
+   "t": "Declarations"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Reference",
+       "CM-TEST-BOARDS/APP/1"
+      ],
+      [
+       "Written record",
+       "Appointment 1"
+      ],
+      [
+       "Period",
+       "From appointment, until replaced"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Appointment"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Appoint inspectors",
+ "version": 6
+}

@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-SIM-{#####}",
+ "creation": "2026-10-15 10:00:00.000000",
+ "description": "Plan D8: the ledger of the Contract Management signing simulation provider, which stands in for an external trust service so a CM-only site can sign in tests. It holds what a provider would hold under each correlation identity (so a retry returns the same proof and reconcile can answer). Written only by the simulation provider; answers only when the site is a simulation environment.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "correlation_id",
+  "signer",
+  "target_digest",
+  "outcome",
+  "proof_reference",
+  "received_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "correlation_id",
+   "label": "Correlation identity",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signer",
+   "label": "Signer",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_digest",
+   "label": "Target digest",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "outcome",
+   "label": "Outcome",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Accepted/Verified\nRejected",
+   "reqd": 1
+  },
+  {
+   "fieldname": "proof_reference",
+   "label": "Proof reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Simulated Signature",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

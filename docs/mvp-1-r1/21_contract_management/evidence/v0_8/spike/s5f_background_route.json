@@ -1,0 +1,31 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S5f.background_job_submitting_a_payment_outside_the_operation",
+   "ok": false,
+   "error": "PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.PermissionError: CM_HOLD: this payment goes to a supplier with contract invoices and must be made through the controlled KenTender operation."
+   ]
+  },
+  {
+   "step": "S5f.state_after_job",
+   "payment": {
+    "docstatus": 0,
+    "workflow_state": "Draft"
+   },
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0
+   }
+  }
+ ]
+}

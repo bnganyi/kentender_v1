@@ -1,0 +1,60 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-cm-only.local",
+  "date": "2026-10-15"
+ },
+ "steps": [
+  {
+   "step": "S9.installed_apps",
+   "apps": [
+    "frappe",
+    "erpnext",
+    "kentender_core",
+    "kentender_suppliers",
+    "kentender_contracts"
+   ],
+   "tendering_apps_present": []
+  },
+  {
+   "step": "S9.seams_present_on_this_site",
+   "hooks": {
+    "kt_trust_signing_services": [],
+    "kt_award_contracting_receivers": [],
+    "kt_supplier_account_provider": [
+     "kentender_suppliers.supplier_accounts.services.provider"
+    ],
+    "kt_my_work_providers": [
+     "kentender_core.services.support_issues.my_work_rows",
+     "kentender_suppliers.supplier_accounts.services.my_work_provider.my_work_rows"
+    ],
+    "kt_portal_surfaces": [
+     "{'key': 'account', 'prefix': '/account', 'resolver': 'kentender_suppliers.supplier_accounts.portal.resolve', 'bundle': 'supplier_account_portal.bundle.js', 'css': ['/assets/kentender_suppliers/css/supplier_account_portal.css?v=1791195411']}"
+    ]
+   }
+  },
+  {
+   "step": "S9.signing_provider_absent_fails_closed",
+   "provider": null,
+   "outcome": "Unavailable"
+  },
+  {
+   "step": "S9.tendering_doctypes_absent_without_error",
+   "absent": [
+    "Tender",
+    "Bid",
+    "Award Case",
+    "Evaluation Case",
+    "Procurement Commitment",
+    "Funding Reservation"
+   ],
+   "present": []
+  },
+  {
+   "step": "S9.contract_records_work_here",
+   "case_doctype": true,
+   "supplier_provider_hook_present": true
+  }
+ ]
+}

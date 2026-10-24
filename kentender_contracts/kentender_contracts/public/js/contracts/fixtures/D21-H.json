@@ -1,0 +1,104 @@
+{
+ "actions": {
+  "Start management": {
+   "args": {},
+   "command": "StartContractManagement",
+   "do": "command"
+  },
+  "View source contract": {
+   "do": "route",
+   "route": [
+    "CM-2027-0001",
+    "agreement",
+    "intake"
+   ]
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-2027-0001",
+ "d": "D21",
+ "dialogs": {},
+ "ev": [],
+ "id": "D21-H",
+ "name": "Opening position",
+ "next": {
+  "h": "Start managing this contract.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Start management",
+ "page": "record",
+ "ref": "CM-2027-0001",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Source and terms",
+       "To confirm when management starts"
+      ],
+      [
+       "Opening position",
+       "Confirmed"
+      ],
+      [
+       "Next work",
+       "Inspect 2 units in custody"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Intake"
+  }
+ ],
+ "s2": [
+  "View source contract"
+ ],
+ "st": "Preparing",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-2027-0001",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-2027-0001",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-2027-0001",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-2027-0001",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-2027-0001",
+    "history"
+   ]
+  }
+ ],
+ "title": "Start managing this contract",
+ "version": 3
+}

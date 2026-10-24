@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-18 19:00:00.000000",
+ "description": "Simulation-only switch for the post-close cancellation route: the isolated cancellation-ground profile. Read only when kt_bds_simulation_environment is set.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "verified_cancellation_grounds"
+ ],
+ "fields": [
+  {
+   "fieldname": "verified_cancellation_grounds",
+   "label": "Verified cancellation grounds (comma separated keys)",
+   "read_only": 0,
+   "fieldtype": "Small Text"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-18 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

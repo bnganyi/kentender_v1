@@ -40,6 +40,8 @@ stops where the cap leaves it."""
 
 from __future__ import annotations
 
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import fiscal as F, world as W, world0 as W0  # noqa: F401
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -47,7 +49,7 @@ import frappe
 
 DHI = "Digital Health"
 HRMD = "Human Resources Management and Development"
-LATEST_DELIVERY = "2027-06-30"  # each item's plan boundary (required by 30 Jun 2027)
+LATEST_DELIVERY = calendar.delivery("2027-06-30")  # each item's plan boundary (required by 30 Jun 2027)
 
 
 def _plus(instant: str, **delta: int) -> str:
@@ -118,13 +120,14 @@ def _bid_clock(start: str, fill: str, intake: str, complete: str, submit: str) -
 	return {"start": start, "fill": fill, "intake": intake, "complete": complete, "submit": submit}
 
 
-def _two_bids(category_models: tuple[str, str], prices: tuple[str, str], quantity: int, day: str, deadline: str, n: int) -> list[dict[str, Any]]:
+def _two_bids(category_models: tuple[str, str], prices: tuple[str, str], quantity: int, day: str, deadline: str, n: int, *, w=W, ref_year: str = "2027", cap: str | None = None) -> list[dict[str, Any]]:
 	"""Afya and Jirani each start, fill and submit before the deadline (16% tax
-	on the quantity at each unit price); every security reference its own."""
+	on the quantity at each unit price); every security reference its own. `w` is the year's
+	mapping of a story instant (Year 0's own for the closed year); `cap` is the latest offered delivery date."""
 	deadline_day = deadline[:10]
 	submit_day = (datetime.fromisoformat(deadline_day) - timedelta(days=3)).strftime("%Y-%m-%d")
 	out = []
-	for index, (key, model, unit_price, delivery) in enumerate((("afya", category_models[0], prices[0], "2027-06-24"), ("jirani", category_models[1], prices[1], "2027-06-28"))):
+	for index, (key, model, unit_price, delivery) in enumerate((("afya", category_models[0], prices[0], min(w("2027-06-24"), cap or LATEST_DELIVERY)), ("jirani", category_models[1], prices[1], min(w("2027-06-28"), cap or LATEST_DELIVERY)))):
 		tax = int(int(unit_price) * quantity * 16 / 100)
 		out.append({
 			"bidder": key,
@@ -132,7 +135,7 @@ def _two_bids(category_models: tuple[str, str], prices: tuple[str, str], quantit
 				f"{submit_day} {11 + index}:00:00", f"{submit_day} {14 + index}:15:00"),
 			"goods": {"offered_make_model": model, "offered_delivery_date": delivery},
 			"price": {"unit_price": unit_price, "tax_amount": str(tax)},
-			"security": {"guarantee_reference": f"{'KCB/TG' if key == 'afya' else 'EQ/BG'}/2027/{n}{index}"},
+			"security": {"guarantee_reference": f"{'KCB/TG' if key == 'afya' else 'EQ/BG'}/{ref_year}/{n}{index}"},
 		})
 	return out
 
@@ -160,101 +163,101 @@ PORTFOLIO: tuple[dict[str, Any], ...] = (
 	{
 		"key": "printers", "ref": "T2", "item": "Printers", "category": "Printer", "item_name": "Network laser printers",
 		"uses": {DHI: "Printing for Digital Health offices"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-01", "2027-03-02 09:00:00", "2027-03-12 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-01"), W("2027-03-02 09:00:00"), W("2027-03-12 11:00:00"))},
 		"tender": {
-			"stop": "closed", "clock": _tender_clock("2027-03-16 10:00:00", "2027-03-16 15:00:00", "2027-03-25 10:00:00", "2027-04-09", "2027-05-10 12:00:00"),
-			"values": _values("Supply of printers", "2027-04-09", "2027-05-10 12:00:00", 100_000),
+			"stop": "closed", "clock": _tender_clock(W("2027-03-16 10:00:00"), W("2027-03-16 15:00:00"), W("2027-03-25 10:00:00"), W("2027-04-09"), W("2027-05-10 12:00:00")),
+			"values": _values("Supply of printers", W("2027-04-09"), W("2027-05-10 12:00:00"), 100_000),
 		},
-		"bids": _two_bids(("OfficeJet Pro 9130", "LaserWorks 4200"), ("100000", "105000"), 40, "2027-04-20", "2027-05-10 12:00:00", 21),
+		"bids": _two_bids(("OfficeJet Pro 9130", "LaserWorks 4200"), ("100000", "105000"), 40, W("2027-04-20"), W("2027-05-10 12:00:00"), 21),
 		"evaluation": {"stop": "report_sent", "reference": "011", "clock": _evaluation_clock(
-			"2027-05-10 12:00:00", 2, review="2027-05-24 09:00:00", meeting="2027-06-16 09:00:00", sent="2027-06-16 11:30:00")},
+			W("2027-05-10 12:00:00"), 2, review=W("2027-05-24 09:00:00"), meeting=W("2027-06-16 09:00:00"), sent=W("2027-06-16 11:30:00"))},
 		"award": {"through": "received", "clock": {}},
 	},
 	{
 		"key": "lab_desktops", "ref": "T3", "item": "Laboratory desktop computers", "category": "Desktop computer", "item_name": "Laboratory desktop computers",
 		"uses": {DHI: "Running hospital laboratory systems"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-02", "2027-03-04 09:00:00", "2027-03-11 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-02"), W("2027-03-04 09:00:00"), W("2027-03-11 11:00:00"))},
 		"tender": {
-			"stop": "closed", "clock": _tender_clock("2027-03-17 10:00:00", "2027-03-17 15:00:00", "2027-03-24 10:00:00", "2027-04-06", "2027-05-07 12:00:00"),
-			"values": _values("Supply of laboratory desktop computers", "2027-04-06", "2027-05-07 12:00:00", 180_000),
+			"stop": "closed", "clock": _tender_clock(W("2027-03-17 10:00:00"), W("2027-03-17 15:00:00"), W("2027-03-24 10:00:00"), W("2027-04-06"), W("2027-05-07 12:00:00")),
+			"values": _values("Supply of laboratory desktop computers", W("2027-04-06"), W("2027-05-07 12:00:00"), 180_000),
 		},
-		"bids": _two_bids(("ProDesk 600 G9", "Vertex Tower 5"), ("125000", "128000"), 60, "2027-04-15", "2027-05-07 12:00:00", 31),
+		"bids": _two_bids(("ProDesk 600 G9", "Vertex Tower 5"), ("125000", "128000"), 60, W("2027-04-15"), W("2027-05-07 12:00:00"), 31),
 		"evaluation": {"stop": "report_sent", "reference": "012", "clock": _evaluation_clock(
-			"2027-05-07 12:00:00", 2, review="2027-05-20 09:00:00", meeting="2027-06-04 09:00:00", sent="2027-06-04 15:00:00")},
-		"award": {"through": "signed", "clock": {"opinion": "2027-06-17 15:30:00", "sign": "2027-06-17 16:00:00"}},
+			W("2027-05-07 12:00:00"), 2, review=W("2027-05-20 09:00:00"), meeting=W("2027-06-04 09:00:00"), sent=W("2027-06-04 15:00:00"))},
+		"award": {"through": "signed", "clock": {"opinion": W("2027-06-17 15:30:00"), "sign": W("2027-06-17 16:00:00")}},
 	},
 	{
 		"key": "scanners", "ref": "T4", "item": "Document scanners", "category": "Scanner", "item_name": "Document scanners",
 		"uses": {HRMD: "Digitising staff records in Human Resources"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-03", "2027-03-03 15:00:00", "2027-03-15 12:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-03"), W("2027-03-03 15:00:00"), W("2027-03-15 12:00:00"))},
 		"tender": {
-			"stop": "closed", "clock": _tender_clock("2027-03-18 10:00:00", "2027-03-18 15:00:00", "2027-04-01 10:00:00", "2027-04-16", "2027-06-03 10:00:00"),
-			"values": _values("Supply of document scanners", "2027-04-16", "2027-06-03 10:00:00", 70_000),
+			"stop": "closed", "clock": _tender_clock(W("2027-03-18 10:00:00"), W("2027-03-18 15:00:00"), W("2027-04-01 10:00:00"), W("2027-04-16"), W("2027-06-03 10:00:00")),
+			"values": _values("Supply of document scanners", W("2027-04-16"), W("2027-06-03 10:00:00"), 70_000),
 		},
-		"bids": _two_bids(("ScanPro 3000", "DocuFeed 750"), ("115000", "118000"), 25, "2027-05-17", "2027-06-03 10:00:00", 41),
-		"evaluation": {"stop": "intake", "reference": "013", "clock": _evaluation_clock("2027-06-03 10:00:00", 2)},
+		"bids": _two_bids(("ScanPro 3000", "DocuFeed 750"), ("115000", "118000"), 25, W("2027-05-17"), W("2027-06-03 10:00:00"), 41),
+		"evaluation": {"stop": "intake", "reference": "013", "clock": _evaluation_clock(W("2027-06-03 10:00:00"), 2)},
 	},
 	{
 		"key": "switches", "ref": "T5", "item": "Network switches", "category": "Network equipment", "item_name": "Managed network switches",
 		"uses": {HRMD: "Networking the staff training centres"},
 		# a partial draw: 25 of the item's 30 switches
 		"amounts": {HRMD: ("25", "7500000.00")},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-03", "2027-03-08 10:00:00", "2027-03-15 11:30:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-03"), W("2027-03-08 10:00:00"), W("2027-03-15 11:30:00"))},
 		"tender": {
-			"stop": "closed", "clock": _tender_clock("2027-03-19 09:00:00", "2027-03-19 15:00:00", "2027-04-02 10:00:00", "2027-05-14", "2027-06-14 11:00:00"),
-			"values": _values("Supply of network switches", "2027-05-14", "2027-06-14 11:00:00", 150_000),
+			"stop": "closed", "clock": _tender_clock(W("2027-03-19 09:00:00"), W("2027-03-19 15:00:00"), W("2027-04-02 10:00:00"), W("2027-05-14"), W("2027-06-14 11:00:00")),
+			"values": _values("Supply of network switches", W("2027-05-14"), W("2027-06-14 11:00:00"), 150_000),
 		},
-		"bids": _two_bids(("NetCore 2930F", "SwitchLine 48G"), ("250000", "255000"), 25, "2027-05-25", "2027-06-14 11:00:00", 51),
-		"evaluation": {"stop": "prepared", "reference": "014", "clock": _evaluation_clock("2027-06-14 11:00:00", 2)},
+		"bids": _two_bids(("NetCore 2930F", "SwitchLine 48G"), ("250000", "255000"), 25, W("2027-05-25"), W("2027-06-14 11:00:00"), 51),
+		"evaluation": {"stop": "prepared", "reference": "014", "clock": _evaluation_clock(W("2027-06-14 11:00:00"), 2)},
 	},
 	{
 		"key": "tablets", "ref": "T6", "item": "Medical-grade tablets", "category": "Tablet", "item_name": "Medical-grade tablets",
 		"uses": {DHI: "Clinical teams at priority facilities"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-04-14", "2027-04-16 09:00:00", "2027-04-20 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-04-14"), W("2027-04-16 09:00:00"), W("2027-04-20 11:00:00"))},
 		"tender": {
-			"stop": "published", "clock": _tender_clock("2027-04-22 10:00:00", "2027-04-22 15:00:00", "2027-05-06 10:00:00", "2027-05-24", "2027-06-25 11:00:00"),
-			"values": _values("Supply of medical-grade tablets", "2027-05-24", "2027-06-25 11:00:00", 120_000, clarification_deadline="2027-06-18 17:00:00"),
+			"stop": "published", "clock": _tender_clock(W("2027-04-22 10:00:00"), W("2027-04-22 15:00:00"), W("2027-05-06 10:00:00"), W("2027-05-24"), W("2027-06-25 11:00:00")),
+			"values": _values("Supply of medical-grade tablets", W("2027-05-24"), W("2027-06-25 11:00:00"), 120_000, clarification_deadline=W("2027-06-18 17:00:00")),
 		},
 		# the four canonical suppliers start bids (Drafts), so they are candidates
 		"candidates": (
-			("afya", "2027-05-26 10:00:00"), ("jirani", "2027-05-27 10:00:00"), ("pwani", "2027-05-31 09:00:00"), ("mlima", "2027-06-01 11:00:00"),
+			("afya", W("2027-05-26 10:00:00")), ("jirani", W("2027-05-27 10:00:00")), ("pwani", W("2027-05-31 09:00:00")), ("mlima", W("2027-06-01 11:00:00")),
 		),
 		"clarifications": tuple(zip(
 			("afya", "jirani", "pwani", "mlima", "afya", "jirani"), T6_QUESTIONS,
-			("2027-06-02 10:00:00", "2027-06-04 14:00:00", "2027-06-08 09:30:00", "2027-06-10 11:00:00", "2027-06-15 15:00:00", "2027-06-17 09:00:00"),
+			(W("2027-06-02 10:00:00"), W("2027-06-04 14:00:00"), W("2027-06-08 09:30:00"), W("2027-06-10 11:00:00"), W("2027-06-15 15:00:00"), W("2027-06-17 09:00:00")),
 		)),
 		# the opening committee appointed; the chair's Start opening is upcoming
-		"opening": {"arranged_only": True, "clock": {"prepare": "2027-06-15 09:55:00", "appoint": "2027-06-15 10:00:00", "publish": "2027-06-15 10:05:00"}},
+		"opening": {"arranged_only": True, "clock": {"prepare": W("2027-06-15 09:55:00"), "appoint": W("2027-06-15 10:00:00"), "publish": W("2027-06-15 10:05:00")}},
 	},
 	{
 		"key": "ups", "ref": "T7", "item": "UPS units", "category": "Power-protection equipment", "item_name": "Line-interactive UPS units",
 		"uses": {HRMD: "Power protection in the training centres"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-05-03", "2027-05-05 09:00:00", "2027-05-10 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-05-03"), W("2027-05-05 09:00:00"), W("2027-05-10 11:00:00"))},
 		"tender": {
-			"stop": "approved", "clock": _tender_clock("2027-05-12 10:00:00", "2027-06-08 10:00:00", "2027-06-16 15:30:00"),
-			"values": _values("Supply of UPS units", "2027-06-21", "2027-07-12 11:00:00", 80_000),
+			"stop": "approved", "clock": _tender_clock(W("2027-05-12 10:00:00"), W("2027-06-08 10:00:00"), W("2027-06-16 15:30:00")),
+			"values": _values("Supply of UPS units", W("2027-06-21"), W("2027-07-12 11:00:00"), 80_000),
 		},
 	},
 	{
 		"key": "access_points", "ref": "T8", "item": "Wireless access points", "category": "Network equipment", "item_name": "Indoor wireless access points",
 		"uses": {DHI: "Wireless coverage in Digital Health offices", HRMD: "Wireless coverage in Human Resources offices"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-08", "2027-03-09 10:00:00", "2027-03-15 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-08"), W("2027-03-09 10:00:00"), W("2027-03-15 11:00:00"))},
 		"tender": {
-			"stop": "returned", "clock": _tender_clock("2027-03-16 09:00:00", "2027-06-14 10:00:00", **{"return": "2027-06-16 09:00:00"}),
-			"values": _values("Supply of wireless access points", "2027-06-28", "2027-07-19 11:00:00", 130_000),
+			"stop": "returned", "clock": _tender_clock(W("2027-03-16 09:00:00"), W("2027-06-14 10:00:00"), **{"return": W("2027-06-16 09:00:00")}),
+			"values": _values("Supply of wireless access points", W("2027-06-28"), W("2027-07-19 11:00:00"), 130_000),
 			"return_reason": WARRANTY_RETURN,
 		},
 	},
 	{
 		"key": "field_laptops", "ref": "T9", "item": "Field laptops", "category": "Laptop", "item_name": "Rugged field laptops",
 		"uses": {DHI: "County digital health officers in the field"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-04-05", "2027-04-07 09:00:00", "2027-04-12 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-04-05"), W("2027-04-07 09:00:00"), W("2027-04-12 11:00:00"))},
 		"tender": {
 			# HOME-CHG-001 v0.6 H1/H12: Brian waits on Amina to consider cancellation from 16 Jun 14:00 — the
 			# material-addendum route (TPR-CHG-001 v0.17 §5.11), the only one that gives her that work item.
 			"stop": "cancellation_review",
-			"clock": _tender_clock("2027-04-13 10:00:00", "2027-04-13 15:00:00", "2027-04-27 10:00:00", "2027-05-10", "2027-06-21 11:00:00", addendum="2027-06-16 11:00:00", review="2027-06-16 14:00:00"),
-			"values": _values("Supply of field laptops", "2027-05-10", "2027-06-21 11:00:00", 140_000),
+			"clock": _tender_clock(W("2027-04-13 10:00:00"), W("2027-04-13 15:00:00"), W("2027-04-27 10:00:00"), W("2027-05-10"), W("2027-06-21 11:00:00"), addendum=W("2027-06-16 11:00:00"), review=W("2027-06-16 14:00:00")),
+			"values": _values("Supply of field laptops", W("2027-05-10"), W("2027-06-21 11:00:00"), 140_000),
 			"review": {
 				"increase": 20,
 				"addendum_reason": "Additional county deployment sites require 20 more field laptops",
@@ -265,47 +268,122 @@ PORTFOLIO: tuple[dict[str, Any], ...] = (
 	{
 		"key": "desktops", "ref": "T10", "item": "Desktop computers", "category": "Desktop computer", "item_name": "Office desktop computers",
 		"uses": {HRMD: "Human Resources offices"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-15", "2027-03-17 09:00:00", "2027-03-22 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-15"), W("2027-03-17 09:00:00"), W("2027-03-22 11:00:00"))},
 		"tender": {
 			"stop": "cancelled",
-			"clock": _tender_clock("2027-03-24 10:00:00", "2027-03-24 15:00:00", "2027-04-07 10:00:00", "2027-04-26", "2027-06-28 11:00:00",
-				recommend_cancellation="2027-06-14 10:00:00", cancel="2027-06-15 12:00:00"),
-			"values": _values("Supply of desktop computers", "2027-04-26", "2027-06-28 11:00:00", 240_000),
+			"clock": _tender_clock(W("2027-03-24 10:00:00"), W("2027-03-24 15:00:00"), W("2027-04-07 10:00:00"), W("2027-04-26"), W("2027-06-28 11:00:00"),
+				recommend_cancellation=W("2027-06-14 10:00:00"), cancel=W("2027-06-15 12:00:00")),
+			"values": _values("Supply of desktop computers", W("2027-04-26"), W("2027-06-28 11:00:00"), 240_000),
 			"cancellation_reason": CANCELLATION_REASON,
 		},
 	},
 	{
 		"key": "routers", "ref": "T11", "item": "Core network routers", "category": "Network equipment", "item_name": "Core network routers",
 		"uses": {DHI: "The national digital health data centre"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-03-01", "2027-03-01 15:00:00", "2027-03-15 14:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-03-01"), W("2027-03-01 15:00:00"), W("2027-03-15 14:00:00"))},
 		"tender": {
 			"stop": "cancelled",
-			"clock": _tender_clock("2027-03-17 09:00:00", "2027-03-17 15:00:00", "2027-03-31 10:00:00", "2027-04-12", "2027-06-30 11:00:00",
-				recommend_cancellation="2027-06-14 09:00:00", cancel="2027-06-16 12:00:00"),
-			"values": _values("Supply of core network routers", "2027-04-12", "2027-06-30 11:00:00", 500_000),
+			"clock": _tender_clock(W("2027-03-17 09:00:00"), W("2027-03-17 15:00:00"), W("2027-03-31 10:00:00"), W("2027-04-12"), W("2027-06-30 11:00:00"),
+				recommend_cancellation=W("2027-06-14 09:00:00"), cancel=W("2027-06-16 12:00:00")),
+			"values": _values("Supply of core network routers", W("2027-04-12"), W("2027-06-30 11:00:00"), 500_000),
 			"cancellation_reason": SERVER_CANCELLATION_REASON,
 			# every obligation evidenced the same afternoon
 			"evidence": {
-				"NOTICE-STATE_PORTAL": ("2027-06-16 14:00:00", "PPIP-CANCEL-ROUTERS", "pdf"),
-				"NOTICE-MINISTRY_WEBSITE": ("2027-06-16 14:05:00", "WEB-CANCEL-ROUTERS", "pdf"),
-				"NOTICE-NOTICE_BOARD": ("2027-06-16 14:10:00", "NB-CANCEL-ROUTERS", "jpg"),
-				"NOTICE-NATIONAL_NEWSPAPERS": ("2027-06-16 14:15:00", "NP-CANCEL-ROUTERS", "pdf"),
-				"PPRA_REPORT": ("2027-06-16 15:00:00", "PPRA-CANCEL-ROUTERS", "pdf"),
-				"CANDIDATE_NOTICE": ("2027-06-16 15:30:00", "CAND-CANCEL-ROUTERS", "pdf"),
+				"NOTICE-STATE_PORTAL": (W("2027-06-16 14:00:00"), "PPIP-CANCEL-ROUTERS", "pdf"),
+				"NOTICE-MINISTRY_WEBSITE": (W("2027-06-16 14:05:00"), "WEB-CANCEL-ROUTERS", "pdf"),
+				"NOTICE-NOTICE_BOARD": (W("2027-06-16 14:10:00"), "NB-CANCEL-ROUTERS", "jpg"),
+				"NOTICE-NATIONAL_NEWSPAPERS": (W("2027-06-16 14:15:00"), "NP-CANCEL-ROUTERS", "pdf"),
+				"PPRA_REPORT": (W("2027-06-16 15:00:00"), "PPRA-CANCEL-ROUTERS", "pdf"),
+				"CANDIDATE_NOTICE": (W("2027-06-16 15:30:00"), "CAND-CANCEL-ROUTERS", "pdf"),
 			},
 		},
 	},
 	{
 		"key": "clinic_desktops", "ref": "R-clinic", "item": "Clinic desktop computers", "category": "Desktop computer", "item_name": "Clinic desktop computers",
 		"uses": {DHI: "Outpatient clinic registration desks"},
-		"requisition": {"stop": "procurement", "clock": _req_clock("2027-06-14", "2027-06-16 11:00:00")},
+		"requisition": {"stop": "procurement", "clock": _req_clock(W("2027-06-14"), W("2027-06-16 11:00:00"))},
 	},
 	{
 		"key": "monitors", "ref": "R-monitors", "item": "Monitors", "category": "Monitor", "item_name": "24-inch office monitors",
 		"uses": {HRMD: "Human Resources offices"},
-		"requisition": {"stop": "authorised", "clock": _req_clock("2027-06-01", "2027-06-03 09:00:00", "2027-06-10 11:00:00")},
+		"requisition": {"stop": "authorised", "clock": _req_clock(W("2027-06-01"), W("2027-06-03 09:00:00"), W("2027-06-10 11:00:00"))},
 	},
 )
+
+
+#: The closed year's (Year 0, FY 2025/26) completed portfolio (SEED-002 v0.8 §A7; new content for the owner's review): three
+#: Tenders told through to the acceptance of the award, one per Plan Item of the year's plan
+#: (`procurement_planning.seeds.kentender_mvp_v1.PORTFOLIO0` and the workstation item). Afya's bid is the lowest in
+#: each, so Mary Wanjiku accepts. The instants are the executed year's stories one year earlier (`W0`), the second and third
+#: Tender a slot later each (`calendar.closed_year_offset_days`). The awards stop at acceptance, so no package reaches Contracting.
+_FY0 = calendar.YEAR0.fiscal_year
+#: Every closed-year delivery is inside its financial year: the year's last day (the Plan Items' own boundary).
+LATEST_DELIVERY0 = F("2026-06-30")
+
+
+def _closed_year_tender_0() -> dict[str, Any]:
+	w = lambda value: W0(value, 0)  # noqa: E731
+	return {
+		"key": "y0_workstations", "ref": "Y0-1", "fiscal_year": _FY0, "latest_delivery": LATEST_DELIVERY0,
+		"item": "Staff workstation computers", "category": "Desktop computer", "item_name": "Staff workstation desktop computers",
+		"uses": {HRMD: "Replacing staff workstations in the headquarters offices"},
+		"requisition": {"stop": "authorised", "clock": _req_clock(w("2027-03-02"), w("2027-03-04 09:00:00"), w("2027-03-11 11:00:00"))},
+		"tender": {
+			"stop": "closed", "clock": _tender_clock(w("2027-03-17 10:00:00"), w("2027-03-17 15:00:00"), w("2027-03-24 10:00:00"), w("2027-04-06"), w("2027-05-07 12:00:00")),
+			"values": _values("Supply of staff workstation computers", w("2027-04-06"), w("2027-05-07 12:00:00"), 480_000),
+		},
+		"bids": _two_bids(("ProDesk 600 G9", "Vertex Tower 5"), ("165000", "170000"), 120, w("2027-04-15"), w("2027-05-07 12:00:00"), 61, w=w, ref_year="2025", cap=LATEST_DELIVERY0),
+		"evaluation": {"stop": "report_sent", "reference": "021", "clock": _evaluation_clock(
+			w("2027-05-07 12:00:00"), 2, review=w("2027-05-20 09:00:00"), meeting=w("2027-06-04 09:00:00"), sent=w("2027-06-04 15:00:00"))},
+		"award": {"through": "accepted", "clock": {
+			"opinion": w("2027-06-07 09:00:00"), "sign": w("2027-06-07 09:10:00"), "decide": w("2027-06-07 10:00:00"), "accept": w("2027-06-08 09:00:00")}},
+	}
+
+
+def _closed_year_tender_1() -> dict[str, Any]:
+	w = lambda value: W0(value, 1)  # noqa: E731
+	return {
+		"key": "y0_printers", "ref": "Y0-2", "fiscal_year": _FY0, "latest_delivery": LATEST_DELIVERY0,
+		"item": "Multifunction office printers", "category": "Printer", "item_name": "Multifunction office printers",
+		"uses": {HRMD: "Printing for the headquarters offices"},
+		"requisition": {"stop": "authorised", "clock": _req_clock(w("2027-03-01"), w("2027-03-02 09:00:00"), w("2027-03-12 11:00:00"))},
+		"tender": {
+			"stop": "closed", "clock": _tender_clock(w("2027-03-16 10:00:00"), w("2027-03-16 15:00:00"), w("2027-03-25 10:00:00"), w("2027-04-09"), w("2027-05-10 12:00:00")),
+			"values": _values("Supply of multifunction office printers", w("2027-04-09"), w("2027-05-10 12:00:00"), 120_000),
+		},
+		"bids": _two_bids(("OfficeJet Pro 9020", "LaserWorks 4100"), ("165000", "172000"), 30, w("2027-04-20"), w("2027-05-10 12:00:00"), 71, w=w, ref_year="2025", cap=LATEST_DELIVERY0),
+		"evaluation": {"stop": "report_sent", "reference": "022", "clock": _evaluation_clock(
+			w("2027-05-10 12:00:00"), 2, review=w("2027-05-24 09:00:00"), meeting=w("2027-06-02 09:00:00"), sent=w("2027-06-02 11:30:00"))},
+		"award": {"through": "accepted", "clock": {
+			"opinion": w("2027-06-04 09:00:00"), "sign": w("2027-06-04 09:10:00"), "decide": w("2027-06-04 10:00:00"), "accept": w("2027-06-07 09:00:00")}},
+	}
+
+
+def _closed_year_tender_2() -> dict[str, Any]:
+	w = lambda value: W0(value, 2)  # noqa: E731
+	return {
+		"key": "y0_laptops", "ref": "Y0-3", "fiscal_year": _FY0, "latest_delivery": LATEST_DELIVERY0,
+		"item": "Replacement staff laptops", "category": "Laptop", "item_name": "Replacement staff laptops",
+		"uses": {HRMD: "Headquarters staff"},
+		"requisition": {"stop": "authorised", "clock": _req_clock(w("2027-03-03"), w("2027-03-03 15:00:00"), w("2027-03-15 12:00:00"))},
+		"tender": {
+			"stop": "closed", "clock": _tender_clock(w("2027-03-18 10:00:00"), w("2027-03-18 15:00:00"), w("2027-04-01 10:00:00"), w("2027-04-16"), w("2027-06-03 10:00:00")),
+			"values": _values("Supply of replacement staff laptops", w("2027-04-16"), w("2027-06-03 10:00:00"), 240_000),
+		},
+		"bids": _two_bids(("ProBook 440 G10", "Vertex Book 14"), ("165000", "172000"), 60, w("2027-05-17"), w("2027-06-03 10:00:00"), 81, w=w, ref_year="2025", cap=LATEST_DELIVERY0),
+		"evaluation": {"stop": "report_sent", "reference": "023", "clock": _evaluation_clock(
+			w("2027-06-03 10:00:00"), 2, review=w("2027-06-08 09:00:00"), meeting=w("2027-06-11 09:00:00"), sent=w("2027-06-11 15:00:00"))},
+		"award": {"through": "accepted", "clock": {
+			"opinion": w("2027-06-14 09:00:00"), "sign": w("2027-06-14 09:10:00"), "decide": w("2027-06-14 10:00:00"), "accept": w("2027-06-15 09:00:00")}},
+	}
+
+
+PORTFOLIO0: tuple[dict[str, Any], ...] = (_closed_year_tender_0(), _closed_year_tender_1(), _closed_year_tender_2())
+
+
+def portfolio_specs() -> tuple[dict[str, Any], ...]:
+	"""Every portfolio item the world builds: the closed year's first once the world is anchored."""
+	return (*PORTFOLIO0, *PORTFOLIO) if calendar.mode() == "anchored" else PORTFOLIO
 
 
 def _reaches(stage: str, current: str) -> bool:
@@ -317,7 +395,7 @@ def _reaches(stage: str, current: str) -> bool:
 def _requisition(spec: dict[str, Any]) -> str:
 	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import _plan_item_id
 
-	plan_item = _plan_item_id(spec["item"])
+	plan_item = _plan_item_id(spec["item"], spec.get("fiscal_year"))
 	return frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item, "current_state": ("not in", ("Withdrawn", "Revoked", "Superseded"))}, "name") if plan_item else ""
 
 
@@ -339,13 +417,13 @@ def seed_portfolio(*, current: str) -> dict[str, Any]:
 	out: dict[str, Any] = {}
 	if not _reaches("requisitions", current):
 		return out
-	for spec in PORTFOLIO:
+	for spec in portfolio_specs():
 		key = spec["key"]
 		row: dict[str, Any] = out.setdefault(key, {})
 		row["requisition"] = build_requisition(
 			key=f"portfolio-{key}", plan_item_title=spec["item"], requirement_title=spec["item"],
-			shared={"equipment_category": spec["category"], "item_name": spec["item_name"], "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": LATEST_DELIVERY},
-			uses=spec["uses"], clock_map=spec["requisition"]["clock"], stop=spec["requisition"]["stop"], amounts=spec.get("amounts"),
+			shared={"equipment_category": spec["category"], "item_name": spec["item_name"], "delivery_location": DELIVERY_LOCATION, "latest_delivery_date": spec.get("latest_delivery", LATEST_DELIVERY)},
+			uses=spec["uses"], clock_map=spec["requisition"]["clock"], stop=spec["requisition"]["stop"], amounts=spec.get("amounts"), fiscal_year=spec.get("fiscal_year"),
 		)
 		if not spec.get("tender") or not _reaches("tenders", current):
 			continue
@@ -359,7 +437,7 @@ def seed_portfolio(*, current: str) -> dict[str, Any]:
 				for bidder, at in spec["candidates"]:
 					started = bids.portfolio_bid(
 						tender=tender, tender_reference=tender_reference, bidder_key=bidder, clock_map={"start": at, "fill": _plus(at, minutes=30)},
-						goods={"offered_make_model": "MedTab 11 Pro", "offered_delivery_date": "2027-06-30"}, price={}, submit=False,
+						goods={"offered_make_model": "MedTab 11 Pro", "offered_delivery_date": LATEST_DELIVERY}, price={}, submit=False,
 					)
 					candidates[bidder] = started.get("candidate") or _candidate_of(tender, bidder)
 				tenders.receive_portfolio_clarifications(tender, [(candidates[b], q, at) for b, q, at in spec["clarifications"]], key=spec["key"])
@@ -390,7 +468,7 @@ def seed_portfolio(*, current: str) -> dict[str, Any]:
 				tender, spec["evaluation"]["clock"], stop=spec["evaluation"]["stop"], reference=spec["evaluation"]["reference"], summary=_summary(spec),
 			)
 		if spec.get("award") and _reaches("award", current):
-			row["award"] = award_portfolio_tender(tender, through=spec["award"]["through"], clock_map=spec["award"]["clock"])
+			row["award"] = award_portfolio_tender(tender, through=spec["award"]["through"], clock_map=spec["award"]["clock"], keep_delivered=_reaches("contracts", current) and spec in PORTFOLIO0)
 	return out
 
 
@@ -438,7 +516,9 @@ def expected_state(spec: dict[str, Any], current: str) -> dict[str, Any]:
 			stop = spec["evaluation"]["stop"]
 			out["evaluation"] = (stop if _reaches("bid_evaluation", current) else None)
 		if spec.get("award"):
-			out["award"] = {"received": "Opinion", "signed": "Decision"}[spec["award"]["through"]] if _reaches("award", current) else None
+			out["award"] = {"received": "Opinion", "signed": "Decision", "accepted": "Waiting to proceed"}[spec["award"]["through"]] if _reaches("award", current) else None
+			if out["award"] and spec in PORTFOLIO0 and _reaches("contracts", current):  # SEED-002 v0.10 §A8.1: the closed year's awards are delivered to Contract Management
+				out["award"] = "Sent to Contracting"
 	return out
 
 
@@ -450,9 +530,9 @@ def validate_portfolio(*, current: str) -> list[dict[str, Any]]:
 		rows.append({"ok": bool(ok), "check": f"portfolio: {label}"})
 
 	if not _reaches("requisitions", current):
-		check(not any(_requisition(spec) for spec in PORTFOLIO), f"no portfolio Requisitions at CURRENT={current}")
+		check(not any(_requisition(spec) for spec in portfolio_specs()), f"no portfolio Requisitions at CURRENT={current}")
 		return rows
-	for spec in PORTFOLIO:
+	for spec in portfolio_specs():
 		want = expected_state(spec, current)
 		name = _requisition(spec)
 		state = frappe.db.get_value("Procurement Requisition", name, "current_state") if name else None
@@ -509,6 +589,9 @@ SERVES = {
 	"routers": "ANL Closed bucket, cancellation complete (046 shape); Women reservation",
 	"clinic_desktops": "HOME H10 Authorise requisition (Charles); ANL R-A",
 	"monitors": "ANL requisition authorised but not taken up (T2 transition open)",
+	"y0_workstations": "The closed year FY 2025/26: Youth reservation; award accepted (SEED-002 v0.8 §A7)",
+	"y0_printers": "The closed year FY 2025/26: award accepted (SEED-002 v0.9 §A7)",
+	"y0_laptops": "The closed year FY 2025/26: Women reservation; award accepted (SEED-002 v0.8 §A7)",
 }
 
 
@@ -517,10 +600,12 @@ def binding_rows() -> list[dict[str, Any]]:
 	the as-at instant, for the binding table (plan SW-0502). Read-only."""
 	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import COMBINED_ITEM_TITLE, _plan_item_id
 
-	items = [{"key": "laptops", "ref": "T1", "item": COMBINED_ITEM_TITLE}] + [{"key": s["key"], "ref": s["ref"], "item": s["item"]} for s in PORTFOLIO]
+	items = [{"key": "laptops", "ref": "T1", "item": COMBINED_ITEM_TITLE}] + [
+		{"key": s["key"], "ref": s["ref"], "item": s["item"], "fiscal_year": s.get("fiscal_year")} for s in portfolio_specs()
+	]
 	rows = []
 	for spec in items:
-		plan_item = _plan_item_id(spec["item"])
+		plan_item = _plan_item_id(spec["item"], spec.get("fiscal_year"))
 		requisition = frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item}, ["name", "requisition_reference", "current_state"], as_dict=True) if plan_item else None
 		tender = frappe.db.get_value("Tender", {"requisition": requisition.name}, ["name", "tender_reference", "overall_status", "requirement_title"], as_dict=True) if requisition else None
 		row = {

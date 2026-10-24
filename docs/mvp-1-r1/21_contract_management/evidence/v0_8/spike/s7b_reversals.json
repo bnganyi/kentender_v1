@@ -1,0 +1,114 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S7b.receipt_posted",
+   "sle": [
+    {
+     "qty": 2.0,
+     "cancelled": 0
+    }
+   ],
+   "serials": [
+    "SPIKE-SN-C01",
+    "SPIKE-SN-C02"
+   ]
+  },
+  {
+   "step": "S7b.cancel_receipt_without_downstream_documents",
+   "ok": false,
+   "error": "LinkExistsError: Cannot delete or cancel because Purchase Receipt <a href=\"http://kentender-test.local/desk/purchase-receipt/MAT-PRE-2026-00066\">MAT-PRE-2026-00066</a> is linked with Quality Inspection <a href=\"http://kentender-test.local/desk/quality-inspection/MAT-QA-2026-00017\">MAT-QA-2026-00017</a> ",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.LinkExistsError: Cannot delete or cancel because Purchase Receipt <a href=\"http://kentender-test.local/desk/purchase-receipt/MAT-PRE-2026-00066\">MAT-PRE-2026-00066</a> is linked with Quality Inspection <a href=\"http://kentender-test.local/desk/quality-inspection/MAT-QA-2026-00017\">MAT-QA-2026-00017</a> "
+   ]
+  },
+  {
+   "step": "S7b.cancel_receipt_after_invoice_is_refused",
+   "ok": false,
+   "error": "ValidationError: Purchase Invoice ACC-PINV-2026-00029 is already submitted",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: Purchase Invoice ACC-PINV-2026-00029 is already submitted"
+   ]
+  },
+  {
+   "step": "S7b.pay_the_invoice_natively",
+   "ok": true,
+   "result": {
+    "payment_entry": "ACC-PAY-2026-00024",
+    "invoice_status": "Paid"
+   }
+  },
+  {
+   "step": "S7b.return_one_paid_unit_with_its_serial",
+   "ok": true,
+   "result": {
+    "return_receipt": "MAT-PRE-2026-00068",
+    "sle": [
+     {
+      "qty": -1.0,
+      "cancelled": 0
+     }
+    ],
+    "serial_status": "Delivered"
+   }
+  },
+  {
+   "step": "S7b.credit_note_for_the_returned_unit",
+   "ok": true,
+   "result": {
+    "debit_note": "ACC-PINV-2026-00030",
+    "grand_total": -100000.0,
+    "outstanding": -100000.0,
+    "original_outstanding": 0.0,
+    "supplier_balance_in_ledger": -2400000.0,
+    "payment_entries_for_refund_created_automatically": 0
+   }
+  },
+  {
+   "step": "S7b.assets_after_receipt",
+   "assets": [
+    "ACC-ASS-2026-00137",
+    "ACC-ASS-2026-00138"
+   ],
+   "docstatus": [
+    0,
+    0
+   ]
+  },
+  {
+   "step": "S7b.submit_one_asset",
+   "ok": true,
+   "result": {
+    "asset": "ACC-ASS-2026-00137",
+    "status": "Submitted"
+   }
+  },
+  {
+   "step": "S7b.cancel_receipt_with_a_submitted_asset_is_refused",
+   "ok": false,
+   "error": "ValidationError: Asset Movement ACC-ASM-2026-342710: Submitted Record cannot be deleted. You must <a href='https://docs.frappe.io/erpnext/user/manual/en/delete-submitted-document' target='_blank'> Cancel </a> it first.",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: Asset Movement ACC-ASM-2026-342710: Submitted Record cannot be deleted. You must <a href='https://docs.frappe.io/erpnext/user/manual/en/delete-submitted-document' target='_blank'> Cancel </a> it first."
+   ]
+  },
+  {
+   "step": "S7b.cancel_the_asset_first_then_the_receipt",
+   "ok": true,
+   "result": {
+    "receipt_docstatus": 2,
+    "assets_left": 0
+   }
+  }
+ ]
+}

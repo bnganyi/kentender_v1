@@ -27,6 +27,7 @@ one that matters here.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from contextlib import contextmanager
 
 import frappe
@@ -126,7 +127,7 @@ YEAR_NEEDS = {
 			"indicative_quantity": 1,
 			"unit": "Programme",
 			"estimated_total_cost": 80000000,
-			"required_by_date": "2027-06-30",
+			"required_by_date": F("2027-06-30"),
 			"state": STATE_ACCEPTED,
 			"reviewer": ACTING_REVIEWER,
 			"times": 0,
@@ -144,7 +145,7 @@ YEAR_NEEDS = {
 			"unit": "Each",
 			"estimated_total_cost": 40000000,
 			"corrected_estimated_total_cost": 20000000,
-			"required_by_date": "2027-06-30",
+			"required_by_date": F("2027-06-30"),
 			"state": STATE_ACCEPTED,
 			"corrected_quantity": 100,
 			"return_reason": RETURN_REASON,
@@ -158,7 +159,7 @@ YEAR_NEEDS = {
 			"indicative_quantity": 150,
 			"unit": "Each",
 			"estimated_total_cost": 30000000,
-			"required_by_date": "2027-06-30",
+			"required_by_date": F("2027-06-30"),
 			"state": STATE_ACCEPTED,
 			"reviewer": ACTING_REVIEWER,
 			"times": 3,
@@ -173,7 +174,7 @@ YEAR_NEEDS = {
 			"indicative_quantity": 1,
 			"unit": "Programme",
 			"estimated_total_cost": 70000000,
-			"required_by_date": "2027-08-31",
+			"required_by_date": F("2027-08-31"),
 			"state": STATE_ACCEPTED,
 			"times": 0,
 		},
@@ -185,7 +186,7 @@ YEAR_NEEDS = {
 			"indicative_quantity": 1,
 			"unit": "Programme",
 			"estimated_total_cost": 12000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 			"state": STATE_SUBMITTED,
 			"times": 1,
 		},
@@ -198,7 +199,7 @@ YEAR_NEEDS = {
 			"unit": "Each",
 			"estimated_total_cost": 20000000,
 			"corrected_estimated_total_cost": 12000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 			"state": STATE_ACCEPTED,
 			"corrected_quantity": 12,
 			"return_reason": YEAR2_RETURN_REASON,
@@ -212,12 +213,32 @@ YEAR_NEEDS = {
 			"indicative_quantity": 150,
 			"unit": "Each",
 			"estimated_total_cost": 20000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 			"state": STATE_ACCEPTED,
 			"times": 3,
 		},
 	),
 }
+
+
+if calendar.mode() == "anchored":
+	#: The closed year's Need (SEED-002 v0.8 §A7; new content for the owner's review): one Human Resources Management and
+	#: Development Need, decided by Dr Peter Kimani, who holds that unit from the start. The year's other requirements are
+	#: direct departmental requirements, as in Year 1.
+	YEAR_NEEDS["year0"] = (
+		{
+			"unit_name": "Human Resources Management and Development",
+			"title": "Staff workstation replacement",
+			"description": "Replacement desktop computers for staff workstations in the Ministry's headquarters offices.",
+			"expected_operational_result": "Staff work on supported computers that run the Ministry's current systems.",
+			"indicative_quantity": 120,
+			"unit": "Each",
+			"estimated_total_cost": 24000000,
+			"required_by_date": F("2026-06-30"),
+			"state": STATE_ACCEPTED,
+			"times": 0,
+		},
+	)
 
 
 def _year(year: str) -> calendar.Year:
@@ -286,7 +307,7 @@ def _require_prerequisites() -> dict[str, str]:
 			"`bench --site <site> execute kentender_core.seeds.site_setup.run` "
 			"first (NDS-CHG-001 v1.6 §14.1)."
 		)
-	for year in calendar.YEARS:
+	for year in calendar.seeded_years():
 		if not frappe.db.exists("Fiscal Year", year.fiscal_year):
 			frappe.throw(f"Fiscal Year {year.fiscal_year} is not configured. Run kentender_core.seeds.site_setup.run first (§14.1).")
 	for unit in UNITS:
@@ -503,7 +524,7 @@ def _open_intake(year: str):
 	y = _year(year)
 	with clock.at(y.at(_INTAKE["open"])):
 		configuration.open_needs_submission(
-			fiscal_year=y.fiscal_year, closes_at=y.at(_INTAKE["closes"]),
+			fiscal_year=y.fiscal_year, closes_at=y.window(_INTAKE["closes"]),
 			reason=f"Annual needs call for {y.label} issued under circular MOH/PROC/{y.start_year - 1}/07.",
 		)
 

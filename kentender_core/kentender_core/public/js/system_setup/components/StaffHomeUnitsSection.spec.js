@@ -4,7 +4,7 @@
 // a stale token reloads, and a refusal or failure is never an empty register.
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { globalMocks } from "./spec_helpers.js";
+import { choose, globalMocks, stubPicker } from "./spec_helpers.js";
 
 const api = vi.hoisted(() => ({ list: vi.fn(), set: vi.fn() }));
 vi.mock("../data/staffHomeUnitApi.js", () => ({ staffHomeUnitApi: api, newIdempotencyKey: () => "home-unit-test-key" }));
@@ -21,10 +21,11 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	api.list.mockResolvedValue({ outcome: "OK", rows: ROWS, total: 2, units: UNITS });
 	api.set.mockResolvedValue({ ok: true });
+	stubPicker([{ id: "OU-1", label: "Ministry of Health › Finance", detail: "OU-1" }]);
 });
 
 const mountIt = async () => {
-	const wrapper = mount(StaffHomeUnitsSection, { global: globalMocks() });
+	const wrapper = mount(StaffHomeUnitsSection, { attachTo: document.body, global: globalMocks() });
 	await flushPromises();
 	return wrapper;
 };
@@ -75,7 +76,7 @@ describe("the Set home unit dialog", () => {
 		expect(wrapper.find('[data-testid="kt-home-unit-clear"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-home-unit-person"]').text()).toBe("Esther Muthoni · esther@x.test");
 		expect(wrapper.find('[data-testid="kt-home-unit-save"]').attributes("disabled")).toBeDefined();
-		await wrapper.find('[data-testid="kt-home-unit-select"]').setValue("OU-1");
+		await choose(wrapper, "#kt-home-unit-select");
 		await wrapper.find('[data-testid="kt-home-unit-save"]').trigger("click");
 		await flushPromises();
 		expect(api.set).toHaveBeenCalledWith("esther@x.test", "OU-1", "t2", "home-unit-test-key");
@@ -96,7 +97,8 @@ describe("the Set home unit dialog", () => {
 		api.set.mockRejectedValue(new Error("This information has changed since you opened it."));
 		const wrapper = await mountIt();
 		await wrapper.find('[data-testid="kt-home-edit-esther@x.test"]').trigger("click");
-		await wrapper.find('[data-testid="kt-home-unit-select"]').setValue("OU-2");
+		stubPicker([{ id: "OU-2", label: "Ministry of Health › ICT", detail: "OU-2" }]);
+		await choose(wrapper, "#kt-home-unit-select");
 		await wrapper.find('[data-testid="kt-home-unit-save"]').trigger("click");
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-home-unit-error"]').text()).toContain("changed since you opened it");

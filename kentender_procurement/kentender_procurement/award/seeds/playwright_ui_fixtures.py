@@ -15,6 +15,12 @@ every stage to `public/js/award/fixtures/` for the fidelity spec.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import block, fiscal as F  # noqa: F401
+
+#: The browser worlds run on synthetic upstreams and go on past the story's "now" (to 11 Oct 2027, a tender validity that
+#: expires), so they move back as one block: the last of them is not later than the anchor (SEED-002 v0.8 R1, `calendar.block`).
+#: `tests/ui/smoke/award/awdWorld.ts` maps the instants it sets with the same block (`awardWorldInstant`).
+W = block("2027-10-11 10:00:00")
 import json
 import os
 from typing import Any, Callable
@@ -39,7 +45,7 @@ D02R = ("The signed report identifies Afya Digital Supplies Limited as the lowes
 	"proposed award.")
 DECR = "I accept the recommendation in the signed evaluation report and professional opinion."
 CORRECTION = {"source_event": "PW-CN:1", "kind": "Report correction", "reference": "PW-CN-1", "reason": "Evaluation reported a material calculation issue.",
-	"detail": "The line total was recalculated.", "effective_at": "2027-06-18 09:30:00"}
+	"detail": "The line total was recalculated.", "effective_at": W("2027-06-18 09:30:00")}
 CORR_REASON = "The reported calculation issue may affect the recommendation."
 _n = [0]
 
@@ -62,7 +68,9 @@ class World:
 	def as_(self, user: str, fn: Callable, **kwargs) -> dict[str, Any]:
 		frappe.set_user(user)
 		try:
-			return fn(user=user, idempotency_key=_key(fn.__name__), **kwargs)
+			result = fn(user=user, idempotency_key=_key(fn.__name__), **kwargs)
+			frappe.db.commit()  # the request's commit runs the notice issue the command queued (AWD v0.9 §5.11)
+			return result
 		finally:
 			frappe.set_user("Administrator")
 
@@ -70,7 +78,7 @@ class World:
 		return int(frappe.db.get_value(records.CASE, self.award, "record_version"))
 
 	def deliver(self, **kwargs) -> "World":
-		self.at(kwargs.pop("at", "2027-06-16 14:07:01"))
+		self.at(kwargs.pop("at", W("2027-06-16 14:07:01")))
 		syn.deliver(self.world, reference=self.reference, **kwargs)
 		return self
 
@@ -78,12 +86,12 @@ class World:
 		self.as_(HOP, opinion.save, award=self.award, conclusion=conclusion, reason=reason, expected_version=self.v())
 		return self
 
-	def sign(self, conclusion="Recommend award", reason=D02R, at="2027-06-17 09:10:00") -> "World":
-		self.at("2027-06-17 09:00:00").save(conclusion, reason).at(at)
+	def sign(self, conclusion="Recommend award", reason=D02R, at=W("2027-06-17 09:10:00")) -> "World":
+		self.at(W("2027-06-17 09:00:00")).save(conclusion, reason).at(at)
 		self.as_(HOP, opinion.sign, award=self.award, expected_version=self.v())
 		return self
 
-	def decide(self, outcome="Award", reason=DECR, next_action="", at="2027-06-17 10:00:00") -> "World":
+	def decide(self, outcome="Award", reason=DECR, next_action="", at=W("2027-06-17 10:00:00")) -> "World":
 		self.at(at)
 		self.as_(AO, decision.record, award=self.award, outcome=outcome, reason=reason, next_action=next_action, expected_version=self.v())
 		return self
@@ -91,7 +99,7 @@ class World:
 	def notice(self):
 		return state.successful_notice(state.current_batch(frappe.get_doc(records.CASE, self.award)))
 
-	def respond(self, response="Accept", reason="", at="2027-06-18 09:00:00") -> "World":
+	def respond(self, response="Accept", reason="", at=W("2027-06-18 09:00:00")) -> "World":
 		self.at(at)
 		self.as_(MARY, supplier.respond, notice=self.notice().name, response=response, reason=reason, notice_version=self.notice().version)
 		return self
@@ -99,7 +107,7 @@ class World:
 	def issue(self, **filters) -> str:
 		return frappe.get_all(state.ISSUE, filters={"award_case": self.award, "state": "Open", **filters}, pluck="name")[0]
 
-	def correction(self, at="2027-06-18 10:00:00") -> "World":
+	def correction(self, at=W("2027-06-18 10:00:00")) -> "World":
 		self.at(at)
 		syn.add_correction(frappe.db.get_value(records.CASE, self.award, "tender"), CORRECTION)
 		corrections.pull_case(self.award)
@@ -110,14 +118,14 @@ class World:
 			reason=CORR_REASON, evidence="PW-CN-1", next_action="Request a corrected evaluation report addressing the calculation issue.")
 		return self
 
-	def instruct(self, at="2027-06-18 10:05:00") -> "World":
+	def instruct(self, at=W("2027-06-18 10:05:00")) -> "World":
 		self.at(at)
 		self.as_(AO, corrections.record, award=self.award, outcome="Request corrected evaluation", reason=CORR_REASON, expected_version=self.v())
 		return self
 
 	def corrected_report(self, **kwargs) -> "World":
-		self.at("2027-06-19 09:00:00")
-		syn.deliver(self.world, reference=self.reference, version=2, delivered_at="2027-06-19 09:00:00", **kwargs)
+		self.at(W("2027-06-19 09:00:00"))
+		syn.deliver(self.world, reference=self.reference, version=2, delivered_at=W("2027-06-19 09:00:00"), **kwargs)
 		return self
 
 
@@ -131,76 +139,76 @@ def _cycle_two(w: World, **kwargs) -> World:
 
 # stage: (builder, viewing instant, switches left on for the browser)
 STAGES: dict[str, tuple[Callable[[], World], str, dict[str, Any]]] = {
-	"received": (lambda: World().deliver(), "2027-06-17 09:00:00", {}),
-	"signed": (lambda: World().deliver().sign(), "2027-06-17 10:00:00", {}),
-	"notified": (lambda: _awarded(World()), "2027-06-17 10:10:00", {}),
-	"accepted": (lambda: _awarded(World()).respond(), "2027-06-18 09:05:00", {}),
-	"delivered": (lambda: _deliver(_awarded(World()).respond()), "2027-07-02 09:00:00", {}),
-	"request": (lambda: _request(_awarded(World()).respond()), "2027-06-18 10:00:00", {}),
-	"request-closed": (lambda: _request(_awarded(World()).respond(), close=True), "2027-06-18 10:15:00", {}),
-	"returned": (lambda: _returned(World().deliver().sign()), "2027-06-18 10:00:00", {}),
-	"source-incomplete": (lambda: World().deliver(overrides={"missing_annex": True}), "2027-06-18 10:00:00", {}),
-	"expired": (lambda: _expired(World()), "2027-10-11 09:00:00", {}),
-	"no-award": (lambda: _no_award(_expired(World())), "2027-10-11 09:00:00", {}),
-	"notice-failed": (lambda: _failing(World()), "2027-06-18 10:00:00", {"email_failure_organisations": "Afya Digital Supplies Limited"}),
-	"declined": (lambda: _awarded(World()).respond("Decline", "We cannot meet the delivery commitment."), "2027-06-18 10:00:00", {}),
-	"no-response": (lambda: _no_response(_awarded(World())), "2027-06-24 17:01:00", {}),
-	"order-hold": (lambda: _order(_awarded(World()).respond()), "2027-06-20 11:00:00", {}),
-	"challenge-hold": (lambda: _order(_awarded(World()).respond(), basis="Reported challenge"), "2027-06-20 11:00:00", {}),
-	"post-decision-correction": (lambda: _awarded(World()).respond().correction(), "2027-06-18 10:00:00", {}),
-	"correction-decision": (lambda: _awarded(World()).respond().correction().propose(), "2027-06-18 10:00:00", {}),
-	"receiver-down": (lambda: _receiver_down(_awarded(World()).respond()), "2027-07-02 09:01:00", {"contracting_down": 1}),
-	"cancelled": (lambda: _cancelled(World().deliver().sign()), "2027-06-17 09:30:00", {}),
-	"signing-unavailable": (lambda: _signing_down(World().deliver()), "2027-06-18 10:00:00", {"signing_outcome": "Unavailable"}),
-	"unsuccessful": (lambda: _awarded_037(), "2027-06-17 10:10:00", {}),
-	"rules-unverified": (lambda: _rules(World()), "2027-06-18 10:00:00", {"rule_unverified": 1}),
-	"status-unknown": (lambda: _status(World()), "2027-06-18 10:00:00", {"status_service_down": 1}),
-	"technical": (lambda: _service_down(World()), "2027-06-18 10:00:00", {"email_service_down": 1}),
-	"tie": (lambda: World("036").deliver(), "2027-06-17 09:00:00", {}),
-	"correction-authorised": (lambda: _awarded(World()).respond().correction().propose().instruct(), "2027-06-18 10:05:00", {}),
-	"corrected-report": (lambda: _cycle_two(World(), outcome="Qualified report", reason="The calculation discrepancy remains unresolved."), "2027-06-19 09:05:00", {}),
-	"closed-correction": (lambda: _no_award(_expired(World())).correction(at="2027-10-11 10:00:00"), "2027-10-11 10:00:00", {}),
-	"late-response": (lambda: _awarded(World()).respond(at="2027-06-24 17:01:00"), "2027-06-24 17:05:00", {}),
+	"received": (lambda: World().deliver(), W("2027-06-17 09:00:00"), {}),
+	"signed": (lambda: World().deliver().sign(), W("2027-06-17 10:00:00"), {}),
+	"notified": (lambda: _awarded(World()), W("2027-06-17 10:10:00"), {}),
+	"accepted": (lambda: _awarded(World()).respond(), W("2027-06-18 09:05:00"), {}),
+	"delivered": (lambda: _deliver(_awarded(World()).respond()), W("2027-07-02 09:00:00"), {}),
+	"request": (lambda: _request(_awarded(World()).respond()), W("2027-06-18 10:00:00"), {}),
+	"request-closed": (lambda: _request(_awarded(World()).respond(), close=True), W("2027-06-18 10:15:00"), {}),
+	"returned": (lambda: _returned(World().deliver().sign()), W("2027-06-18 10:00:00"), {}),
+	"source-incomplete": (lambda: World().deliver(overrides={"missing_annex": True}), W("2027-06-18 10:00:00"), {}),
+	"expired": (lambda: _expired(World()), W("2027-10-11 09:00:00"), {}),
+	"no-award": (lambda: _no_award(_expired(World())), W("2027-10-11 09:00:00"), {}),
+	"notice-failed": (lambda: _failing(World()), W("2027-06-18 10:00:00"), {"email_failure_organisations": "Afya Digital Supplies Limited"}),
+	"declined": (lambda: _awarded(World()).respond("Decline", "We cannot meet the delivery commitment."), W("2027-06-18 10:00:00"), {}),
+	"no-response": (lambda: _no_response(_awarded(World())), W("2027-06-24 17:01:00"), {}),
+	"order-hold": (lambda: _order(_awarded(World()).respond()), W("2027-06-20 11:00:00"), {}),
+	"challenge-hold": (lambda: _order(_awarded(World()).respond(), basis="Reported challenge"), W("2027-06-20 11:00:00"), {}),
+	"post-decision-correction": (lambda: _awarded(World()).respond().correction(), W("2027-06-18 10:00:00"), {}),
+	"correction-decision": (lambda: _awarded(World()).respond().correction().propose(), W("2027-06-18 10:00:00"), {}),
+	"receiver-down": (lambda: _receiver_down(_awarded(World()).respond()), W("2027-07-02 09:01:00"), {"contracting_down": 1}),
+	"cancelled": (lambda: _cancelled(World().deliver().sign()), W("2027-06-17 09:30:00"), {}),
+	"signing-unavailable": (lambda: _signing_down(World().deliver()), W("2027-06-18 10:00:00"), {"signing_outcome": "Unavailable"}),
+	"unsuccessful": (lambda: _awarded_037(), W("2027-06-17 10:10:00"), {}),
+	"rules-unverified": (lambda: _rules(World()), W("2027-06-18 10:00:00"), {"rule_unverified": 1}),
+	"status-unknown": (lambda: _status(World()), W("2027-06-18 10:00:00"), {"status_service_down": 1}),
+	"technical": (lambda: _service_down(World()), W("2027-06-18 10:00:00"), {"email_service_down": 1}),
+	"tie": (lambda: World("036").deliver(), W("2027-06-17 09:00:00"), {}),
+	"correction-authorised": (lambda: _awarded(World()).respond().correction().propose().instruct(), W("2027-06-18 10:05:00"), {}),
+	"corrected-report": (lambda: _cycle_two(World(), outcome="Qualified report", reason="The calculation discrepancy remains unresolved."), W("2027-06-19 09:05:00"), {}),
+	"closed-correction": (lambda: _no_award(_expired(World())).correction(at=W("2027-10-11 10:00:00")), W("2027-10-11 10:00:00"), {}),
+	"late-response": (lambda: _awarded(World()).respond(at=W("2027-06-24 17:01:00")), W("2027-06-24 17:05:00"), {}),
 	"corrected-opinion": (lambda: _cycle_two(World(), outcome="Qualified report",
 		reason="The calculation discrepancy remains unresolved.").sign("No current recommendation", "The calculation discrepancy remains unresolved.",
-		at="2027-06-19 09:10:00"), "2027-06-19 09:15:00", {}),
-	"corrected-opinion-positive": (lambda: _cycle_two(World()).sign("Recommend award", "The corrected report confirms the recommendation.", at="2027-06-19 09:10:00"),
-		"2027-06-19 09:15:00", {}),
-	"revised-held": (lambda: _revised(World()), "2027-06-19 10:00:00", {"revised_treatment_unverified": 1}),
-	"revised-ready": (lambda: _revised(World(), release=True), "2027-06-19 10:00:00", {}),
+		at=W("2027-06-19 09:10:00")), W("2027-06-19 09:15:00"), {}),
+	"corrected-opinion-positive": (lambda: _cycle_two(World()).sign("Recommend award", "The corrected report confirms the recommendation.", at=W("2027-06-19 09:10:00")),
+		W("2027-06-19 09:15:00"), {}),
+	"revised-held": (lambda: _revised(World()), W("2027-06-19 10:00:00"), {"revised_treatment_unverified": 1}),
+	"revised-ready": (lambda: _revised(World(), release=True), W("2027-06-19 10:00:00"), {}),
 }
 
 
 def _deliver(w: World) -> World:
-	w.at("2027-07-02 09:00:00")
+	w.at(W("2027-07-02 09:00:00"))
 	eligibility.refresh_case(w.award)
 	return w
 
 
 def _request(w: World, close: bool = False) -> World:
-	w.at("2027-06-18 10:00:00")
+	w.at(W("2027-06-18 10:00:00"))
 	req = w.as_(DAVID, supplier.request_explanation, notice=w.notice().name, request="Please explain the recorded award result.")["request"]
 	if close:
-		w.at("2027-06-18 10:15:00")
+		w.at(W("2027-06-18 10:15:00"))
 		w.as_(HOP, explanation.send, award=w.award, request=req,
 			reply="The recorded result follows the signed evaluation report. Your tender was successful at KES 46,400,000.")
 	return w
 
 
 def _returned(w: World) -> World:
-	w.at("2027-06-17 10:00:00")
+	w.at(W("2027-06-17 10:00:00"))
 	w.as_(AO, decision.record, award=w.award, outcome="Return for correction", reason="Explain the unresolved funding concern before recommending an award.",
 		expected_version=w.v())
 	return w
 
 
 def _expired(w: World) -> World:
-	return w.deliver(overrides={"validity_end": "2027-10-10 11:00:00"}).at("2027-10-11 09:00:00")
+	return w.deliver(overrides={"validity_end": W("2027-10-10 11:00:00")}).at(W("2027-10-11 09:00:00"))
 
 
 def _no_award(w: World) -> World:
-	w.sign("No current recommendation", "Tender validity expired before an award could be notified.", at="2027-10-11 09:00:00")
-	return w.decide("No award", "Tender validity expired before an award could be notified.", "Review whether the tender should be cancelled", at="2027-10-11 09:00:00")
+	w.sign("No current recommendation", "Tender validity expired before an award could be notified.", at=W("2027-10-11 09:00:00"))
+	return w.decide("No award", "Tender validity expired before an award could be notified.", "Review whether the tender should be cancelled", at=W("2027-10-11 09:00:00"))
 
 
 def _failing(w: World) -> World:
@@ -209,37 +217,37 @@ def _failing(w: World) -> World:
 
 
 def _no_response(w: World) -> World:
-	w.at("2027-06-24 17:01:00")
+	w.at(W("2027-06-24 17:01:00"))
 	eligibility.refresh_case(w.award)
 	return w
 
 
 def _order(w: World, basis: str = "Authoritative order") -> World:
-	w.at("2027-06-20 11:00:00")
+	w.at(W("2027-06-20 11:00:00"))
 	w.as_(HOP, restrictions.record_external, award=w.award, basis=basis, source="Review Board suspension notice" if basis == "Authoritative order" else "Complaint letter",
-		received_at="2027-06-20 11:00:00", evidence="PPARB/2027/33" if basis == "Authoritative order" else "", reason="Received by the procuring entity.")
+		received_at=W("2027-06-20 11:00:00"), evidence="PPARB/2027/33" if basis == "Authoritative order" else "", reason="Received by the procuring entity.")
 	return w
 
 
 def _receiver_down(w: World) -> World:
 	simulation.set_controls(contracting_down=1)
-	return _deliver(w).at("2027-07-02 09:01:00")
+	return _deliver(w).at(W("2027-07-02 09:01:00"))
 
 
 def _cancelled(w: World) -> World:
 	tender = frappe.db.get_value(records.CASE, w.award, "tender")
 	syn.set_fact(tender, cancelled=True)
 	syn.add_event(tender, {"event_key": "PW-CANCEL-1", "kind": "Cancellation", "source": "Tenders", "source_reference": "TCN-PW-1", "authority": AO,
-		"reason": "The procurement is no longer required.", "effective_at": "2027-06-17 09:30:00"})
-	w.at("2027-06-17 09:30:00")
+		"reason": "The procurement is no longer required.", "effective_at": W("2027-06-17 09:30:00")})
+	w.at(W("2027-06-17 09:30:00"))
 	tender_events.consume_case(w.award)
 	return w
 
 
 def _signing_down(w: World) -> World:
-	w.at("2027-06-18 09:55:00").save()
+	w.at(W("2027-06-18 09:55:00")).save()
 	simulation.set_controls(signing_outcome="Unavailable")
-	w.at("2027-06-18 10:00:00")
+	w.at(W("2027-06-18 10:00:00"))
 	w.as_(HOP, opinion.sign, award=w.award, expected_version=w.v())
 	return w
 
@@ -264,9 +272,9 @@ def _service_down(w: World) -> World:
 
 
 def _revised(w: World, release: bool = False) -> World:
-	_cycle_two(w).sign("Recommend award", "The corrected report confirms the recommendation.", at="2027-06-19 09:10:00")
+	_cycle_two(w).sign("Recommend award", "The corrected report confirms the recommendation.", at=W("2027-06-19 09:10:00"))
 	simulation.set_controls(revised_treatment_unverified=1)
-	w.at("2027-06-19 10:00:00")
+	w.at(W("2027-06-19 10:00:00"))
 	w.as_(AO, corrections.record, award=w.award, outcome="Record corrected award", reason="The corrected report confirms the recommendation.", expected_version=w.v())
 	if release:
 		simulation.set_controls(revised_treatment_unverified=0)

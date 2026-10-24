@@ -130,18 +130,20 @@ def resolve_strategy_context(
 			filters={"plan_id": ["in", [p.name for p in plans]], "status": "Active"},
 			fields=["name", "plan_version_id", "plan_id", "version_number", "status", "effective_from", "effective_to"],
 		)
-		by_plan = {v.plan_id: v for v in versions}
+		# v1.11: a plan can hold more than one Active version (one in force, one starting later), so every
+		# Active version is judged by its own dates. Two that both overlap the range make it ambiguous.
+		versions_by_plan: dict[str, list] = {}
+		for v in versions:
+			versions_by_plan.setdefault(v.plan_id, []).append(v)
 		out = []
 		for plan in plans:
-			version = by_plan.get(plan.name)
-			if not version:
-				continue
-			if not (
-				_overlaps_range(plan.period_start, plan.period_end, range_start, range_end)
-				and _overlaps_range(version.effective_from, version.effective_to, range_start, range_end)
-			):
-				continue
-			out.append(_context_entry(plan, version))
+			for version in sorted(versions_by_plan.get(plan.name, []), key=lambda v: v.version_number):
+				if not (
+					_overlaps_range(plan.period_start, plan.period_end, range_start, range_end)
+					and _overlaps_range(version.effective_from, version.effective_to, range_start, range_end)
+				):
+					continue
+				out.append(_context_entry(plan, version))
 		return out
 
 	primaries = _applicable(PLAN_ROLE_PRIMARY)

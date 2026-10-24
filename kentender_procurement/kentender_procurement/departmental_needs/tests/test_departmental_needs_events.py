@@ -7,6 +7,7 @@ reaches accepted Needs only through the published handoff contract.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from uuid import uuid4
 
@@ -97,7 +98,7 @@ class EventCase(IntegrationTestCase):
 			"indicative_quantity": 10,
 			"unit": "Each",
 			"estimated_total_cost": 1000000,
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 		}
 		values.update(overrides)
 		return values
@@ -250,7 +251,7 @@ class TestSupersededEvent(EventCase):
 			need=opened["need"],
 			expected_version=opened["record_version"],
 			idempotency_key=self.key(),
-			**self.content(required_by_date="2027-09-15"),
+			**self.content(required_by_date=F("2027-09-15")),
 		)
 		submitted = lifecycle.submit_need(
 			need=saved["need"],

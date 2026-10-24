@@ -3,7 +3,7 @@
 # writes data belongs here, never on the dev site (kentender.midas.com).
 #
 #   scripts/test-site.sh rebuild --yes   copy the dev site into the test site (overwrites it)
-#   scripts/test-site.sh serve           start the test site's own web server (port 8001)
+#   scripts/test-site.sh serve           start the test site's own web server (port 8001); TEST_SERVE_NORELOAD=1 without the file watcher
 #   scripts/test-site.sh stop            stop that server
 #   scripts/test-site.sh status          is it up, and is the seeded world intact
 #   scripts/test-site.sh run <command>   run <command> pointed at the test site
@@ -37,7 +37,9 @@ cmd_serve() {
 	if up; then echo "Test site already serving at $BASE_URL"; return 0; fi
 	# nohup + closed stdin/stdout: a server whose output pipe dies turns every
 	# frappe.throw into an HTML 500 (see the dev-server broken-pipe note).
-	nohup bench --site "$TEST_SITE" serve --port "$TEST_PORT" > "$LOG_FILE" 2>&1 < /dev/null &
+	# TEST_SERVE_NORELOAD=1 serves without the file watcher: a long browser run on a checkout that other work is editing
+	# is otherwise cut off ("net::ERR_EMPTY_RESPONSE") each time a Python file changes and the server restarts.
+	nohup bench --site "$TEST_SITE" serve --port "$TEST_PORT" ${TEST_SERVE_NORELOAD:+--noreload} > "$LOG_FILE" 2>&1 < /dev/null &
 	echo $! > "$PID_FILE"
 	for _ in $(seq 1 60); do
 		if up; then echo "Test site serving at $BASE_URL (log: $LOG_FILE)"; return 0; fi
@@ -61,7 +63,7 @@ cmd_stop() {
 
 cmd_status() {
 	if up; then echo "server: up at $BASE_URL"; else echo "server: down (scripts/test-site.sh serve)"; fi
-	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{"current": "award", "next_year": "annual_plan"}' 2>&1 | tail -1
+	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{}' 2>&1 | tail -1
 }
 
 cmd_rebuild() {
@@ -151,7 +153,7 @@ PY
 	node "$BENCH_ROOT/apps/kentender_v1/tests/ui/helpers/queueCheck.cjs" --fix | tail -1
 
 	echo "== 6/6 validate the canonical world"
-	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{"current": "award", "next_year": "annual_plan"}' 2>&1 | tail -1
+	bench --site "$TEST_SITE" execute kentender_core.seeds.canonical.validate --kwargs '{}' 2>&1 | tail -1
 }
 
 cmd_run() {

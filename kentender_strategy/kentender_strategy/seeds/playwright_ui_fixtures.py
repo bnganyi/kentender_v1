@@ -27,6 +27,7 @@ line; a spec reads every id from it and never hardcodes one.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 
 import frappe
@@ -142,7 +143,7 @@ def purge(*, commit: bool = True) -> dict[str, Any]:
 		first = frappe.db.get_value(
 			"Strategic Plan Version", {"plan_id": plan, "version_number": 1}, ["name", "status", "effective_to"], as_dict=True
 		)
-		if first and (first.status != "Active" or str(first.effective_to) != "2028-06-30"):
+		if first and (first.status != "Active" or str(first.effective_to) != F("2028-06-30")):
 			# A browser run that approved a successor does two things to
 			# Version 1: marks it Superseded, and (v1.8 predecessor closure)
 			# shortens its "used until" date to the day before the successor
@@ -151,7 +152,7 @@ def purge(*, commit: bool = True) -> dict[str, Any]:
 			frappe.db.set_value(
 				"Strategic Plan Version",
 				first.name,
-				{"status": "Active", "effective_to": "2028-06-30"},
+				{"status": "Active", "effective_to": F("2028-06-30")},
 				update_modified=False,
 			)
 	for name in frappe.get_all("Strategic Plan", filters={"title": ["like", f"{BROWSER_PLAN_PREFIX}%"]}, pluck="name"):
@@ -204,7 +205,7 @@ def reset_submitted_fixture(*, commit: bool = True) -> dict[str, Any]:
 
 def reset_future_fixture(*, commit: bool = True) -> dict[str, Any]:
 	"""STR18-FX-FUTURE — the same submission starting 1 Jul 2027: approval
-	is refused and Return stays available."""
+	succeeds (STR-CHG-001 v1.11) and Version 1 keeps applying until 30 Jun 2027."""
 	base = reset_default(commit=False)
 	fixture = seed_str_des_v2_fixture(profile=PROFILE_FUTURE)
 	return _with_v2(base, fixture, commit=commit)

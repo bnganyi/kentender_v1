@@ -9,6 +9,7 @@ release 1.2 MOH definition (no database world)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from decimal import Decimal
 
@@ -41,7 +42,7 @@ class TestControls(IntegrationTestCase):
 			("CTL-YES-NO", "Yes", "Yes"), ("CTL-SINGLE-CHOICE", " Joint venture ", "Joint venture"),
 			("CTL-MULTI-SELECT", ["Wi-Fi 6", "Ethernet", "Wi-Fi 6"], ["Wi-Fi 6", "Ethernet"]),
 			("CTL-SHORT-TEXT", "  ApexBook Pro 14 ", "ApexBook Pro 14"), ("CTL-LONG-TEXT", "Line one\nLine two", "Line one\nLine two"),
-			("CTL-INTEGER", "36", 36), ("CTL-DECIMAL", "1.5", "1.50"), ("CTL-MONEY", "160000", "160000.00"), ("CTL-DATE", "2027-09-15", "2027-09-15"),
+			("CTL-INTEGER", "36", 36), ("CTL-DECIMAL", "1.5", "1.50"), ("CTL-MONEY", "160000", "160000.00"), ("CTL-DATE", W("2027-09-15"), W("2027-09-15")),
 			("CTL-PORTS-LIST", [{"port_type": "USB-C", "count": "2"}], [{"port_type": "USB-C", "count": 2}]),
 		]
 		params = {"CTL-DECIMAL": {"scale": 2}, "CTL-MONEY": {"scale": 2}}
@@ -64,7 +65,7 @@ class TestValidations(IntegrationTestCase):
 		self.assertTrue(bad("VAL-DECIMAL-RANGE", {"minimum": "0", "maximum": "10", "scale": 2}, "10.01"))
 		self.assertIsNone(ok("VAL-MONEY", {"currency": "KES", "minimum": "500000.00", "maximum": "500000.00", "scale": 2}, "500000.00"))
 		self.assertTrue(bad("VAL-MONEY", {"currency": "KES", "minimum": "500000.00", "maximum": "500000.00", "scale": 2}, "600000.00"))
-		self.assertTrue(bad("VAL-DATE-RANGE", {"not_before": "2027-11-02"}, "2027-11-01"))
+		self.assertTrue(bad("VAL-DATE-RANGE", {"not_before": W("2027-11-02")}, W("2027-11-01")))
 		self.assertTrue(bad("VAL-OPTION-IN-LIST", {"options": ["Yes", "No"]}, "Perhaps"))
 		self.assertTrue(bad("VAL-OPTIONS-SUBSET", {"options": ["Ethernet", "5G"]}, ["Ethernet", "6G"]))
 		self.assertTrue(bad("VAL-PORTS", {"port_options": ["USB-A", "HDMI"]}, [{"port_type": "USB-A", "count": 2}, {"port_type": "USB-A", "count": 1}]))

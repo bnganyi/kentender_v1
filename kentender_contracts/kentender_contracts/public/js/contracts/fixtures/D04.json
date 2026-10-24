@@ -1,0 +1,206 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Deliveries"
+  },
+  "Enter unit references": {
+   "dialog": "units",
+   "do": "dialog"
+  },
+  "Record delivery": {
+   "args": {},
+   "command": "RecordContractArrival",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "receiver"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D04",
+ "dialogs": {
+  "units": {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Unit references",
+       "name": "units.L1",
+       "o": {
+        "rows": 11
+       },
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "local": true,
+   "p": "Use references",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Unit references"
+  }
+ },
+ "ev": [
+  "Delivery schedule 1"
+ ],
+ "id": "D04",
+ "lineId": "L1",
+ "name": "Receive goods",
+ "next": {
+  "h": "Record the goods that arrived.",
+  "k": "turn",
+  "s": "Responsible: Grace Wanjiku"
+ },
+ "p": "Record delivery",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Delivery due",
+       "20 July 2027"
+      ],
+      [
+       "Destination",
+       "Ministry of Health, Afya House store"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Delivery"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Supplier delivery reference",
+       "name": "supplier_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Received at",
+       "name": "received_at",
+       "o": {
+        "time": true
+       },
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Destination",
+       "name": "destination",
+       "o": {},
+       "opts": [
+        "Ministry of Health, Afya House store"
+       ],
+       "t": "sel",
+       "v": "Ministry of Health, Afya House store"
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Arrival details"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Expected",
+      "Arrived",
+      "Unit references"
+     ],
+     "inputs": {
+      "0,2": "quantity.L1"
+     },
+     "k": "table",
+     "live": {
+      "0,3": "units.L1"
+     },
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "10",
+       "#10",
+       "\u2014"
+      ]
+     ]
+    },
+    {
+     "items": [
+      "Enter unit references"
+     ],
+     "k": "btns"
+    },
+    {
+     "k": "help",
+     "v": "Recording delivery does not accept the goods."
+    }
+   ],
+   "t": "Items"
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Deliveries",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Record delivery",
+ "version": 9
+}

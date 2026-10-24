@@ -1,0 +1,140 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S5a.workflow",
+   "states": [
+    [
+     "Draft",
+     "0"
+    ],
+    [
+     "Pending Approval",
+     "0"
+    ],
+    [
+     "Approved",
+     "1"
+    ]
+   ],
+   "pe_has_workflow_state_field": true
+  },
+  {
+   "step": "S5a.maker_creates_payment_draft",
+   "ok": true,
+   "result": "ACC-PAY-2026-00001"
+  },
+  {
+   "step": "S5a.maker_submits_for_approval",
+   "ok": true,
+   "result": {
+    "workflow_state": "Pending Approval",
+    "docstatus": 0
+   }
+  },
+  {
+   "step": "S5a.maker_cannot_approve_lacking_the_role",
+   "ok": false,
+   "error": "WorkflowTransitionError: Not a valid Workflow Action",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.model.workflow.WorkflowTransitionError: Not a valid Workflow Action"
+   ]
+  },
+  {
+   "step": "S5a.separate_approver_approves",
+   "ok": true,
+   "result": {
+    "workflow_state": "Approved",
+    "docstatus": 1
+   }
+  },
+  {
+   "step": "S5a.payment_posted",
+   "pe": {
+    "docstatus": 1,
+    "workflow_state": "Approved",
+    "paid_amount": 100000.0,
+    "status": "Submitted"
+   },
+   "gl": [
+    {
+     "account": "2110 - Creditors - K",
+     "debit": 100000.0,
+     "credit": 0.0,
+     "party": "CM Spike Supplier"
+    },
+    {
+     "account": "CM Spike Bank - K",
+     "debit": 0.0,
+     "credit": 100000.0,
+     "party": ""
+    }
+   ],
+   "invoice": {
+    "status": "Paid",
+    "outstanding_amount": 0.0
+   }
+  },
+  {
+   "step": "S5a.dual_role_user_creates_own_payment",
+   "ok": true,
+   "result": "ACC-PAY-2026-00002"
+  },
+  {
+   "step": "S5a.own_entry_approval_is_refused_allow_self_approval_off",
+   "ok": false,
+   "error": "ValidationError: Self approval is not allowed",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: Self approval is not allowed"
+   ]
+  },
+  {
+   "step": "S5a.draft_for_direct_submit",
+   "ok": true,
+   "result": "ACC-PAY-2026-00003"
+  },
+  {
+   "step": "S5a.bypass_doc_submit_by_accounts_manager_in_draft_state",
+   "ok": true,
+   "result": {
+    "docstatus": 1,
+    "workflow_state": "Approved"
+   }
+  },
+  {
+   "step": "S5a.entry_after_bypass_attempt",
+   "docstatus": 1,
+   "workflow_state": "Approved"
+  },
+  {
+   "step": "S5a.draft_for_api_submit",
+   "ok": true,
+   "result": "ACC-PAY-2026-00004"
+  },
+  {
+   "step": "S5a.bypass_desk_savedocs_submit_in_draft_state",
+   "ok": true,
+   "result": {
+    "docstatus": 1,
+    "workflow_state": "Approved"
+   }
+  },
+  {
+   "step": "S5a.bypass_doc_submit_by_administrator",
+   "ok": true,
+   "result": {
+    "docstatus": 1,
+    "workflow_state": "Approved"
+   }
+  }
+ ]
+}

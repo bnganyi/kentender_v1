@@ -15,6 +15,8 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 from datetime import datetime
 from decimal import Decimal
 
@@ -28,13 +30,13 @@ from kentender_procurement.award.test_services import sources as syn
 from kentender_procurement.award.tests.support import AO, CASE, DANIEL, HOP, NAOMI, NS, REF, AwardCase
 from kentender_procurement.award.tests.test_awd_corrections import CORRECTION
 
-AT = datetime(2027, 6, 19, 10, 0)
+AT = W(datetime(2027, 6, 19, 10, 0))
 HOD = "awdanl.hod@example.test"
 OUTSIDER = "brian.wafula@moh.example.test"  # a Procurement Officer: no Award responsibility
 ANL_NS = "KT_TEST_AWDANL"
-RECEIVED = datetime(2027, 6, 16, 14, 7, 1)
-SIGNED = datetime(2027, 6, 17, 9, 10)
-DECIDED = datetime(2027, 6, 17, 10, 0)
+RECEIVED = W(datetime(2027, 6, 16, 14, 7, 1))
+SIGNED = W(datetime(2027, 6, 17, 9, 10))
+DECIDED = W(datetime(2027, 6, 17, 10, 0))
 AMOUNT = Decimal("46400000.00")
 REASON = "The reported calculation issue may affect the recommendation."
 
@@ -98,15 +100,15 @@ class TestAwardAnalyticsFacts(AwardCase):
 		"""Award recorded in cycle 1, then a reported correction and a corrected evaluation report open cycle 2."""
 		self.deliver()
 		self.awarded()
-		self.at("2027-06-18 10:00:00")
+		self.at(W("2027-06-18 10:00:00"))
 		syn.add_correction(self.case().tender, CORRECTION)
 		corrections.pull_case(self.case().name)
 		issue = issues.open_issues(self.case(), issue_type="Source correction")[0]
 		self.run_as(HOP, restrictions.disposition, award=self.case().name, issue=issue.name, outcome="Request corrected evaluation", reason=REASON,
 			evidence="CN-1", next_action="Request a corrected evaluation report.")
 		self.run_as(AO, corrections.record, award=self.case().name, outcome="Request corrected evaluation", reason=REASON, expected_version=self.version())
-		self.at("2027-06-19 09:00:00")
-		self.deliver(version=2, delivered_at="2027-06-19 09:00:00")
+		self.at(W("2027-06-19 09:00:00"))
+		self.deliver(version=2, delivered_at=W("2027-06-19 09:00:00"))
 
 	def counts(self) -> dict:
 		tables = [*records.DOCTYPES, "Support Issue", "Audit Event", "Notification Log", "Version", "Error Log"]
@@ -154,23 +156,23 @@ class TestAwardAnalyticsFacts(AwardCase):
 	def test_return_for_correction_is_not_a_decision_and_the_first_decision_stands(self):
 		self.deliver()
 		self.signed_opinion()
-		self.at("2027-06-17 09:30:00")
+		self.at(W("2027-06-17 09:30:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="Return for correction", reason="Explain the unresolved funding concern before recommending an award.",
 			expected_version=self.version())
 		row = self.mine()
 		self.assertEqual((row["stage"], row["decision_at"], row["decision_outcome"], row["decision_events"], row["award_amount"]), ("Opinion", None, None, [], None))
-		self.assertEqual(row["outstanding"]["since"], datetime(2027, 6, 17, 9, 30))  # back with the Head of Procurement Function since the return
+		self.assertEqual(row["outstanding"]["since"], W(datetime(2027, 6, 17, 9, 30)))  # back with the Head of Procurement Function since the return
 		self.signed_opinion()
-		self.at("2027-06-17 11:00:00")
+		self.at(W("2027-06-17 11:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="Award", reason="I accept the recommendation in the signed evaluation report and professional opinion.",
 			expected_version=self.version())
 		row = self.mine()
-		self.assertEqual((row["decision_at"], row["decision_outcome"], row["decision_events"], row["award_amount"]), (datetime(2027, 6, 17, 11, 0), "Award", [datetime(2027, 6, 17, 11, 0)], AMOUNT))
+		self.assertEqual((row["decision_at"], row["decision_outcome"], row["decision_events"], row["award_amount"]), (W(datetime(2027, 6, 17, 11, 0)), "Award", [W(datetime(2027, 6, 17, 11, 0))], AMOUNT))
 
 	def test_no_award_has_an_outcome_no_amount_and_the_recorded_next_action(self):
 		self.deliver()
 		self.signed_opinion(conclusion="No current recommendation", reason="Tender validity expired before an award could be notified.")
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="No award", reason="Tender validity expired before an award could be notified.",
 			next_action="Review whether the tender should be cancelled", expected_version=self.version())
 		row = self.mine()
@@ -186,10 +188,10 @@ class TestAwardAnalyticsFacts(AwardCase):
 		self.assertEqual((row["stage"], row["decision_at"], row["decision_outcome"], row["decision_events"]), ("Opinion", DECIDED, "Award", [DECIDED]))
 		self.assertIsNone(row["award_amount"])
 		self.signed_opinion(reason="The corrected report confirms the recommendation.")
-		self.at("2027-06-19 10:00:00")
+		self.at(W("2027-06-19 10:00:00"))
 		self.run_as(AO, corrections.record, award=CASE, outcome="Record corrected award", reason="The corrected report confirms the recommendation.", expected_version=self.version())
 		row = self.mine()
-		self.assertEqual((row["decision_at"], row["decision_outcome"], row["decision_events"]), (DECIDED, "Award", [DECIDED, datetime(2027, 6, 19, 10, 0)]))
+		self.assertEqual((row["decision_at"], row["decision_outcome"], row["decision_events"]), (DECIDED, "Award", [DECIDED, W(datetime(2027, 6, 19, 10, 0))]))
 		current = state.committed_decision(self.case())
 		self.assertEqual((current.kind, current.cycle), ("Correction", 2))
 		self.assertEqual(row["award_amount"], Decimal(current.submitted_amount))
@@ -197,12 +199,12 @@ class TestAwardAnalyticsFacts(AwardCase):
 	def test_a_no_award_correction_after_an_award_has_no_amount_but_keeps_the_first_outcome(self):
 		self.to_cycle_two()
 		self.signed_opinion(conclusion="No current recommendation", reason="The calculation discrepancy remains unresolved.")
-		self.at("2027-06-19 10:00:00")
+		self.at(W("2027-06-19 10:00:00"))
 		self.run_as(AO, corrections.record, award=CASE, outcome="Record no award", reason="The calculation discrepancy remains unresolved.",
 			next_action="Review whether the tender should be cancelled", expected_version=self.version())
 		row = self.mine()
 		self.assertEqual((row["stage"], row["closed"], row["decision_at"], row["decision_outcome"], row["award_amount"]), ("Closed", True, DECIDED, "Award", None))
-		self.assertEqual(row["decision_events"], [DECIDED, datetime(2027, 6, 19, 10, 0)])
+		self.assertEqual(row["decision_events"], [DECIDED, W(datetime(2027, 6, 19, 10, 0))])
 
 	def test_an_award_waiting_for_its_notices_is_outstanding_from_the_decision(self):
 		simulation.set_controls(email_failure_organisations="Afya Digital Supplies Limited")
@@ -219,30 +221,30 @@ class TestAwardAnalyticsFacts(AwardCase):
 		self.deliver()
 		self.awarded()
 		self.assertIsNone(self.mine()["outstanding"])
-		self.at("2027-06-20 11:00:00")
+		self.at(W("2027-06-20 11:00:00"))
 		self.run_as(HOP, restrictions.record_external, award=CASE, basis="Authoritative order", source="Review Board suspension notice",
-			received_at="2027-06-20 11:00:00", evidence="PPARB/2027/33", reason="Suspension received.")
-		self.assertEqual(self.mine()["outstanding"], {"text": "This award is on hold.", "holder": people.full_name(issues.hop_for(self.case())), "since": datetime(2027, 6, 20, 11, 0)})
+			received_at=W("2027-06-20 11:00:00"), evidence="PPARB/2027/33", reason="Suspension received.")
+		self.assertEqual(self.mine()["outstanding"], {"text": "This award is on hold.", "holder": people.full_name(issues.hop_for(self.case())), "since": W(datetime(2027, 6, 20, 11, 0))})
 
 	def test_the_position_phrase_follows_the_stage_the_hold_and_the_closed_outcome(self):
 		self.deliver()
 		self.assertEqual(self.mine()["position"], "professional opinion outstanding")
 		self.signed_opinion()
 		self.assertEqual(self.mine()["position"], "award decision outstanding")
-		self.at("2027-06-17 09:30:00")
+		self.at(W("2027-06-17 09:30:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="Return for correction", reason="Explain the unresolved funding concern before recommending an award.",
 			expected_version=self.version())
 		self.assertEqual(self.mine()["position"], "professional opinion outstanding")  # back with the Head of Procurement Function
 		self.signed_opinion()
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="Award", reason="I accept the recommendation in the signed evaluation report and professional opinion.",
 			expected_version=self.version())
 		self.assertEqual(self.mine()["position"], "waiting period running")
-		self.at("2027-06-20 11:00:00")
+		self.at(W("2027-06-20 11:00:00"))
 		self.run_as(HOP, restrictions.record_external, award=CASE, basis="Authoritative order", source="Review Board suspension notice",
-			received_at="2027-06-20 11:00:00", evidence="PPARB/2027/33", reason="Suspension received.")
+			received_at=W("2027-06-20 11:00:00"), evidence="PPARB/2027/33", reason="Suspension received.")
 		self.assertEqual(self.mine()["position"], "on hold")
-		frappe.db.set_value(records.CASE, CASE, {"delivered_at": "2027-06-24 10:00:00", "stage": "Sent to Contracting"})
+		frappe.db.set_value(records.CASE, CASE, {"delivered_at": W("2027-06-24 10:00:00"), "stage": "Sent to Contracting"})
 		self.assertEqual(self.mine()["position"], "sent to Contract Management")  # a hold does not undo a durable delivery
 		frappe.db.set_value(records.CASE, CASE, {"cancelled": 1})
 		self.assertEqual(self.mine()["position"], "tender cancelled; award ended")
@@ -256,7 +258,7 @@ class TestAwardAnalyticsFacts(AwardCase):
 		self.deliver("036")
 		name = "AWD-AWT-2100-036"
 		self.signed_opinion(name, conclusion="No current recommendation", reason="Refer the unresolved tie to the Accounting Officer for a lawful next step.")
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		self.run_as(AO, decision.record, award=name, outcome="No award", reason="The tie is unresolved.",
 			next_action="Prepare a lawful next procurement step for the Accounting Officer's decision", expected_version=self.version(name))
 		self.assertEqual(self.facts(tenders=[self.case(name).tender])[self.case(name).tender]["position"], "no award was made")
@@ -267,7 +269,7 @@ class TestAwardAnalyticsFacts(AwardCase):
 		frappe.db.set_value(records.CASE, CASE, {"cancelled": 1})
 		row = self.mine()
 		self.assertEqual((row["cancelled"], row["closed"], row["outstanding"]), (True, False, None))
-		frappe.db.set_value(records.CASE, CASE, {"cancelled": 0, "delivered_at": "2027-06-24 10:00:00", "stage": "Sent to Contracting"})
+		frappe.db.set_value(records.CASE, CASE, {"cancelled": 0, "delivered_at": W("2027-06-24 10:00:00"), "stage": "Sent to Contracting"})
 		row = self.mine()
 		self.assertEqual((row["sent_to_contracting"], row["cancelled"], row["stage"], row["outstanding"]), (True, False, "Sent to Contracting", None))
 

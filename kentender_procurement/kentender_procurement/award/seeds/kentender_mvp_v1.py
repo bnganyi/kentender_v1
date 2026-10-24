@@ -24,6 +24,8 @@ on 2 Jul is the AWD-DEMO-DELIVERED profile."""
 
 from __future__ import annotations
 
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 
 import frappe
@@ -48,8 +50,8 @@ UNSUCCESSFUL = {
 STEPS = ("received", "signed", "notified", "accepted", "delivered")
 #: Where the canonical world's award stands at the as-at instant.
 CANONICAL_STEP = "accepted"
-CLOCK = {"opinion": "2027-06-17 09:00:00", "sign": "2027-06-17 09:10:00", "decide": "2027-06-17 10:00:00", "accept": "2027-06-18 09:00:00",
-	"deliver": "2027-07-02 09:00:00"}
+CLOCK = {"opinion": W("2027-06-17 09:00:00"), "sign": W("2027-06-17 09:10:00"), "decide": W("2027-06-17 10:00:00"), "accept": W("2027-06-18 09:00:00"),
+	"deliver": calendar.shift(W("2027-06-18 09:00:00"), 14)}
 
 
 def _guard() -> None:
@@ -81,7 +83,9 @@ def _ok(result: dict[str, Any], what: str) -> dict[str, Any]:
 def _as(user: str, fn, **kwargs) -> dict[str, Any]:
 	frappe.set_user(user)
 	try:
-		return fn(user=user, idempotency_key=_key(fn.__name__), **kwargs)
+		result = fn(user=user, idempotency_key=_key(fn.__name__), **kwargs)
+		frappe.db.commit()  # the request's commit runs the notice issue the command queued (AWD v0.9 §5.11)
+		return result
 	finally:
 		frappe.set_user("Administrator")
 
@@ -119,17 +123,21 @@ def tell(tender: str, through: str = STEPS[-1], clock_map: dict[str, str] | None
 	return award
 
 
-def award_portfolio_tender(tender: str, *, through: str, clock_map: dict[str, str]) -> dict[str, Any]:
+def award_portfolio_tender(tender: str, *, through: str, clock_map: dict[str, str], keep_delivered: bool = False) -> dict[str, Any]:
 	"""An executed-portfolio Tender's award to `through` ("received": the
 	professional opinion is Charles Mutiso's to prepare; "signed": the award
-	decision is Amina Hassan's). Idempotent: an award case already there is
+	decision is Amina Hassan's; "accepted": the successful supplier has accepted and the waiting period
+	runs, as in the closed year, SEED-002 v0.8 §A7). Idempotent: an award case already there is
 	returned untouched. Award takes a delivered report up by itself, so a case
 	short of `through` is told again from the receipt at the story's instants."""
 	_guard()
-	wanted = {"received": "Opinion", "signed": "Decision"}[through]
+	wanted = {"received": "Opinion", "signed": "Decision", "accepted": "Waiting to proceed"}[through]
 	existing = frappe.db.get_value(records.CASE, {"tender": tender}, ["name", "stage"], as_dict=True)
-	if existing and existing.stage == wanted and (through == "received" or state.signed_opinion(frappe.get_doc(records.CASE, existing.name))):
+	if existing and existing.stage == wanted and (through in ("received", "accepted") or state.signed_opinion(frappe.get_doc(records.CASE, existing.name))):
 		return {"ok": True, "idempotent": True, "award": existing.name}
+	if keep_delivered and through == "accepted" and existing and existing.stage == "Sent to Contracting":
+		# SEED-002 v0.10 §A8.1: a closed-year award the contracts stage has delivered to Contracting stays delivered; telling it again would remove the contract it became.
+		return {"ok": True, "idempotent": True, "award": existing.name, "delivered": True}
 	if not _delivery(tender):
 		frappe.throw(f"The evaluation report of {tender} has not been delivered.")
 	if existing:
@@ -201,7 +209,7 @@ def validate_award_seed() -> list[dict[str, Any]]:
 	notices = state.notices(batch)
 	successful = state.successful_notice(batch)
 	check(bool(successful) and successful.organisation_name == "Afya Digital Supplies Limited" and successful.status == "Given"
-		and cstr(successful.reply_deadline) == "2027-06-24 17:00:00", "Afya's successful notice was given, reply by 24 Jun 2027, 17:00 EAT")
+		and cstr(successful.reply_deadline) == calendar.shift(W("2027-06-17 17:00:00"), 7), "Afya's successful notice was given, reply by 24 Jun 2027, 17:00 EAT")
 	# the other three bidders are told too, each with its own reason
 	unsuccessful = {n.organisation_name: n for n in notices if n.result == "Unsuccessful"}
 	check(len(notices) == 1 + len(UNSUCCESSFUL) and set(unsuccessful) == set(UNSUCCESSFUL), f"{1 + len(UNSUCCESSFUL)} notices: one successful, {len(UNSUCCESSFUL)} unsuccessful")

@@ -50,7 +50,6 @@ vi.mock("./data/orgStructureApi.js", () => ({ orgStructureApi: orgApi }));
 const uraApi = vi.hoisted(() => ({
 	listRows: vi.fn(),
 	formOptions: vi.fn(),
-	searchUsers: vi.fn(async () => []),
 	preview: vi.fn(),
 	detail: vi.fn(),
 }));

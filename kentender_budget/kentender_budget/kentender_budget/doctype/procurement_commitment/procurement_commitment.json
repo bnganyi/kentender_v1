@@ -8,11 +8,16 @@
  "field_order": [
   "generated_reference",
   "reservation",
+  "origin",
+  "budget",
+  "budget_line",
   "col_a",
   "contract",
   "status",
   "current_amount",
   "currency",
+  "entry_row",
+  "lineage_json",
   "fixture_namespace"
  ],
  "fields": [
@@ -30,10 +35,39 @@
    "fieldtype": "Link",
    "label": "Funding Reservation",
    "options": "Funding Reservation",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Prevents a conversion commitment from bypassing the confirmed funding lineage. Required when origin is Reservation conversion; empty for an existing-contract entry (BUD-CHG-001 v1.16 4.6)."
+  },
+  {
+   "fieldname": "origin",
+   "fieldtype": "Select",
+   "label": "Origin",
+   "options": "Reservation conversion\nExisting-contract entry",
+   "default": "Reservation conversion",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Set once at creation (BUD-CHG-001 v1.16 4.6)."
+  },
+  {
+   "fieldname": "budget",
+   "fieldtype": "Link",
+   "label": "Procurement Budget",
+   "options": "Procurement Budget",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "The Budget the commitment is charged to. Set at creation; every reader and lock reads it from here."
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget Line",
+   "options": "Procurement Budget Line",
    "reqd": 1,
    "read_only": 1,
    "search_index": 1,
-   "description": "Prevents a commitment from bypassing the confirmed funding lineage."
+   "description": "The Budget Line the commitment is charged to. For a conversion it equals its reservation's line; for an existing-contract entry it is the line the entry row names. Every reader of Committed reads it from here (BUD-CHG-001 v1.16 4.6)."
   },
   {
    "fieldname": "col_a",
@@ -77,6 +111,20 @@
    "reqd": 1
   },
   {
+   "fieldname": "entry_row",
+   "fieldtype": "Data",
+   "label": "Entry Row",
+   "read_only": 1,
+   "description": "For an existing-contract entry, the allocation row of the entry that created this commitment (unique). Empty for a conversion."
+  },
+  {
+   "fieldname": "lineage_json",
+   "fieldtype": "Long Text",
+   "label": "Verified Lineage",
+   "read_only": 1,
+   "description": "For a conversion, the lineage the Award owner verified at creation (BUD-BR-036). Immutable; a legitimate correction is a new versioned entry beside it."
+  },
+  {
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture Namespace",
@@ -85,7 +133,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-07 02:34:35.066796",
+ "modified": "2026-10-16 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Kentender Budget",
  "name": "Procurement Commitment",

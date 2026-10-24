@@ -35,6 +35,8 @@ SEALED_DOCTYPES = (
 	# Project Owner, 10 October 2026: Opening incidents and the opening records that carry an envelope identifier or a bidder's name are the
 	# restricted incident workflow's and the committee's, never a Desk read by System Manager status alone
 	"Opening Access Incident", "Opening Exception", "Opening Decision Item", "Opening Entry", "Opening Register Request", "Opening Incident Access Event",
+	# BOP-CHG-001 v0.16: the append-only support findings on an incident
+	"Opening Incident Finding",
 )
 # Documents whose private files are never served by URL: the owning service delivers them to the right person.
 SEALED_ATTACHMENTS = ("Bid Evidence",)

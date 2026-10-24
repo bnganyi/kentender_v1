@@ -29,7 +29,7 @@ from kentender_core.utils.raw_delete import delete_rows
 
 #: Every doctype that carries a `tender` link, dependants first; `Tender` last.
 TENDER_DOCTYPES = (
-	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
+	"Tender Event Delivery", "Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
 	"Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
 	"Tender Version", "Tender",
 )
@@ -67,6 +67,12 @@ def _delete_family(removed: dict[str, list[str]]) -> dict[str, int]:
 	through its own document, which keeps the stored file while another
 	File row still shares it."""
 	deleted: dict[str, int] = {}
+	if removed.get("Tender"):
+		# a Tender's cancellation recovery (Requisitions' record, with Planning's holds and Budget's releases) goes with it
+		from kentender_procurement.procurement_requisitions.seeds.clear import delete_recoveries
+
+		for doctype, count in delete_recoveries(tenders=removed["Tender"]).items():
+			_count(deleted, doctype, count)
 	notify_removal(removed.get("Tender", []), deleted)
 	for doctype in TENDER_DOCTYPES:
 		for chunk in _chunks(removed.get(doctype, [])):

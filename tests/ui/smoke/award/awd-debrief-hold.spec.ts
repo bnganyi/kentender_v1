@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { CHARLES, EVIDENCE, as, awardWorld, closeSession, expectJourney, expectNextStep, expectScreen, restoreAwardWorld } from "./awdWorld";
+import { shortDateTime } from "../../helpers/anchor";
+import { CHARLES, EVIDENCE, as, awardWorld, awardWorldInstant, closeSession, expectJourney, expectNextStep, expectScreen, restoreAwardWorld } from "./awdWorld";
 
 /**
  * AWD-CHG-001 v0.4 slice 8 (boards D07, D07c, X03, V08, X04; tracker
@@ -51,7 +52,7 @@ test.describe("Award — debrief and holds", () => {
 		await expectNextStep(page, "your_turn_blocked", "This award is on hold.");
 		await expectJourney(page, ["Done", "Done", "Done", "Blocked", "Not started"]);
 		const root = page.locator('[data-testid="awd-root"]');
-		await expect(root).toContainText("Review Board suspension notice received 20 Jun 2027, 11:00 EAT");
+		await expect(root).toContainText(`Review Board suspension notice received ${shortDateTime(awardWorldInstant("2027-06-20 11:00:00"))}`);
 		await page.screenshot({ path: `${EVIDENCE}/V08.png`, fullPage: true });
 		await root.locator('[data-testid="awd-guidance"] [data-fix^="record_outcome:"]').click();
 		const dialog = root.locator('[data-testid="awd-dialog"]');
@@ -80,7 +81,7 @@ test.describe("Award — debrief and holds", () => {
 		await page.screenshot({ path: `${EVIDENCE}/X03.png`, fullPage: true });
 		await dialog.locator("label.radio", { hasText: "Reported challenge" }).click();
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_source"]').fill("Complaint letter from a bidder");
-		await dialog.locator('[data-testid="awd-dialog-field-dlg_received_at"]').fill("2027-06-17 09:30:00");
+		await dialog.locator('[data-testid="awd-dialog-field-dlg_received_at"]').fill(awardWorldInstant("2027-06-17 09:30:00"));
 		await dialog.locator('[data-testid="awd-dialog-field-dlg_reason"]').fill("A bidder reported a challenge.");
 		await dialog.locator('[data-testid="awd-dialog-save-restriction"]').click();
 		await expect(root.locator('[data-testid="awd-dialog"]')).toHaveCount(0, { timeout: 30_000 });

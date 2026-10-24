@@ -75,6 +75,34 @@ test.describe.serial("System setup — Procuring entity", () => {
 		expect(errors, "console errors").toEqual([]);
 	});
 
+	test("the principal address the agreement prints is on the tab, saves through the command, and a blank is refused inline", async ({ page }) => {
+		// CFG-CHG-002 v0.20 (CFG20-AC-001, -003): one plain field in the existing grid; once held it can be corrected and never removed.
+		await loginAsAdministrator(page);
+		const errors = await openEntity(page);
+		const field = page.locator('[data-testid="kt-setup-pe-address"]');
+		await expect(page.getByText("Principal address", { exact: true })).toBeVisible();
+		const original = await field.inputValue();
+		expect(original.length, "the canonical world holds the Ministry's address").toBeGreaterThan(7);
+		const changed = `${original}, P.O. Box 30016-00100`;
+		try {
+			await field.fill(changed);
+			await page.click('[data-testid="kt-setup-pe-submit"]');
+			await expect(page.locator('[data-testid="kt-setup-pe-success"]')).toHaveText("Site details saved");
+			await page.reload({ waitUntil: "domcontentloaded" });
+			await expect(page.locator('[data-testid="kt-setup-pe-address"]')).toHaveValue(changed, { timeout: 20_000 });
+			await page.locator('[data-testid="kt-setup-pe-address"]').fill("");
+			await page.click('[data-testid="kt-setup-pe-submit"]');
+			await expect(page.locator('[data-testid="kt-setup-pe-error"]')).toContainText("principal address");
+			await noFrappeModal(page);
+		} finally {
+			await page.reload({ waitUntil: "domcontentloaded" });
+			await page.locator('[data-testid="kt-setup-pe-address"]').fill(original);
+			await page.click('[data-testid="kt-setup-pe-submit"]');
+			await expect(page.locator('[data-testid="kt-setup-pe-success"]')).toBeVisible();
+		}
+		expect(errors.filter((e) => !/principal address|cannot be removed|status of 417/.test(e)), "console errors").toEqual([]);
+	});
+
 	test("a county/type conflict is refused inline, directly after the county answer, and nothing is saved", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const errors = await openEntity(page);
@@ -136,10 +164,11 @@ test.describe.serial("System setup — Procuring entity", () => {
 			await page.keyboard.press("Tab");
 		}
 		// Disabled code and timezone are skipped; the rest follow the board.
-		expect(order.slice(0, 5)).toEqual([
+		expect(order.slice(0, 6)).toEqual([
 			"kt-setup-pe-name",
 			"kt-setup-pe-type",
 			"kt-setup-pe-ppra",
+			"kt-setup-pe-address", // v0.20: the principal address, after the registration it sits beside
 			"kt-setup-pe-route",
 			"kt-pe-county",
 		]);

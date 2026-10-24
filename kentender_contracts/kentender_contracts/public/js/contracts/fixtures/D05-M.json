@@ -1,0 +1,251 @@
+{
+ "actions": {
+  "Record observations": {
+   "dialog": "record",
+   "do": "dialog"
+  },
+  "View all observations": {
+   "dialog": "all",
+   "do": "dialog"
+  }
+ },
+ "arrival": "CM-ARR-514682",
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-INS",
+ "d": "D05",
+ "dialogs": {
+  "all": {
+   "b": [
+    {
+     "cols": [
+      "Unit",
+      "RAM (GB)",
+      "Storage (GB)",
+      "Starts successfully"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "CMT235973-0017",
+       "16",
+       "512",
+       "Yes"
+      ],
+      [
+       "CMT235973-0018",
+       "16",
+       "512",
+       "Yes"
+      ],
+      [
+       "CMT235973-0019",
+       "16",
+       "512",
+       "Not recorded"
+      ],
+      [
+       "CMT235973-0020",
+       "16",
+       "512",
+       "Yes"
+      ]
+     ]
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "All observations"
+  },
+  "record": {
+   "args": {
+    "arrival": "CM-ARR-514682"
+   },
+   "b": [
+    {
+     "cols": [
+      "Unit",
+      "RAM (GB)",
+      "Storage (GB)",
+      "Starts successfully"
+     ],
+     "inputs": {
+      "0,1": "obs.CMT235973-0017.C1",
+      "0,2": "obs.CMT235973-0017.C2",
+      "0,3": "obs.CMT235973-0017.C3",
+      "1,1": "obs.CMT235973-0018.C1",
+      "1,2": "obs.CMT235973-0018.C2",
+      "1,3": "obs.CMT235973-0018.C3",
+      "2,1": "obs.CMT235973-0019.C1",
+      "2,2": "obs.CMT235973-0019.C2",
+      "2,3": "obs.CMT235973-0019.C3",
+      "3,1": "obs.CMT235973-0020.C1",
+      "3,2": "obs.CMT235973-0020.C2",
+      "3,3": "obs.CMT235973-0020.C3"
+     },
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "CMT235973-0017",
+       "~16",
+       "~512",
+       "^Yes|Not recorded,Yes,No"
+      ],
+      [
+       "CMT235973-0018",
+       "~16",
+       "~512",
+       "^Yes|Not recorded,Yes,No"
+      ],
+      [
+       "CMT235973-0019",
+       "~16",
+       "~512",
+       "^Not recorded|Not recorded,Yes,No"
+      ],
+      [
+       "CMT235973-0020",
+       "~16",
+       "~512",
+       "^Yes|Not recorded,Yes,No"
+      ]
+     ]
+    }
+   ],
+   "command": "RecordInspectionObservations",
+   "p": "Save observations",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Record observations"
+  }
+ },
+ "ev": [
+  "Arrival 1",
+  "Contract requirements 1"
+ ],
+ "id": "D05-M",
+ "name": "Inspect delivery",
+ "next": {
+  "fixes": [
+   "Record observations",
+   "View all observations"
+  ],
+  "h": "The inspection evidence needs review.",
+  "k": "blk",
+  "s": "Responsible for the fix: Julia Njeri",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-INS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Coverage",
+       "4 laptop computer; each unit inspected"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Coverage"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Check",
+      "Required",
+      "Observed",
+      "Result"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "RAM",
+       "At least 16 GB",
+       "16 GB on all 4",
+       "!Meets"
+      ],
+      [
+       "Storage",
+       "At least 512 GB",
+       "512 GB on all 4",
+       "!Meets"
+      ],
+      [
+       "Starts successfully",
+       "Yes",
+       "3 Yes; 1 not recorded",
+       "!Needs review"
+      ]
+     ]
+    }
+   ],
+   "t": "Findings"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Deliveries",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-INS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-INS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-INS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-INS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-INS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Inspect delivery",
+ "version": 11
+}

@@ -45,6 +45,7 @@ def configure_procuring_entity(
 	statutory_approval_route: str | None = None,
 	entity_is_county=None,
 	idempotency_key: str | None = None,
+	pe_address: str | None = None,
 ) -> dict[str, Any]:
 	"""§7 `ConfigureProcuringEntity` — first-run: PE plus root unit, atomically.
 	PLN-CHG-001 v1.18 §10.11 C01: the mandatory route and the county flag are
@@ -61,6 +62,7 @@ def configure_procuring_entity(
 		statutory_approval_route=statutory_approval_route or "",
 		entity_is_county=county,
 		idempotency_key=idempotency_key or "",
+		pe_address=pe_address or "",
 	)
 
 

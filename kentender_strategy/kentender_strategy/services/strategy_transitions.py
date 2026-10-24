@@ -31,6 +31,7 @@ from kentender_strategy.services.strategy_authorization import (
 	require_plan_version_capability,
 )
 from kentender_strategy.services.strategy_domain_guards import assert_no_primary_overlap
+from kentender_strategy.services import strategy_readiness
 from kentender_strategy.services.strategy_readiness import (
 	assert_version_ready_for_approval,
 	assert_version_ready_for_submit,
@@ -111,12 +112,11 @@ def _activate(doc) -> None:
 	transaction. Fires directly off "Approve" (§5.1: "Approval ... activates
 	within one transaction") — there is no separate Activate action.
 
-	Predecessor closure (v1.8 plan D8 / STR18-XD-002): the superseded
-	version's applicability interval is closed to the day before the
-	successor starts when the successor starts after the predecessor did;
-	otherwise the predecessor keeps its stored dates. Date semantics are
-	whole site dates — a successor effective on day D is current from D and
-	the predecessor's last applicable day is D-1."""
+	Predecessor closure (v1.8 plan D8 / STR18-XD-002; v1.11 STR-BR-026): each other
+	Active version of the plan is handled by its dates — see
+	`_supersede_and_activate`. Date semantics are whole site dates: a successor
+	effective on day D applies from D and the predecessor's last applicable day
+	is D-1."""
 	_assert_no_primary_overlap(doc)
 
 	# AUD-XC-005 — the only place a version becomes Active (or Superseded);
@@ -126,6 +126,19 @@ def _activate(doc) -> None:
 
 
 def _supersede_and_activate(doc) -> None:
+	"""STR-BR-026 — activate `doc` and settle the plan's other Active versions by their dates, in one
+	transaction. A later start date is allowed (v1.11), so more than one version of a plan can be Active.
+
+	For each other Active version `other` of the same plan:
+	- it starts on or after `doc` and `doc` covers that start: it never applies, so it is Superseded;
+	- it starts before `doc`: its "Use until" is closed to the day before `doc` starts, never lengthened;
+	  it becomes Superseded when `doc` starts on or before the site date, and stays Active while it is
+	  still the version in force (`doc` starts later);
+	- otherwise it is left as it is."""
+	getdate = frappe.utils.getdate
+	site_today = strategy_readiness.today()
+	starts = getdate(doc.effective_from) if doc.effective_from else None
+	ends = getdate(doc.effective_to) if doc.effective_to else None
 	current_active = frappe.get_all(
 		"Strategic Plan Version",
 		filters={"plan_id": doc.plan_id, "status": "Active", "name": ["!=", doc.name]},
@@ -133,23 +146,34 @@ def _supersede_and_activate(doc) -> None:
 	)
 	for name in current_active:
 		other = frappe.get_doc("Strategic Plan Version", name)
-		other.status = "Superseded"
-		if (
-			doc.effective_from
-			and other.effective_from
-			and frappe.utils.getdate(doc.effective_from) > frappe.utils.getdate(other.effective_from)
-		):
-			other.effective_to = frappe.utils.add_days(frappe.utils.getdate(doc.effective_from), -1)
+		other_start = getdate(other.effective_from) if other.effective_from else None
+		supersede = False
+		shortened = False
+		if starts and other_start and other_start >= starts:
+			supersede = ends is None or other_start <= ends
+		elif starts and other_start and other_start < starts:
+			day_before = frappe.utils.add_days(starts, -1)
+			if not other.effective_to or getdate(other.effective_to) > day_before:
+				other.effective_to = day_before
+				shortened = True
+			supersede = starts <= site_today
+		elif not starts or not other_start:
+			supersede = True  # no dates to judge by: the earlier behaviour, a successor replaces its predecessor
+		if not supersede and not shortened:
+			continue
+		if supersede:
+			other.status = "Superseded"
 		other.save(ignore_permissions=True)
-		record_event(
-			entity_type="Strategic Plan Version",
-			entity_name=other.name,
-			event_type="Approve successor",
-			prior_state="Active",
-			new_state="Superseded",
-			plan_version=other.name,
-			summary=f"Superseded by {doc.name}",
-		)
+		if supersede:
+			record_event(
+				entity_type="Strategic Plan Version",
+				entity_name=other.name,
+				event_type="Approve successor",
+				prior_state="Active",
+				new_state="Superseded",
+				plan_version=other.name,
+				summary=f"Superseded by {doc.name}",
+			)
 
 	doc.status = "Active"
 	doc.save(ignore_permissions=True)

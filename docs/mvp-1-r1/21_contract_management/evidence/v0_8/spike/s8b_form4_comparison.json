@@ -1,0 +1,42 @@
+{
+ "normalised_similarity": 0.945,
+ "official_chars": 2071,
+ "release_chars": 2223,
+ "words_only_in_official": [
+  "\"procuring",
+  "arerespectively"
+ ],
+ "words_only_in_release": [
+  "after",
+  "are",
+  "award",
+  "b",
+  "c",
+  "d",
+  "e",
+  "f",
+  "g",
+  "h",
+  "instructions",
+  "respectively",
+  "successful",
+  "tenderer"
+ ],
+ "material_differences": [
+  [
+   "insert",
+   "",
+   " to be completed by the successful tenderer after contract award in accordance with the in"
+  ],
+  [
+   "insert",
+   "",
+   "aving its principal place of business at h"
+  ],
+  [
+   "replace",
+   "the procuring entit",
+   "b"
+  ]
+ ]
+}

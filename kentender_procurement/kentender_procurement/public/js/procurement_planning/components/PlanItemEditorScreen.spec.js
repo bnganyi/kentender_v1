@@ -561,3 +561,40 @@ describe("PlanItemEditorScreen — View classification details is offered only w
 		expect(wrapper.find('[data-testid="ppi-view-classification"]').exists()).toBe(false);
 	});
 });
+
+// PLN-CHG-001 v1.32 §10.19 — the unused allowance of this purchase after a tender was cancelled, on the Plan Item itself.
+describe("PlanItemEditorScreen — unused allowance after a tender was cancelled", () => {
+	const recovery = (status, extra = {}) => ({
+		recovery: "CRR-00001", status, title: "Unused allowance and funding",
+		label: { Pending: "Restoring unused allowance", Completed: "Unused allowance restored after tender cancellation", "Needs attention": "Unused allowance could not be restored" }[status],
+		explanation: "Planning's own words.", reason: status === "Needs attention" ? "The affected source is held until the cause is corrected." : "",
+		rows: [{ key: "PSA-1", source: "Digital Health", quantity: "60", value: "6000000.00", restored: status === "Completed" ? "60 · 6000000.00" : "—" }],
+		technical: [{ label: "Recovery", value: "CRR-00001" }], next_step: null, ...extra,
+	});
+	const withRecovery = (status, extra) => make({ item: item({ recoveries: [recovery(status, extra)] }) });
+
+	it("Pending: states the hold, lists the held source and offers no way round it", () => {
+		const w = withRecovery("Pending");
+		expect(w.find('[data-testid="ppi-recovery"]').attributes("data-status")).toBe("Pending");
+		expect(w.find('[data-testid="ppi-recovery-label"]').text()).toBe("Restoring unused allowance");
+		expect(w.find('[data-testid="ppi-recovery-rows"] tbody').text()).toContain("Digital Health");
+		expect(w.find('[data-testid="ppi-recovery-next"]').exists()).toBe(false);
+	});
+
+	it("Completed: the restored amounts and the ordinary route, passed on as the segments Desk takes", async () => {
+		const w = withRecovery("Completed", { next_step: { label: "Start a new requisition for this purchase", route: ["procurement-requisitions", "new", "PPI-MOH-2027-033"] } });
+		expect(w.find('[data-testid="ppi-recovery-rows"] tbody').text()).toContain("60 · 6000000.00");
+		await w.find('[data-testid="ppi-recovery-next"]').trigger("click");
+		expect(w.emitted("navigate")[0][0]).toEqual(["procurement-requisitions", "new", "PPI-MOH-2027-033"]);
+	});
+
+	it("Needs attention: the real reason, identifiers only inside Technical details", () => {
+		const w = withRecovery("Needs attention");
+		expect(w.find('[data-testid="ppi-recovery-reason"]').text()).toContain("held until the cause is corrected");
+		expect(w.find('[data-testid="ppi-recovery-technical"]').text()).toContain("CRR-00001");
+	});
+
+	it("a purchase with no recovery draws nothing", () => {
+		expect(make().find('[data-testid="ppi-recovery"]').exists()).toBe(false);
+	});
+});

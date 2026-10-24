@@ -178,6 +178,12 @@ kt_tender_evaluation_portal = ["kentender_procurement.bid_evaluation.portal.reso
 # Award before a cancellation and reads its authority status; the Award goes
 # with its evaluation or Tender. Plan D10: the Contracting receiver (only the
 # simulation stand-in exists). Plan D7: the notice email channel.
+# Award is the integrator of an award's contract source material (CM-CHG-001 v0.8 section 19.4; plan D20): it answers `S<n>-<award case>` through the owners' published seams.
+kt_contract_source_provider = ["kentender_procurement.award.services.contract_sources.service"]
+
+# Award's answer to Budget about which reservations an award is allocated to (AWD-CHG-001 v0.7 section 7.1): kentender_core.services.award_funding_verification.
+kt_award_funding_verification = ["kentender_procurement.award.services.funding_verification.service"]
+
 kt_award_source_providers = [
 	"kentender_procurement.award.services.sources.evaluation_provider",
 	"kentender_procurement.award.test_services.sources.synthetic_provider",
@@ -202,6 +208,27 @@ kt_evaluation_correction_consumers = ["kentender_procurement.award.services.corr
 kt_evaluation_removal_consumers = ["kentender_procurement.award.seeds.clear.on_evaluations_removed"]
 kt_award_authority_status = ["kentender_procurement.award.services.authority.tender_status"]
 kt_tender_cancellation_guards = ["kentender_procurement.award.services.authority.cancellation_guard"]
+# AWD-CHG-001 v0.9 §5.11 — Award's Tender-publication integration: the durable Tender-level authority record is registered in the transaction that
+# publishes the Tender, before any Award case exists. Insert-if-absent; a replay never resets a recorded notice or cancellation.
+kt_tender_publication_registrars = ["kentender_procurement.award.services.tender_authority.registrar"]
+# AWD-CHG-001 v0.9 §5.11, §7.2 / TPR-CHG-001 v0.24 §7.6 — the shared cancellation / first-notice fence: Tenders asks it (structured blockers with reason, holder
+# and route) and, once the cancellation is committed to, stamps the cancellation on the Tender's authority record in the same transaction.
+kt_tender_cancellation_fence = ["kentender_procurement.award.services.authority.cancellation_fence"]
+kt_tender_cancellation_recorders = ["kentender_procurement.award.services.tender_authority.recorder"]
+# GetAwardAuthorityStatus for Tenders' decision screen: the canonical decision and notification facts with source, revision and checked time (read-only).
+kt_award_authority_facts = ["kentender_procurement.award.services.authority.status"]
+# TPR-CHG-001 v0.24 §5.12, §7.6 — a verified applicable cancellation ground for the post-close route; with none, the route stays blocked
+# (`TND_CANCEL_GROUND_UNVERIFIED`). The one registered here answers only on a test environment, with the grounds a test or browser world names.
+kt_tender_cancellation_ground_verifiers = ["kentender_procurement.tenders.test_services.ground_verifier.verify"]
+# TPR-CHG-001 v0.24 §7.6 — the consumers of the existing TenderCancelled event whose delivery Tenders tracks and retries from the same event.
+kt_tender_cancellation_consumers = ["kentender_procurement.bid_opening.services.cancellation_consumer"]
+# Bid Opening's own account of the opening and its decision item for the Tender decision screen (references and states only; the Accounting Officer's alone).
+kt_tender_opening_decision_context = ["kentender_procurement.bid_opening.services.decision_context.get"]
+# PLN-CHG-001 v1.32 §5.4.7 / TPR-CHG-001 v0.21 §7.5 — what Award holds that would make restoring a cancelled Tender's allowance unsafe, and the
+# Tender owner's verified basis Requisitions asks for before it restores anything (Requisitions must not import Tenders).
+kt_tender_cancellation_downstream_disposition = ["kentender_procurement.award.services.authority.downstream_disposition"]
+kt_tender_cancellation_recovery_basis = ["kentender_procurement.tenders.services.cancellation_recovery_basis.provider"]
+kt_cancellation_recovery_reader = ["kentender_procurement.procurement_requisitions.services.recovery_reader.reader"]
 kt_award_contracting_receivers = ["kentender_procurement.award.test_services.contracting_receiver.receiver"]
 kt_award_notice_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
 
@@ -487,7 +514,7 @@ _TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
 _TND_FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
 	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition",
-	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff", "Tender Command Journal",
+	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Event Delivery", "Tender Submission Handoff", "Tender Command Journal",
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
 has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})
@@ -543,6 +570,9 @@ scheduler_events: dict[str, list[str]] = {
 		# AWD-CHG-001 v0.4 plan D9 — receipt retries, Tenders' events, corrections,
 		# deadlines and technical retries for awards.
 		"kentender_procurement.award.services.sweep.run",
+		# REQ-CHG-001 v1.20 §9.1D — carry out each registered whole-Tender cancellation recovery (retried with a backoff while an owner is
+		# unavailable; a Needs attention recovery is never retried by itself).
+		"kentender_procurement.procurement_requisitions.services.recovery_sweep.run",
 	],
 }
 
@@ -708,6 +738,14 @@ kt_staff_home_unit_changed = [
 	"kentender_procurement.bid_evaluation.services.member_department.on_home_unit_changed",
 ]
 
+# Shared record picker (approved plan, 13 Oct 2026) — the sources this app registers with
+# kentender_core.services.record_picker. A source owns who may be listed and why a row is
+# unavailable; core owns search, ranking, paging and the actor.
+kt_record_picker_sources = [
+	"kentender_procurement.bid_opening.services.picker_sources.sources",
+	"kentender_procurement.bid_evaluation.services.picker_sources.sources",
+]
+
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
 # search page/service and the technical-read conformance gate collect every
 # module's reference resolvers and read probes through these two hooks; core
@@ -795,6 +833,7 @@ for _bds_content in (
 	"Tender Security Intake", "Tender Security Intake Match", "Tender Security Exposure", "Tender Security Duty Conflict", "Tender Security Verification",
 	# and the Opening incident records and the opening records that carry an envelope identifier or a bidder's name
 	"Opening Access Incident", "Opening Exception", "Opening Decision Item", "Opening Entry", "Opening Register Request", "Opening Incident Access Event",
+	"Opening Incident Finding",
 ):
 	has_permission[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_access"
 	permission_query_conditions[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_query"

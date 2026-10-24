@@ -237,13 +237,52 @@ export function departmentBoard(d) {
 	return { ...header(d, { guidance: null }), screen: "department", sec, act: [], place: "row" };
 }
 
+// AWD-CHG-001 v0.7 section 10.4: the read-only 'Funding sources', after the supported amount and before the historical detail. The server sends `funding` to internal readers only; a board never invents it.
+const FUNDING_SCREENS = new Set(["opinion", "opinion-read", "decision", "decision-read", "corrected", "correction-positive", "notices", "wait", "delivered", "hold"]);
+
+const amount = (v) => {
+	const n = Number(v);
+	return Number.isFinite(n) ? n.toLocaleString("en-US", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }) : String(v ?? "");
+};
+
+function fundingSection(f) {
+	const base = { t: "Funding sources", anchor: "funding-sources", testid: "awd-funding" };
+	if (f.state === "Missing" || f.state === "Unavailable") return { ...base, p: [`!${f.message}`] };
+	const unit = f.unit ? ` ${f.unit}` : "";
+	const money = (v) => `${f.currency} ${amount(v)}`;
+	const r = f.rows.map((x) => [x.department, `${amount(x.quantity)}${unit}`, money(x.amount)]);
+	r.push(["Total", `${amount(f.total_quantity)}${unit}`, money(f.total_amount)]);
+	return { ...base, tbl: { h: ["Department", "Quantity", "Awarded amount"], n: [1, 2], r } };
+}
+
+function fundingDetails(f) {
+	if (f.state !== "Available") return null;
+	const req = f.requisition || {};
+	const lines = f.rows.map((x) => [x.department, `Requisition ${req.id || "—"}${req.version ? `, version ${req.version}` : ""}`, `Drawdown ${x.drawdown_line}`, `Reservation ${x.reservation_reference || x.reservation}`,
+		`Budget line ${x.budget_line_title || x.budget_line}${x.budget_line_code ? ` (${x.budget_line_code})` : ""}`].join(" · "));
+	return { t: "Funding source details", lines };
+}
+
+function withFunding(board, d) {
+	if (!d.funding || !FUNDING_SCREENS.has(board.screen) || !board.sec) return board;
+	const at = board.sec.findIndex((s) => s.t === "Recommendation");
+	const sec = [...board.sec];
+	sec.splice(at < 0 ? sec.length : at + 1, 0, fundingSection(d.funding));
+	const details = fundingDetails(d.funding);
+	if (!details) return { ...board, sec };
+	const disc = [...(board.disc || [])];
+	const history = disc.findIndex((x) => (typeof x === "string" ? x : x.t) === "History");
+	disc.splice(history < 0 ? disc.length : history, 0, details);
+	return { ...board, sec, disc };
+}
+
 export function recordBoard(d, ctx = {}) {
 	if (d.technical) return technicalBoard(d);
 	if (d.department) return departmentBoard(d);
 	if (ctx.sub === "requests" && ctx.id) return { screen: "request", ...requestBoard(d, first(d.correspondence, (c) => c.request === ctx.id)) };
 	const screen = screenOf(d);
 	const build = BUILD[screen] || BUILD.wait;
-	return { ...build(d), screen };
+	return withFunding({ ...build(d), screen }, d);
 }
 
 export { CONCLUSIONS };

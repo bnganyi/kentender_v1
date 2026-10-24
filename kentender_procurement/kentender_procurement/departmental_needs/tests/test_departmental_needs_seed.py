@@ -10,10 +10,13 @@ untouched.
 from __future__ import annotations
 
 import json
+import unittest
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import fiscal as F, world as W
 from kentender_procurement.departmental_needs.constants import (
 	INTAKE_OPEN,
 	ROLE_HEAD_OF_USER_DEPARTMENT,
@@ -43,6 +46,7 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 	validate_needs_seed,
 )
 from kentender_procurement.departmental_needs.services.context import needs_submission_state
+from kentender_procurement.departmental_needs.services.events import EVENT_ACCEPTED
 from kentender_procurement.departmental_needs.services.usage import planning_usage
 from kentender_procurement.departmental_needs.tests import support
 
@@ -58,20 +62,27 @@ from kentender_procurement.departmental_needs.tests import support
 # FY 2026/27 (carried out): the infrastructure Need and the two laptop Needs
 # the executed Annual Plan takes up, all due inside the year.
 YEAR1_NEEDS = {
-	"NDS-MOH-2026-0001": ("Digital Health", 1, "2027-06-30", STATE_ACCEPTED),
+	"NDS-MOH-2026-0001": ("Digital Health", 1, F("2027-06-30"), STATE_ACCEPTED),
 	# Revision 1 asks for 200 and is returned; Revision 2 corrects it to 100.
-	"NDS-MOH-2026-0002": ("Human Resources Management and Development", 100, "2027-06-30", STATE_ACCEPTED),
-	"NDS-MOH-2026-0003": ("Digital Health", 150, "2027-06-30", STATE_ACCEPTED),
+	"NDS-MOH-2026-0002": ("Human Resources Management and Development", 100, F("2027-06-30"), STATE_ACCEPTED),
+	"NDS-MOH-2026-0003": ("Digital Health", 150, F("2027-06-30"), STATE_ACCEPTED),
 }
 # FY 2027/28 (being prepared): the same journeys with the year's own
 # requirements; 0002 still waits for review, 0003 returned once (20 -> 12).
 YEAR2_NEEDS = {
-	"NDS-MOH-2027-0001": ("Digital Health", 1, "2027-08-31", STATE_ACCEPTED),
-	"NDS-MOH-2027-0002": ("Human Resources Management and Development", 1, "2027-12-31", STATE_SUBMITTED),
-	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 12, "2027-12-31", STATE_ACCEPTED),
-	"NDS-MOH-2027-0004": ("Digital Health", 150, "2027-12-31", STATE_ACCEPTED),
+	"NDS-MOH-2027-0001": ("Digital Health", 1, F("2027-08-31"), STATE_ACCEPTED),
+	"NDS-MOH-2027-0002": ("Human Resources Management and Development", 1, F("2027-12-31"), STATE_SUBMITTED),
+	"NDS-MOH-2027-0003": ("Human Resources Management and Development", 12, F("2027-12-31"), STATE_ACCEPTED),
+	"NDS-MOH-2027-0004": ("Digital Health", 150, F("2027-12-31"), STATE_ACCEPTED),
 }
-DEFAULT_NEEDS = {**YEAR1_NEEDS, **YEAR2_NEEDS}
+# The closed year's one Need (SEED-002 v0.9 §A7), in an anchored world.
+YEAR0_NEEDS = {"NDS-MOH-2025-0001": ("Human Resources Management and Development", 120, F("2026-06-30"), STATE_ACCEPTED)} if calendar.mode() == "anchored" else {}
+DEFAULT_NEEDS = {**YEAR0_NEEDS, **YEAR1_NEEDS, **YEAR2_NEEDS}
+
+
+def _year2_plan_active() -> bool:
+	"""Whether the prepared year goes as far as its Annual Plan in this world (the v0.7 world does; an October anchor stops at its Needs)."""
+	return bool(frappe.db.get_value("Annual Plan", {"fiscal_year": calendar.YEAR2.fiscal_year}, "active_version"))
 
 # §14.3 exact expected operational results.
 EXPECTED_RESULTS = {
@@ -123,12 +134,12 @@ class TestConfigurationPrerequisites(SeedCase):
 			as_dict=True,
 		)
 		self.assertTrue(row.kentender_needs_submission_open)
-		self.assertEqual(str(row.kentender_needs_submission_closes_at), "2026-11-25 23:59:00")
+		self.assertEqual(str(row.kentender_needs_submission_closes_at), calendar.YEAR2.window("2026-11-25 23:59:00"))
 
 	def test_the_window_is_open_at_the_design_clock(self):
 		# §14.1's design clock is 24 Nov 2026, inside the window.
 		self.assertEqual(
-			needs_submission_state(FY, at="2026-11-24 15:00:00")["state"], INTAKE_OPEN
+			needs_submission_state(FY, at=W("2026-11-24 15:00:00"))["state"], INTAKE_OPEN
 		)
 
 
@@ -216,17 +227,17 @@ class TestDefaultNeeds(SeedCase):
 		# FY 2026/27 runs the same journey 364 days earlier (same weekdays),
 		# with Julia Njeri accepting the Digital Health Needs while acting.
 		expected = {
-			("NDS-MOH-2027-0001", "Accept for planning"): ("2026-11-24 14:00:00", REVIEWER),
-			("NDS-MOH-2027-0002", "Submit"): ("2026-11-24 12:20:00", AUTHOR),
-			("NDS-MOH-2027-0003", "Return for correction"): ("2026-11-24 13:35:00", REVIEWER),
-			("NDS-MOH-2027-0003", "Resubmit"): ("2026-11-25 09:00:00", AUTHOR),
-			("NDS-MOH-2027-0003", "Accept for planning"): ("2026-11-25 10:00:00", REVIEWER),
-			("NDS-MOH-2027-0004", "Accept for planning"): ("2026-11-25 09:30:00", REVIEWER),
-			("NDS-MOH-2026-0001", "Accept for planning"): ("2025-11-25 14:00:00", ACTING_REVIEWER),
-			("NDS-MOH-2026-0002", "Return for correction"): ("2025-11-25 13:35:00", REVIEWER),
-			("NDS-MOH-2026-0002", "Resubmit"): ("2025-11-26 09:00:00", AUTHOR),
-			("NDS-MOH-2026-0002", "Accept for planning"): ("2025-11-26 10:00:00", REVIEWER),
-			("NDS-MOH-2026-0003", "Accept for planning"): ("2025-11-26 09:30:00", ACTING_REVIEWER),
+			("NDS-MOH-2027-0001", "Accept for planning"): (W("2026-11-24 14:00:00"), REVIEWER),
+			("NDS-MOH-2027-0002", "Submit"): (W("2026-11-24 12:20:00"), AUTHOR),
+			("NDS-MOH-2027-0003", "Return for correction"): (W("2026-11-24 13:35:00"), REVIEWER),
+			("NDS-MOH-2027-0003", "Resubmit"): (W("2026-11-25 09:00:00"), AUTHOR),
+			("NDS-MOH-2027-0003", "Accept for planning"): (W("2026-11-25 10:00:00"), REVIEWER),
+			("NDS-MOH-2027-0004", "Accept for planning"): (W("2026-11-25 09:30:00"), REVIEWER),
+			("NDS-MOH-2026-0001", "Accept for planning"): (W("2025-11-25 14:00:00"), ACTING_REVIEWER),
+			("NDS-MOH-2026-0002", "Return for correction"): (W("2025-11-25 13:35:00"), REVIEWER),
+			("NDS-MOH-2026-0002", "Resubmit"): (W("2025-11-26 09:00:00"), AUTHOR),
+			("NDS-MOH-2026-0002", "Accept for planning"): (W("2025-11-26 10:00:00"), REVIEWER),
+			("NDS-MOH-2026-0003", "Accept for planning"): (W("2025-11-26 09:30:00"), ACTING_REVIEWER),
 		}
 		for (need, action), (when, actor) in expected.items():
 			occurred = frappe.db.get_value(
@@ -280,11 +291,16 @@ class TestDefaultNeeds(SeedCase):
 		# carries the whole world.)
 		expected = {reference: USAGE_FULL for reference, row in DEFAULT_NEEDS.items() if row[3] == STATE_ACCEPTED}
 		expected["NDS-MOH-2027-0002"] = USAGE_NOT_INCLUDED
+		if not _year2_plan_active():
+			# a prepared year that stops at its Needs has no Active plan; the Needs its Draft plans already hold read as the Draft holds them,
+			# so the prepared year's Needs are not asserted here
+			for reference in YEAR2_NEEDS:
+				expected.pop(reference, None)
 		for reference, usage in expected.items():
 			self.assertEqual(planning_usage(reference), usage, reference)
 
 	def test_the_seed_validates_both_years(self):
-		for year in ("year1", "year2"):
+		for year in tuple(y.key for y in calendar.seeded_years()):
 			self.assertEqual([r["check"] for r in validate_needs_seed(year) if not r["ok"]], [], year)
 
 	def test_reseeding_creates_nothing_new(self):
@@ -313,7 +329,7 @@ class TestDefaultNeeds(SeedCase):
 				"Departmental Need Event",
 				{
 					"departmental_need": need.name,
-					"event_type": "DepartmentalNeedAccepted.v2",
+					"event_type": EVENT_ACCEPTED,  # v3 since NDS v1.17 (v2 read: a stale expectation, found 16 Oct 2026)
 					"need_revision": need.current_accepted_revision,
 				},
 			)
@@ -366,7 +382,7 @@ class TestSelectableProfiles(SeedCase):
 		# Version 1 is superseded, not altered.
 		version_one.reload()
 		self.assertEqual(version_one.revision_status, REVISION_SUPERSEDED)
-		self.assertEqual(str(version_one.required_by_date), "2027-08-31")
+		self.assertEqual(str(version_one.required_by_date), F("2027-08-31"))
 
 	def test_resetting_the_successor_restores_the_default_fixture(self):
 		before = self.default_fingerprint()
@@ -386,6 +402,8 @@ class TestSelectableProfiles(SeedCase):
 		profiles.reset_profile("withdrawal_blocked")
 
 	def test_the_blocked_variant_carries_the_active_plan_dependency(self):
+		if not _year2_plan_active():
+			self.skipTest("the prepared year has no Active Annual Plan in this world")
 		self.addCleanup(profiles.reset_profile, "withdrawal_blocked")
 		profiles.apply_profile("withdrawal_blocked")
 		self.assertEqual(planning_usage("NDS-MOH-2027-0001"), USAGE_FULL)
@@ -393,6 +411,8 @@ class TestSelectableProfiles(SeedCase):
 
 	def test_the_cleared_variant_supplies_no_plan_references(self):
 		# §14.5 — the cleared variant is Not included with no Plan references.
+		if not _year2_plan_active():
+			self.skipTest("the prepared year has no Active Annual Plan in this world; its Draft plans keep the Need included")
 		self.addCleanup(profiles.reset_profile, "withdrawal_cleared")
 		profiles.apply_profile("withdrawal_cleared")
 		need = self.need("NDS-MOH-2027-0001")

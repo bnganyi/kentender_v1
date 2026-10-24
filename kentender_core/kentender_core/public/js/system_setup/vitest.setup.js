@@ -50,3 +50,4 @@ globalThis.frappe.provide =
 	});
 globalThis.window.kentender_core = globalThis.kentender_core;
 await import("./../kt_industry/kt_industry_pager.bundle.js");
+await import("./../kt_industry/kt_industry_record_picker.bundle.js");

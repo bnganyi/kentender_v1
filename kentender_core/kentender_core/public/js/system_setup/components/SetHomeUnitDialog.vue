@@ -3,7 +3,8 @@
 // organisation unit. A focused dialog: the person (read-only), the unit, and
 // the sentence that says what this records and what it does not. Built in-Vue
 // (AGENTS.md §6.3), not with frappe.ui.Dialog.
-import { nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
+import RecordPickerHost from "../../record_picker_shared/RecordPickerHost.vue";
 
 const props = defineProps({
 	row: { type: Object, required: true },
@@ -15,6 +16,13 @@ const emit = defineEmits(["save", "clear", "cancel"]);
 
 const chosen = ref(props.row.organisation_unit || "");
 const field = ref(null);
+// The saved unit is shown by its full path, from the options the page already holds; one chosen here, from the picker's own row.
+const chosenLabel = ref((props.units.find((u) => u.value === chosen.value) || {}).label || "");
+const label = computed(() => chosenLabel.value);
+function onChosen(row) {
+	chosen.value = row ? row.id : "";
+	chosenLabel.value = row ? row.label : "";
+}
 const recorded = !!props.row.organisation_unit;
 
 onMounted(async () => {
@@ -34,10 +42,17 @@ onMounted(async () => {
 				</div>
 				<div class="field">
 					<label for="kt-home-unit-select">{{ __("Home organisation unit") }}</label>
-					<select id="kt-home-unit-select" ref="field" v-model="chosen" class="input" data-testid="kt-home-unit-select">
-						<option value="" disabled>{{ __("Choose an organisation unit") }}</option>
-						<option v-for="unit in units" :key="unit.value" :value="unit.value">{{ unit.label }}</option>
-					</select>
+					<RecordPickerHost
+						ref="field"
+						:model-value="chosen || null"
+						input-id="kt-home-unit-select"
+						source="core.home_unit"
+						noun="unit"
+						plural="units"
+						:placeholder="__('Search by name or path')"
+						:value-label="label"
+						@change="onChosen"
+					/>
 					<p class="text-muted" style="margin:6px 0 0;font-size:13px">{{ __("This records where the person works. It does not grant any responsibility or access.") }}</p>
 				</div>
 				<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="kt-home-unit-error">

@@ -1,0 +1,92 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-EVT-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "An append-only entry of the contract's history: what happened, who, when.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "event_type",
+  "occurred_at",
+  "actor",
+  "summary",
+  "detail_json",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "event_type",
+   "label": "Event type",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "occurred_at",
+   "label": "Occurred at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actor",
+   "label": "Actor",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary",
+   "label": "Summary",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "detail_json",
+   "label": "Detail json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Event",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -1,0 +1,198 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-FND-{#####}",
+ "creation": "2026-10-16 15:00:00.000000",
+ "description": "CM-CHG-001 v0.10 section 20.4/20.4A: the funding position of one independently registered contract for one Budget year - the prepared charge, Finance's versioned confirmations (ContractFundingBasis.v1) and the request to Budget with its outcomes.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "fiscal_year",
+  "scope_key",
+  "kind",
+  "subject_event",
+  "original_commitment",
+  "schedule_amount",
+  "request_state",
+  "outcome",
+  "request_reference",
+  "last_outcome_sequence",
+  "charge",
+  "explanation",
+  "evidence_json",
+  "prepared_by",
+  "prepared_at",
+  "confirmations_json",
+  "basis_digest",
+  "history_json",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "label": "Budget year",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Fiscal Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "scope_key",
+   "label": "Scope key",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Initial\nAnnual\nAdditional\nCorrection"
+  },
+  {
+   "fieldname": "subject_event",
+   "label": "Subject event",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "original_commitment",
+   "label": "Original commitment",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "schedule_amount",
+   "label": "Year share in the signed terms",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_state",
+   "label": "Request",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Not requested\nOpen\nCompleted\nDeclined\nWithdrawn",
+   "default": "Not requested"
+  },
+  {
+   "fieldname": "outcome",
+   "label": "Outcome",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "request_reference",
+   "label": "Budget request reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_outcome_sequence",
+   "label": "Last outcome received",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "charge",
+   "label": "Prepared funding charge",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "explanation",
+   "label": "Explanation",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence references",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_by",
+   "label": "Prepared by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "label": "Prepared at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmations_json",
+   "label": "Versioned confirmations",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_digest",
+   "label": "Basis digest",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "history_json",
+   "label": "History",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Funding Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -7,6 +7,7 @@ shared-service evidence only, never a Bid Opening ceremony (PRC v0.9 §15)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from itertools import count
 from typing import Any
 
@@ -92,7 +93,7 @@ class ProceedingsCase(IntegrationTestCase):
 	def create(self, owner_id: str | None = None) -> dict[str, Any]:
 		owner_id = owner_id or f"SIM-{frappe.generate_hash(length=6)}"
 		self.owner.add(owner_id)
-		self.at("2027-06-12 10:30:00")
+		self.at(W("2027-06-12 10:30:00"))
 		return lifecycle.create_proceeding(owner_type=OWNER_TYPE, owner_id=owner_id, title="Test opening — synthetic bids only", idempotency_key=self.key(), actor=CHAIR)
 
 	def version(self, result: dict[str, Any]) -> int:
@@ -102,7 +103,7 @@ class ProceedingsCase(IntegrationTestCase):
 		row = frappe.db.get_value("Proceeding", result["proceeding"], ["owner_type", "owner_id", "record_version"], as_dict=True)
 		return {"owner_type": row.owner_type, "owner_id": row.owner_id, "expected_version": int(row.record_version)}
 
-	def start(self, result: dict[str, Any], *, at: str = "2027-06-12 11:00:12") -> dict[str, Any]:
+	def start(self, result: dict[str, Any], *, at: str = W("2027-06-12 11:00:12")) -> dict[str, Any]:
 		self.at(at)
 		return lifecycle.start_proceeding(**self.ref(result), roster=ROSTER, custody_reference="TEST-CUSTODY-1", owner_event_id=f"start-{result['proceeding']}", idempotency_key=self.key(), actor=CHAIR)
 
@@ -110,7 +111,7 @@ class ProceedingsCase(IntegrationTestCase):
 		return events.append_event(**self.ref(result), event_type=event_type, source="Owner", owner_event_id=owner_event_id, payload=payload or {"event": owner_event_id},
 			idempotency_key=self.key(), actor=CHAIR, **extra)
 
-	def end(self, result: dict[str, Any], *, at: str = "2027-06-12 11:04:00", outcome_event: dict | None = None) -> dict[str, Any]:
+	def end(self, result: dict[str, Any], *, at: str = W("2027-06-12 11:04:00"), outcome_event: dict | None = None) -> dict[str, Any]:
 		self.at(at)
 		return lifecycle.end_proceeding(**self.ref(result), owner_event_id=f"end-{result['proceeding']}", outcome_event=outcome_event, idempotency_key=self.key(), actor=CHAIR)
 
@@ -122,7 +123,7 @@ class ProceedingsCase(IntegrationTestCase):
 					"target_digest": frappe.generate_hash(length=16), "required_member": member, "roster_segment": 1})
 		return rows
 
-	def freeze(self, result: dict[str, Any], *, targets: list[dict] | None = None, content: str = "Test minutes version 1", at: str = "2027-06-12 11:07:00") -> dict[str, Any]:
+	def freeze(self, result: dict[str, Any], *, targets: list[dict] | None = None, content: str = "Test minutes version 1", at: str = W("2027-06-12 11:07:00")) -> dict[str, Any]:
 		self.at(at)
 		owner_events = [e.event_id for e in frappe.get_all("Proceeding Event", filters={"proceeding": result["proceeding"], "source": "Owner"}, fields=["event_id"])]
 		return minutes.freeze_minutes(**self.ref(result), content=content, page_count=1, register_reference="TEST-REGISTER-1", register_digest="test-register-digest",

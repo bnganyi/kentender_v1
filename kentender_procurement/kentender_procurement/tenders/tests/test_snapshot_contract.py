@@ -12,6 +12,7 @@ DB-free."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import unittest
 from types import SimpleNamespace
@@ -28,8 +29,8 @@ V14_PAYLOAD = {
 		"minimum_warranty_months": 36, "onsite_support_required": 1, "maximum_support_response_hours": 8,
 		"manufacturer_support_required": 1, "service_location_constraint": "Within Kenya", "support_description": "Escalation contacts.",
 	},
-	"departmental_certification": {"lead_org_unit_id": "OU-1", "actor": "peter.kimani@moh.example.test", "capacity": "Head of User Department", "decided_at": "2027-03-01 09:00:00", "decision": "RQD-1"},
-	"procurement_authorisation": {"actor": "charles.mutiso@moh.example.test", "capacity": "Head of Procurement Function", "decided_at": "2027-03-15 10:00:00", "decision": "RQD-2"},
+	"departmental_certification": {"lead_org_unit_id": "OU-1", "actor": "peter.kimani@moh.example.test", "capacity": "Head of User Department", "decided_at": W("2027-03-01 09:00:00"), "decision": "RQD-1"},
+	"procurement_authorisation": {"actor": "charles.mutiso@moh.example.test", "capacity": "Head of Procurement Function", "decided_at": W("2027-03-15 10:00:00"), "decision": "RQD-2"},
 	"items": [],
 }
 

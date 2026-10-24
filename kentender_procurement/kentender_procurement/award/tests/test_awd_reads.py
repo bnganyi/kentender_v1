@@ -7,6 +7,8 @@ viewer's §5.9 headline, the board's journey code and the task list."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W, ad  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import (
@@ -47,11 +49,11 @@ class TestNextSteps(AwardCase):
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
 		self.assertEqual(headline(HOP), "The supplier must reply by the date in the notice.")
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1)
-		self.at("2027-06-18 09:05:00")
+		self.at(W("2027-06-18 09:05:00"))
 		self.assertEqual((headline(HOP), code()), ("The required waiting period is still running.", "DDDCN"))
-		self.at("2027-07-02 09:00:00")
+		self.at(W("2027-07-02 09:00:00"))
 		eligibility.refresh_case(CASE)
 		self.assertEqual((headline(HOP), code()), ("Contracting has received the award.", "DDDDD"))
 
@@ -59,10 +61,10 @@ class TestNextSteps(AwardCase):
 		self.deliver()
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1)
 		simulation.set_controls(contracting_down=1)
-		self.at("2027-07-02 09:01:00")
+		self.at(W("2027-07-02 09:01:00"))
 		eligibility.refresh_case(CASE)
 		self.assertEqual((headline(HOP), code()), ("Contracting is unavailable. KenTender will check that the award can still proceed before sending it.", "DDDDB"))
 
@@ -81,8 +83,8 @@ class TestNextSteps(AwardCase):
 		self.assertEqual([f["label"] for f in a["fixes"]], ["View source issue", "Return report"])
 
 	def test_expired_v03_and_no_award_v04(self):
-		self.at("2027-10-11 09:00:00")
-		self.deliver(overrides={"validity_end": "2027-10-10 11:00:00"})
+		self.at(W("2027-10-11 09:00:00"))
+		self.deliver(overrides={"validity_end": W("2027-10-10 11:00:00")})
 		self.assertEqual(headline(HOP), "Tender validity has expired. No award can proceed.")
 		self.signed_opinion(conclusion="No current recommendation", reason="Tender validity expired before an award could be notified.")
 		self.run_as(AO, decision.record, award=CASE, outcome="No award", reason="Tender validity expired before an award could be notified.",
@@ -108,22 +110,22 @@ class TestNextSteps(AwardCase):
 		self.deliver()
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=notice.name, response="Decline", notice_version=1, reason="We cannot meet the delivery commitment.")
 		self.assertEqual((headline(HOP), code()), ("Review the supplier’s response.", "DDDBN"))
 		self.assertIn("Resolve supplier response", task_names(HOP))
-		self.at("2027-06-20 11:00:00")
-		self.run_as(HOP, restrictions.record_external, award=CASE, basis="Authoritative order", source="Review Board suspension notice", received_at="2027-06-20 11:00:00",
+		self.at(W("2027-06-20 11:00:00"))
+		self.run_as(HOP, restrictions.record_external, award=CASE, basis="Authoritative order", source="Review Board suspension notice", received_at=W("2027-06-20 11:00:00"),
 			evidence="PPARB/2027/33", reason="Suspension")
 		a = next_steps.answer(self.case(), HOP)
-		self.assertEqual((a["headline"], a["sentence"]), ("This award is on hold.", "Review Board suspension notice received 20 Jun 2027, 11:00 EAT"))
+		self.assertEqual((a["headline"], a["sentence"]), ("This award is on hold.", f"Review Board suspension notice received {ad.dt_eat('2027-06-20 11:00:00')}"))
 
 	def test_correction_v09_v17_v19(self):
 		from kentender_procurement.award.tests.test_awd_corrections import CORRECTION
 
 		self.deliver()
 		self.awarded()
-		self.at("2027-06-18 10:00:00")
+		self.at(W("2027-06-18 10:00:00"))
 		syn.add_correction(self.case().tender, CORRECTION)
 		corrections.pull_case(CASE)
 		self.assertEqual((headline(HOP), code()), ("Review the report correction before this award proceeds.", "DDDBN"))
@@ -160,7 +162,7 @@ class TestNextSteps(AwardCase):
 		self.deliver()
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1)
 		self.run_as(DAVID, supplier.request_explanation, notice=notice.name, request="Please explain the recorded award result.")
 		self.assertEqual((headline(HOP), code()), ("Respond to the bidder’s request.", "DDDCN"))
@@ -172,7 +174,7 @@ class TestReads(AwardCase):
 		self.deliver()
 		out = reads.record(award=CASE, user=HOP)
 		self.assertEqual((out["report"]["signatures"], out["report"]["valid_until"], out["report"]["recommended"]["submitted"]),
-			("3 of 3", "10 Oct 2027, 11:00 EAT", "KES 46,400,000"))
+			("3 of 3", ad.dt_eat("2027-10-10 11:00:00"), "KES 46,400,000"))
 		self.assertTrue(out["actions"]["sign_opinion"])
 		self.assertFalse(reads.record(award=CASE, user=AO)["actions"]["sign_opinion"])
 		naomi = reads.record(award=CASE, user=NAOMI)

@@ -1,0 +1,160 @@
+{
+ "actions": {
+  "Review publication": {
+   "do": "route",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "obligations",
+    "publication"
+   ]
+  },
+  "View close-out record": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View history": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_accounting_offi",
+ "d": "D11",
+ "dialogs": {},
+ "ev": [
+  "Completion certificate 1",
+  "Financial reconciliation 1"
+ ],
+ "id": "D11-C",
+ "name": "Close-out review",
+ "next": {
+  "h": "Amina Hassan closed the contract on 28 Jul 2028, 08:30 EAT.",
+  "k": "done",
+  "s": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_the_accounting_offi",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted",
+       "10"
+      ],
+      [
+       "Invoiced",
+       "KES 0"
+      ],
+      [
+       "Cash confirmed",
+       "KES 0"
+      ],
+      [
+       "Balance",
+       "KES 0"
+      ]
+     ],
+     "k": "facts"
+    },
+    {
+     "items": [
+      [
+       "Warranty",
+       "Ended with no unresolved claim"
+      ],
+      [
+       "Security",
+       "Not required by the issued terms"
+      ],
+      [
+       "Required reporting",
+       "Complete"
+      ],
+      [
+       "Completion certificate",
+       "Certificate 1"
+      ],
+      [
+       "Funding",
+       "Commitment closed by the funding owner"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Completion review"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "I close this procurement contract following the evidenced completion recorded below. The surviving obligations and their accountable owners are listed in the attached schedule."
+    },
+    {
+     "items": [
+      [
+       "Surviving obligations",
+       "Publication \u2014 hopfsp, Not confirmed \u2014 set by current directions"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Close-out decision"
+  }
+ ],
+ "s2": [
+  "View close-out record",
+  "View history"
+ ],
+ "st": "Closed",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Closure 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "history"
+   ]
+  }
+ ],
+ "title": "Close contract",
+ "version": 21
+}

@@ -11,6 +11,7 @@ TPR09-AC-083..096, TPR11-AC-007, TPR12-AC-002/003."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -37,7 +38,7 @@ class TestBidDefinition(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_all()
 		self.addCleanup(frappe.set_user, "Administrator")
-		frappe.flags.kt_tenders_clock = "2027-04-20 10:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-04-20 10:00:00")
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_clock", None)
 
 	def _submitted(self):

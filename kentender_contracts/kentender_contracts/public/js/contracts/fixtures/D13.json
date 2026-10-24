@@ -1,0 +1,131 @@
+{
+ "actions": {
+  "Send message": {
+   "args": {
+    "issue": "CM-ISS-991370"
+   },
+   "command": "SendContractCorrespondence",
+   "do": "command"
+  },
+  "View acceptance report": {
+   "do": "tab",
+   "tab": "Deliveries"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delivery_issue_fr",
+ "d": "D13",
+ "dialogs": {},
+ "ev": [
+  "Acceptance report 1",
+  "Inspection 1"
+ ],
+ "id": "D13",
+ "name": "Delivery issue",
+ "next": {
+  "h": "Send the inspection findings to the supplier.",
+  "k": "turn",
+  "s": "Responsible: Carol Coordinator"
+ },
+ "p": "Send message",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_issue_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Units",
+       "CMTB0A72C-0029 and CMTB0A72C-0030"
+      ],
+      [
+       "Result",
+       "Does not meet"
+      ],
+      [
+       "Observed",
+       "Starts successfully is No, the requirement is Yes."
+      ],
+      [
+       "Requested remedy",
+       "Replacement"
+      ],
+      [
+       "Requested reply date",
+       "22 July 2027"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Issue"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Message",
+       "name": "message",
+       "o": {},
+       "t": "ta",
+       "v": "2 laptop computers did not meet the requirements (Starts successfully is No, the requirement is Yes.). Please arrange replacement and confirm the delivery date."
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Message to supplier"
+  }
+ ],
+ "s2": [
+  "View acceptance report"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Issue 1 version 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "2 laptop computers need replacement",
+ "version": 17
+}

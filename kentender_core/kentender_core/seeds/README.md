@@ -2,33 +2,43 @@
 
 Implements [docs/data/seed-data-spec-v1.md](../../docs/data/seed-data-spec-v1.md) and [docs/data/users-roles-permissions-spec-v1.md](../../docs/data/users-roles-permissions-spec-v1.md).
 
-## Canonical world (two years, read as at 18 Jun 2027 10:00) — the current entry point
+## Canonical world (three years, around the real date) — the current entry point
 
 ```bash
-bench --site <site> execute kentender_core.seeds.canonical.run --kwargs '{"current": "award", "next_year": "annual_plan"}'
+bench --site <site> execute kentender_core.seeds.canonical.run --kwargs '{"current": "contracts", "next_year": ""}'
 bench --site <site> execute kentender_core.seeds.canonical.dry_run
-bench --site <site> execute kentender_core.seeds.canonical.validate --kwargs '{"current": "award", "next_year": "annual_plan"}'
+bench --site <site> execute kentender_core.seeds.canonical.validate --kwargs '{}'
 ```
 
 `run` first removes every row that is not part of the canonical world
 (test/Playwright budgets, needs, plans, requisitions and Tenders, users on
 fixture e-mail domains, duplicate organisation units, isolation fiscal years,
 legacy demo journeys, and child-table rows and files whose record is gone —
-see `canonical.py`'s `collect_non_canonical`), then reseeds two financial
-years (`calendar.py`): **FY 2026/27**, carried out — the site, Strategy, its
-budget, Needs, departmental plans and Active Annual Plan always, then
-`current` (`requisitions` → `tenders` → `bid_submission` → `bid_opening` →
+see `canonical.py`'s `collect_non_canonical`), then reseeds three financial
+years (`calendar.py`) around the world's **anchor**, the latest Friday 10:00
+not later than the run's start, stored on the site (site default
+`kt_seed_world_state`) by `make seed-canonical` in a process of its own, so no
+simulated instant is later than the real clock: **Year 0**, the closed year
+(always built: a small completed portfolio of three Tenders to an accepted
+award); **Year 1**, the year that contains the anchor, carried out — the site,
+Strategy, its budget, Needs, departmental plans and Active Annual Plan always,
+then `current` (`requisitions` → `tenders` → `bid_submission` → `bid_opening` →
 `bid_evaluation` → `award`) for the laptops Tender and the executed portfolio
-(`portfolio.py`) — and **FY 2027/28**, being prepared, as far as `next_year`
-(`none` → `budget` → `needs` → `departmental_plans` → `annual_plan`). Each step
-goes through its owning module's own seed, at its fixture instant (the bid
-stages only on a test site, since they use the simulated signing, tender-box
-and delivery services). Before the clear, any loaded demo profile
-(Requisitions, Departmental Needs, Bid Opening, Award) is undone; at the end a
-test site's clock is set to the as-at instant. The world, the commands and how
-a module adds to it are in SEED-002
-(`docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md`,
-approved 8 October 2026; it retired SEED-001 and SEED-OPS-001). Pass `"rebuild": True` to also drop the canonical
+(`portfolio.py`); and **Year 2**, being prepared, as far as `next_year`
+(`none` → `budget` → `needs` → `departmental_plans` → `annual_plan`), by default as
+far as the anchor allows (Departmental Needs in October). Each step goes through
+its owning module's own seed, at its fixture instant (the bid stages only on a
+test site, since they use the simulated signing, tender-box and delivery
+services). Before the clear, any loaded demo profile (Requisitions,
+Departmental Needs, Bid Opening, Award) is undone; at the end a test site's
+clock is set to the anchor. The story's own dates (18 Jun 2027 and the
+months before it) are illustrative: `calendar.world` (`W`) moves each one to
+where the anchor puts it, `calendar.fiscal` (`F`) moves fiscal-calendar dates by
+whole years, and `ANCHOR=story` builds the v0.7 world unchanged. The world, the
+commands and how a module adds to it are in SEED-002
+(`docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md`; the
+approved baseline is v0.3 of 8 October 2026, which retired SEED-001 and
+SEED-OPS-001). Pass `"rebuild": True` to also drop the canonical
 module rows first (downstream first: Tenders — which takes the bid, opening,
 evaluation and award with it — Requisitions, Planning, Needs, Budget,
 Strategy) and rebuild from scratch. Leaves ERPNext-owned records and the pre-cutover
@@ -36,7 +46,7 @@ legacy reference doctypes alone (KT-STD-001 §10).
 
 The site stage also records each fixture person's home organisation unit (`site_setup.HOME_UNITS`, KT-STD-001 §8.3A) through the System setup command `SetStaffHomeOrganisationUnit` (CFG-CHG-002 v0.19), never by writing the field; Esther Muthoni has none on purpose. Evaluation reads a committee member's department from it and generates the appointment reference, so no Evaluation seed passes either.
 
-`make seed-canonical SITE=<site>` wraps `run` for the full world (`CURRENT=award NEXT=annual_plan`; set either lower to stop a year earlier, add `REBUILD=True` for a rebuild; `THROUGH=` still maps for one release). Until SEED-002 is approved, the approved runbook is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_24.md` (each version has its own file from v1.16; v1.0–v1.15 were kept in `…_v1_0.md`); its stage ladder is superseded by the two controls.
+`make seed-canonical SITE=<site>` wraps `run` for the full world (`CURRENT` empty = `contracts` on an anchored world with Contract Management installed, else `award`: the closed year's three awards go through Contract Management, one paid, one in delivery, one waiting for its agreement — SEED-002 v0.10 §A8.1; `NEXT` empty = as far as the anchor allows; set either lower to stop a year earlier, add `REBUILD=True` for a rebuild and a new anchor, `ANCHOR=story` for the v0.7 world; `THROUGH=` still maps for one release). The site's test clock follows its own policy, `kt_test_clock_policy` in site_config: no key (`free`), `never_ahead` (a test site) or `off` (the development site); read it with `bench --site <site> execute kentender_core.services.test_clock.describe`.
 
 **Procurement meetings branch (OVS-CHG-001 v0.6, runbook v1.23 §9C).** `make seed-ovs-register-branch SITE=<site>` adds Tender B beside the canonical Tender: a second department's Tender whose opening was recorded Not held, so the register shows four rows and counts three meetings held. `make seed-ovs-register-branch-restore SITE=<site>` removes it. Opt-in, test-site use; the canonical rows are never touched.
 

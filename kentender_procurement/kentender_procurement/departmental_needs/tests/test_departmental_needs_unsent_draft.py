@@ -8,6 +8,7 @@ theirs to read, only the accepted requirement is.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import frappe
@@ -33,7 +34,7 @@ CONTENT = {
 	"indicative_quantity": 10,
 	"unit": "Each",
 	"estimated_total_cost": 1000000,
-	"required_by_date": "2027-12-31",
+	"required_by_date": F("2027-12-31"),
 }
 
 

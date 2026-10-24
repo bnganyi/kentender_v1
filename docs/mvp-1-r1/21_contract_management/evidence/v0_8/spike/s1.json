@@ -1,0 +1,38 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S1.create_po",
+   "ok": true,
+   "result": "PUR-ORD-2026-00001"
+  },
+  {
+   "step": "S1.replay_returns_same_po",
+   "ok": true,
+   "result": "PUR-ORD-2026-00001"
+  },
+  {
+   "step": "S1.po_facts",
+   "docstatus": 1,
+   "status": "To Receive and Bill",
+   "grand_total": 1000000.0,
+   "per_received": 0.0,
+   "per_billed": 0.0,
+   "supplier": "CM Spike Supplier",
+   "company": "KenTender",
+   "cm_operation_identity": "SPIKE-S1|agreement 1|1|Purchase order|k-1"
+  },
+  {
+   "step": "S1.same_document",
+   "ok": true,
+   "first": "PUR-ORD-2026-00001",
+   "again": "PUR-ORD-2026-00001",
+   "count_with_identity": 1
+  }
+ ]
+}

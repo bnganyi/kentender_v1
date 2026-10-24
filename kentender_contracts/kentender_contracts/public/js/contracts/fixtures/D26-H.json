@@ -1,0 +1,160 @@
+{
+ "actions": {
+  "Record source evidence": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "View differences": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-0001",
+ "d": "D26",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D26-H",
+ "name": "Record outside signature",
+ "next": {
+  "fixes": [
+   "Record source evidence",
+   "View differences"
+  ],
+  "h": "The signed copies do not match agreement 1.",
+  "k": "blk",
+  "s": "Responsible for the fix: Charles Mutiso",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-0001",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Party",
+       "name": "party",
+       "o": {},
+       "opts": [
+        "Supplier",
+        "Procuring entity"
+       ],
+       "t": "sel",
+       "v": "Procuring entity"
+      },
+      {
+       "l": "Signed by",
+       "name": "signed_by",
+       "o": {},
+       "t": "tx",
+       "v": "Amina Hassan"
+      },
+      {
+       "l": "Capacity",
+       "name": "capacity",
+       "o": {},
+       "t": "tx",
+       "v": "Accounting Officer"
+      },
+      {
+       "l": "Signed on",
+       "name": "signed_on",
+       "o": {},
+       "t": "dt",
+       "v": "2027-07-02"
+      },
+      {
+       "l": "Signed copy",
+       "name": "copy",
+       "o": {},
+       "t": "file",
+       "v": ""
+      },
+      {
+       "l": "Notes",
+       "name": "notes",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Signature evidence"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Whole-document version",
+       "Agreement 1"
+      ],
+      [
+       "Authority source",
+       "Entity signing appointment"
+      ],
+      [
+       "Reviewed method",
+       "Outside signing permitted in these test terms"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Signing basis"
+  }
+ ],
+ "s2": [],
+ "st": "Awaiting signatures",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-0001",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-0001",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-0001",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-0001",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-0001",
+    "history"
+   ]
+  }
+ ],
+ "title": "Record an outside signature",
+ "version": 5
+}

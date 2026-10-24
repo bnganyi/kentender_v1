@@ -18,6 +18,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from datetime import date, datetime
 from decimal import Decimal
@@ -119,14 +120,14 @@ def _world() -> None:
 	envelope.insert(draft)
 	envelope.bump(WORLD["t041"]["tender"], current_version=draft.name)
 	WORLD["t041"]["version"] = draft
-	_task("t041", handoffs.CORRECT_RETURNED, creation="2027-06-16 09:00:01", holder=fx.OFFICER, sender=fx.HOPF, comment="State the warranty period required from suppliers.")
+	_task("t041", handoffs.CORRECT_RETURNED, creation=W("2027-06-16 09:00:01"), holder=fx.OFFICER, sender=fx.HOPF, comment="State the warranty period required from suppliers.")
 	_tender("t042", "042", "Supply of network switches", status="Published — open", lead=alpha, contributors=[alpha], lines=[(alpha, "8000000.00")], published="2027-04-20 11:00", deadline="2027-06-25 11:00")
 	_tender("t043", "043", "Supply of office desks", status="Submission period ended", lead=beta, contributors=[beta], lines=[(beta, "3500000.00")], published="2027-05-02 09:00", deadline="2027-06-01 11:00")
 	_tender("t044", "044", "Supply of printers", status="Submission period ended", lead=beta, contributors=[beta, alpha], lines=[(beta, "3000000.00"), (alpha, "2000000.00")], published="2027-05-04 09:00", deadline="2027-06-02 11:00")
 	_tender("t045", "045", "Supply of monitors", status="Submission period ended", lead=alpha, contributors=[alpha], lines=[(alpha, "7500000.00")], published="2027-05-06 09:00", deadline="2027-06-03 11:00")
 	_tender("t046", "046", "Supply of servers", status="Cancelled", lead=beta, contributors=[beta], lines=[(beta, "25000000.00")], published="2027-05-08 09:00", deadline="2027-06-20 11:00")
 	_cancel("t046", at="2027-06-16 12:00")
-	_task("t046", handoffs.CANCELLATION_COMPLIANCE, creation="2027-06-16 12:00:01", holder=fx.OFFICER, sender=fx.AO, subject_type="Tender Cancellation", subject_id=WORLD["t046"]["tender"].cancellation)
+	_task("t046", handoffs.CANCELLATION_COMPLIANCE, creation=W("2027-06-16 12:00:01"), holder=fx.OFFICER, sender=fx.AO, subject_type="Tender Cancellation", subject_id=WORLD["t046"]["tender"].cancellation)
 	_tender("t047", "047", "Supply of routers", status="Published — open", lead=alpha, contributors=[alpha], lines=[(alpha, "1500000.00")], published="2027-05-10 09:00", deadline="2027-06-17 17:00")
 	_tender("t048", "048", "Supply of cabling", status="Submission period ended", lead=beta, contributors=[beta], lines=[(beta, "900000.00")], published="2027-05-10 09:00", deadline="2027-06-05 11:00")
 	_tender("t049", "049", "Supply of toner", status="Submission period ended", lead=beta, contributors=[beta], lines=[(beta, "600000.00")], published="2027-05-12 09:00", deadline="2027-06-06 11:00")
@@ -364,7 +365,7 @@ class TestTendersAnalyticsProvider(IntegrationTestCase):
 	def test_a_cancelled_tender_keeps_only_its_own_compliance_follow_up(self):
 		matter = self.rec("t046")["outstanding"]
 		officer = frappe.db.get_value("User", fx.OFFICER, "full_name")
-		self.assertEqual((matter["text"], matter["holder"], matter["since"]), (f"Waiting for cancellation compliance evidence from {officer}.", officer, _dt("2027-06-16 12:00:01")))
+		self.assertEqual((matter["text"], matter["holder"], matter["since"]), (f"Waiting for cancellation compliance evidence from {officer}.", officer, _dt(W("2027-06-16 12:00:01"))))
 		self.assertIsNone(self.rec("t050")["outstanding"])
 
 	def test_a_stage_owners_matter_wins_over_the_tenders_own_and_a_tenders_own_shows_when_the_stage_has_none(self):

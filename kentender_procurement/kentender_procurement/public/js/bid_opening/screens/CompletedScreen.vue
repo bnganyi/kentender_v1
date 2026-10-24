@@ -15,6 +15,16 @@
 				<p style="margin:0 0 16px;font-size:14px;max-width:75ch;text-wrap:pretty">{{ technical.message }}</p>
 				<div class="kt-meta-row"><div><span class="kt-label">{{ technical.completed_label ? "Opening completed" : "State" }}</span><span class="kt-meta-value">{{ technical.completed_label || technical.state }}</span></div><div><span class="kt-label">Technical incidents</span><span class="kt-meta-value">{{ technical.incidents === null || technical.incidents === undefined ? "Held by Opening access support" : technical.incidents ? technical.incidents : "None recorded" }}</span></div></div>
 			</div>
+			<!-- TRUST-OPS-001 v0.2 §9.2, BOP-CHG-001 v0.16 §5.2 (FU-BOP-28): Opening access support records what it found. A finding starts, resumes and decides nothing. -->
+			<div v-if="viewer.is_support && (data.incidents || []).length" class="kt-region" data-testid="bop-support-incidents"><h2>Opening problems assigned to you</h2>
+				<table class="table"><thead><tr><th>Reference</th><th>Problem</th><th>Notice</th><th>Current finding</th></tr></thead><tbody>
+					<tr v-for="i in data.incidents" :key="i.incident_id" :data-testid="`bop-support-incident-${i.incident_id}`"><td>{{ i.incident_id }}</td><td>{{ i.type }}</td><td>{{ i.notification_state }}<template v-if="i.notified_label"> {{ i.notified_label }}</template></td><td>{{ i.current_finding || "Unresolved" }}</td></tr>
+				</tbody></table>
+				<div v-for="i in data.incidents" :key="'s-' + i.incident_id">
+					<IncidentDetails v-if="viewer.can_read_incident_details" :tender="opening.tender_reference" :incident="i.incident_id" :purposes="viewer.incident_purposes" />
+					<IncidentFindingForm :incident="i" :pending="pending" @record="(v) => emit('command', { method: 'record_incident_finding', args: v, then: '' })" />
+				</div>
+			</div>
 		</template>
 
 		<!-- h4 -->
@@ -75,6 +85,8 @@ import { computed, ref } from "vue";
 import CorrectionsTable from "../components/CorrectionsTable.vue";
 import Guidance from "../components/Guidance.vue";
 import History from "../components/History.vue";
+import IncidentDetails from "../components/IncidentDetails.vue";
+import IncidentFindingForm from "../components/IncidentFindingForm.vue";
 import PageHead from "../components/PageHead.vue";
 import RegisterTable from "../components/RegisterTable.vue";
 import RequestsTable from "../components/RequestsTable.vue";

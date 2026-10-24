@@ -1,0 +1,36 @@
+Starting test run with parameters: site=kentender-test.local, app=kentender_budget, module=kentender_budget.tests.test_bud_chg_001_phase3_check_reserve, verbose=False, tests=(), force=False, profile=False, failfast=False, skip_before_tests=False, debug=False, selected_categories=[]
+View detailed logs (using --verbose): /home/midasuser/frappe-bench/logs/frappe.testing.log
+
+Running 8 unspecified-category tests for kentender_budget
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestCheckFundingNonMutating
+   [32m ✔ [0m test_check_funding_changes_no_state
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestClosedBudgetRejectsNewReservations
+   [32m ✔ [0m test_check_funding_on_closed_line_raises_budget_closed
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestCombinedSourceAtomicity
+   [32m ✔ [0m test_combined_source_confirmation_creates_both_reservations_atomically
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestDuplicateCorrelationIdempotency
+   [32m ✔ [0m test_duplicate_correlation_returns_original_reservation
+   [32m ✔ [0m test_same_plan_source_allocation_different_correlation_conflicts
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestPartialConversion
+   [32m ✔ [0m test_partial_conversion_leaves_exact_position
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestShortfallRejection
+   [32m ✔ [0m test_shortfall_creates_no_reservation
+
+kentender_budget.tests.test_bud_chg_001_phase3_check_reserve.TestSingleSourceReservation
+   [32m ✔ [0m test_single_source_confirmation_leaves_exact_position
+
+
+----------------------------------------------------------------------
+Ran 8 tests in 13.948s
+
+OK
+
+real	0m18.805s
+user	0m10.151s
+sys	0m1.907s

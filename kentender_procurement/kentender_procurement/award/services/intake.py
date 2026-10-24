@@ -21,7 +21,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr
 
-from kentender_procurement.award.services import checks, clock, issues, notify, records, sources, state
+from kentender_procurement.award.services import checks, clock, issues, notify, records, sources, state, tender_authority
 from kentender_procurement.services import sequence
 
 
@@ -77,6 +77,9 @@ def _received_at(snap: dict[str, Any]):
 
 def _create(case_name: str, snap: dict[str, Any], delivery: str, namespace: str, source_kind: str):
 	now = _received_at(snap)
+	# AWD-CHG-001 v0.9 §5.11: the Tender-level authority record is taken (or derived, for a world that never went through publication here) and linked
+	# before the case row is written — Tender → record → case.
+	tender_authority.attach_case(tender=snap["tender"], tender_reference=snap["tender_reference"], case=case_name)
 	doc = records.new(records.CASE, award_id=case_name, tender=snap["tender"], tender_reference=snap["tender_reference"], tender_title=snap.get("tender_title") or "",
 		lot=snap.get("lot") or "1", procuring_entity=snap.get("procuring_entity") or "", source_kind=source_kind, source_case=snap.get("source_case") or "",
 		current_cycle=1, stage="Opinion", outcome="", decision_status="No decision recorded", notification_status="Not issued", received_at=now,

@@ -13,16 +13,24 @@ import frappe
 from kentender_procurement.award.services import records
 
 
-def wipe(*, tenders=None, namespace: str = "") -> int:
+def wipe(*, tenders=None, namespace: str = "", with_authority: bool = False) -> int:
+	"""Remove the Award cases of the given tenders and namespace with everything under them. The Tender-level authority record belongs to the Tender,
+	not to its case: removing a case only unlinks it and resets the notice status its notices went with (a fixture reset); the record itself goes only
+	with its Tender (`with_authority`)."""
 	cases: set[str] = set()
 	if tenders:
 		cases |= set(frappe.get_all(records.CASE, filters={"tender": ("in", list(tenders))}, pluck="name"))
 	if namespace:
 		cases |= set(frappe.get_all(records.CASE, filters={"fixture_namespace": namespace}, pluck="name"))
+	if with_authority and tenders:
+		frappe.db.delete("Award Tender Authority", {"tender": ("in", list(tenders))})
 	if cases:
 		names = list(cases)
+		from kentender_procurement.award.services import tender_authority
+
+		tender_authority.unlink_cases(names)
 		for doctype in records.DOCTYPES:
-			if doctype == records.CASE:
+			if doctype in (records.CASE, "Award Tender Authority"):
 				continue
 			field = "award_case"
 			if frappe.get_meta(doctype).has_field(field):
@@ -46,4 +54,4 @@ def on_evaluations_removed(*, tenders=None, namespace: str = "") -> None:
 
 def on_tenders_removed(tenders: list[str]) -> None:
 	"""`kt_tender_removal_consumers`: an award goes with its Tender."""
-	wipe(tenders=tenders)
+	wipe(tenders=tenders, with_authority=True)

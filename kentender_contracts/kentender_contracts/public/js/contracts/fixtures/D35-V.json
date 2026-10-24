@@ -1,0 +1,182 @@
+{
+ "actions": {
+  "Request correction": {
+   "dialog": "correction",
+   "do": "dialog"
+  },
+  "Verify remedy": {
+   "args": {
+    "issue": "CM-ISS-992892"
+   },
+   "command": "VerifyContractRemedy",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_warranty_claim_fr",
+ "d": "D35",
+ "dialogs": {
+  "correction": {
+   "args": {},
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordContractIssue",
+   "p": "Request",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Request correction"
+  }
+ },
+ "ev": [
+  "Replacement report"
+ ],
+ "id": "D35-V",
+ "name": "Paid-unit warranty replacement",
+ "next": {
+  "h": "Confirm the remedy evidence.",
+  "k": "turn",
+  "s": "Responsible: Peter Mugo"
+ },
+ "p": "Verify remedy",
+ "page": "record",
+ "ref": "CM-TEST-test_a_warranty_claim_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Returned unit",
+       "CMTB0A72C-0072"
+      ],
+      [
+       "Replacement",
+       "CMTB0A72C-0079"
+      ],
+      [
+       "Return/credit and replacement receipt",
+       "Reconciled"
+      ],
+      [
+       "Acquisition entitlement",
+       "Unchanged"
+      ],
+      [
+       "Additional cash or payable",
+       "KES 0"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Remedy"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Check",
+      "Observed",
+      "Result"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "RAM",
+       "16 GB on all 1",
+       "!Meets"
+      ],
+      [
+       "Storage",
+       "512 GB on all 1",
+       "!Meets"
+      ],
+      [
+       "Starts successfully",
+       "Yes on all 1",
+       "!Meets"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Evidence",
+       "Inspection of CMTB0A72C-0079"
+      ],
+      [
+       "Verification source",
+       "Current technical certificate and fully signed replacement report"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Findings"
+  }
+ ],
+ "s2": [
+  "Request correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "Verify warranty remedy",
+ "version": 30
+}

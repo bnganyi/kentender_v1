@@ -6,6 +6,8 @@ AC-031; tracker AWD4-902)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import corrections, decision, issues, profile, restrictions, simulation, state
@@ -18,7 +20,7 @@ class TestCycles(AwardCase):
 	def _to_cycle_two(self):
 		self.deliver()
 		self.awarded()
-		self.at("2027-06-18 10:00:00")
+		self.at(W("2027-06-18 10:00:00"))
 		syn.add_correction(self.case().tender, CORRECTION)
 		corrections.pull_case(self.case().name)
 		issue = issues.open_issues(self.case(), issue_type="Source correction")[0]
@@ -26,8 +28,8 @@ class TestCycles(AwardCase):
 			reason="The reported calculation issue may affect the recommendation.", evidence="CN-1", next_action="Request a corrected evaluation report.")
 		self.run_as(AO, corrections.record, award=self.case().name, outcome="Request corrected evaluation",
 			reason="The reported calculation issue may affect the recommendation.", expected_version=self.version())
-		self.at("2027-06-19 09:00:00")
-		self.deliver(version=2, delivered_at="2027-06-19 09:00:00")
+		self.at(W("2027-06-19 09:00:00"))
+		self.deliver(version=2, delivered_at=W("2027-06-19 09:00:00"))
 
 	def test_successor_cycle(self):
 		self._to_cycle_two()
@@ -49,7 +51,7 @@ class TestCycles(AwardCase):
 		self._to_cycle_two()
 		self.signed_opinion(reason="The corrected report confirms the recommendation.")
 		simulation.set_controls(revised_treatment_unverified=1)
-		self.at("2027-06-19 10:00:00")
+		self.at(W("2027-06-19 10:00:00"))
 		self.run_as(AO, corrections.record, award=self.case().name, outcome="Record corrected award", reason="The corrected report confirms the recommendation.",
 			expected_version=self.version())
 		doc = self.case()
@@ -97,7 +99,7 @@ class TestCycles(AwardCase):
 		self.signed_opinion(conclusion="No current recommendation", reason="Tender validity expired before an award could be notified.")
 		self.run_as(AO, decision.record, award=self.case().name, outcome="No award", reason="Tender validity expired before an award could be notified.",
 			next_action="Review whether the tender should be cancelled", expected_version=self.version())
-		self.at("2027-10-11 10:00:00")
+		self.at(W("2027-10-11 10:00:00"))
 		syn.add_correction(self.case().tender, CORRECTION)
 		corrections.pull_case(self.case().name)
 		doc = self.case()

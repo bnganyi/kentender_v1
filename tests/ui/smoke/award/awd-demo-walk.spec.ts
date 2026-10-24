@@ -1,5 +1,6 @@
 import { Page, expect, test } from "@playwright/test";
 
+import { asAt, format, parse, shortDateTime, world } from "../../helpers/anchor";
 import { loginToPortal, waitForPortal } from "../../helpers/portal";
 import { AMINA, CHARLES, DAVID, EVIDENCE, MARY, PASSWORD, as, awdFixture, closeSession, collectConsoleErrors, expectJourney, expectNextStep, expectScreen,
 	openAwardsFromMenu } from "./awdWorld";
@@ -9,17 +10,27 @@ import { AMINA, CHARLES, DAVID, EVIDENCE, MARY, PASSWORD, as, awdFixture, closeS
  * walked the way people reach it — the Head from the menu, the Accounting
  * Officer from the bell, the supplier from her own Tender page in the portal —
  * never from a typed address. Starts from demo profile AWD-DEMO-OPINION on the
- * real Evaluation delivery of TND-MOH-2027-002 and ends with the canonical
+ * real Evaluation delivery of TND-MOH-2026-002 and ends with the canonical
  * award restored (tracker AWD4-1103).
  */
 
-const REF = "TND-MOH-2027-002";
-const AWARD = "AWD-MOH-2027-002";
+const REF = "TND-MOH-2026-002";
+const AWARD = "AWD-MOH-2026-002";
+// The Accounting Officer awards at this instant (second step); the server sets the supplier's reply deadline from it under the
+// entity's rule (seven days, by 17:00). The expectation is derived from that instant, not from the story's deadline mapped on its
+// own: `world()` pushes a story instant later than the as-at date a further week out (a live seed deadline), which the server's
+// own computation does not (found 18 Oct 2026: the spec expected 29 Oct where the page said 22 Oct).
+const AWARDED_AT = world("2027-06-17 10:00:00");
+const REPLY_BY = `${format(new Date(parse(AWARDED_AT).moment.getTime() + 7 * 86_400_000), true)} 17:00:00`;
+// The waiting period ends fifteen days after the notices, at 09:00 (the story's 2 Jul 2027 for notices on 17 Jun), computed by the server from the
+// same instant.
+const WAIT_ENDS = `${format(new Date(parse(AWARDED_AT).moment.getTime() + 15 * 86_400_000), true)} 09:00:00`;
 
 async function openFromBell(page: Page, subject: string): Promise<void> {
-	await page.goto("/app", { waitUntil: "domcontentloaded" });
-	await page.locator(".dropdown-notifications .nav-link, .dropdown-notifications > a").first().click();
-	await page.locator(".notification-list-body").getByText(subject).first().click();
+	// Home carries the bell (the "Notification" control); Desk's own navbar bell is not the way in any more
+	await page.goto("/app/home", { waitUntil: "domcontentloaded" });
+	await page.getByText("Notification", { exact: true }).first().click();
+	await page.getByText(subject).first().click();
 }
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });
@@ -56,7 +67,7 @@ test.describe("Award, walked from the menu, the bell and the portal on the canon
 	});
 
 	test("the Accounting Officer awards from the bell", async ({ browser }) => {
-		awdFixture("set_instant", { instant: "2027-06-17 10:00:00" });
+		awdFixture("set_instant", { instant: AWARDED_AT });
 		const page = await as(browser, AMINA);
 		await openFromBell(page, `Decide award for ${REF}`);
 		await expectScreen(page, "decision");
@@ -69,7 +80,7 @@ test.describe("Award, walked from the menu, the bell and the portal on the canon
 	});
 
 	test("the supplier finds and accepts the notice from her Tender page", async ({ browser }) => {
-		awdFixture("set_instant", { instant: "2027-06-18 09:00:00" });
+		awdFixture("set_instant", { instant: world("2027-06-18 09:00:00") });
 		const context = await browser.newContext({ baseURL: process.env.UI_BASE_URL || "http://127.0.0.1:8000" });
 		let page = await context.newPage();
 		await page.setViewportSize({ width: 390, height: 844 });
@@ -87,7 +98,7 @@ test.describe("Award, walked from the menu, the bell and the portal on the canon
 		await page.locator('[data-testid="bds-overview-link-award-notice"]').click();
 		portal = page.locator('[data-testid="awd-portal"]');
 		await expect(portal.locator('[data-testid="awd-next-step-headline"]')).toHaveText("Your tender was successful.", { timeout: 30_000 });
-		await expect(portal.locator('[data-testid="awd-fact-reply-by"]')).toHaveText("24 Jun 2027, 17:00 EAT");
+		await expect(portal.locator('[data-testid="awd-fact-reply-by"]')).toHaveText(shortDateTime(REPLY_BY));
 		await portal.locator('[data-testid="awd-action-accept-award"]').click();
 		await portal.locator('[data-testid="awd-dialog-accept-award"]').click();
 		await expect(portal.locator('[data-testid="awd-next-step-headline"]')).toHaveText("You accepted this award.", { timeout: 30_000 });
@@ -95,16 +106,28 @@ test.describe("Award, walked from the menu, the bell and the portal on the canon
 	});
 
 	test("the wait ends and Contracting receives the canonical award", async ({ browser }) => {
-		awdFixture("set_instant", { instant: "2027-06-18 09:05:00" });
+		awdFixture("set_instant", { instant: world("2027-06-18 09:05:00") });
 		let page = await as(browser, CHARLES);
 		await page.goto("/app", { waitUntil: "domcontentloaded" });
 		await openAwardsFromMenu(page);
 		await page.goto(`/app/award/${AWARD}`, { waitUntil: "domcontentloaded" });
 		await expectScreen(page, "wait");
 		await expectNextStep(page, "waiting", "The required waiting period is still running.");
-		await expect(page.locator('[data-testid="awd-fact-earliest-permitted-date-and-time"]')).toHaveText("2 Jul 2027, 09:00 EAT");
+		await expect(page.locator('[data-testid="awd-fact-earliest-permitted-date-and-time"]')).toHaveText(shortDateTime(WAIT_ENDS));
 		await page.screenshot({ path: `${EVIDENCE}/canonical-D05.png`, fullPage: true });
-		awdFixture("set_instant", { instant: "2027-07-02 09:00:00" });
+		if (WAIT_ENDS > asAt()) {
+			// Contracting receives the award only when the waiting period ends, and in a world anchored on the real date that
+			// moment (the story's 2 Jul 2027) is some days after the anchor: this step runs once the real clock reaches it
+			// (SEED-002 v0.8 R1: no simulated instant is later than the real clock).
+			const late = WAIT_ENDS;
+			if (new Date(late.replace(" ", "T")).getTime() > Date.now() + 3 * 3_600_000) {
+				test.info().annotations.push({ type: "not-yet-reached", description: `Contracting receives the canonical award at ${late}; the walk ends at the wait` });
+				const restoredEarly = awdFixtureRestore();
+				expect(restoredEarly.ok).toBe(true);
+				return;
+			}
+		}
+		awdFixture("set_instant", { instant: WAIT_ENDS });
 		awdFixture("refresh", { award: AWARD });
 		page = await as(browser, CHARLES);
 		await page.goto(`/app/award/${AWARD}`, { waitUntil: "domcontentloaded" });

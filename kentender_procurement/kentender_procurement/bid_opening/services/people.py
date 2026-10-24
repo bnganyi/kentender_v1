@@ -57,5 +57,6 @@ def eligibility(user: str) -> tuple[bool, str]:
 	row = frappe.db.get_value("User", user, ["enabled", "user_type"], as_dict=True)
 	if not row or not row.enabled or row.user_type != "System User" or technical(user):
 		return False, ""
-	held = [r for r in responsibilities(user) if holds(user, r)]
-	return (True, held[0]) if held else (False, "")
+	# the first responsibility the person actually holds; stopping there gives the same answer as listing them all
+	first = next((r for r in responsibilities(user) if holds(user, r)), None)
+	return (True, first) if first else (False, "")

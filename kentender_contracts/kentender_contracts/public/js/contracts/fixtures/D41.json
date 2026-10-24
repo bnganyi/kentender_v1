@@ -1,0 +1,469 @@
+{
+ "actions": {},
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D41",
+ "dialogs": {},
+ "ev": [],
+ "id": "D41",
+ "name": "History",
+ "next": {
+  "h": "Warranty for 8 accepted units",
+  "k": "wait",
+  "s": "hopfsp; assigned 2 Jul 2027, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "When",
+      "Event",
+      "By",
+      "What happened"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Award package received",
+       "Administrator",
+       "Award package CM-DEMO-AWD-01 received."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Publication obligation opened",
+       "",
+       "The publication requirement needs review; no deadline has been confirmed."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Particulars saved",
+       "Brian Wafula",
+       "Contract particulars saved."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Sent for signature",
+       "Charles Mutiso",
+       "Agreement 1 sent for signature."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Signed",
+       "Mary Wanjiku",
+       "Agreement 1 signed for the supplier."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Signed",
+       "Amina Hassan",
+       "Agreement 1 signed for the entity."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Agreement effective",
+       "Amina Hassan",
+       "Agreement 1 is in force."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Purchase order linked",
+       "Amina Hassan",
+       "Purchase order PUR-ORD-2026-00002 linked."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Funding conversion linked",
+       "Amina Hassan",
+       "Funding conversion SIMCOM-6815A3B6 linked."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Inspectors recommended",
+       "Charles Mutiso",
+       "Appointment 1 recommended."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Inspectors appointed",
+       "Amina Hassan",
+       "Appointment 1 in force."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Interest declared",
+       "Julia Njeri",
+       "Julia Njeri declared no conflict of interest."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Interest declared",
+       "Peter Mugo",
+       "Peter Mugo declared no conflict of interest."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Interest declared",
+       "Brian Wafula",
+       "Brian Wafula declared no conflict of interest."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Arrival recorded",
+       "Grace Wanjiku",
+       "DEL-001: 10 units received at Afya House store."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Inspection recorded",
+       "Peter Mugo",
+       "Inspection 1 of DEL-001: {'Meets': 8, 'Does not meet': 2, 'Needs review': 0}."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Technical certificate signed",
+       "Peter Mugo",
+       "Technical confirmation of arrival 1 signed."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report prepared",
+       "Julia Njeri",
+       "Acceptance report 1 prepared."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report signed",
+       "Julia Njeri",
+       "Julia Njeri signed acceptance report 1."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report signed",
+       "Peter Mugo",
+       "Peter Mugo signed acceptance report 1."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report signed",
+       "Brian Wafula",
+       "Brian Wafula signed acceptance report 1."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance effective",
+       "Brian Wafula",
+       "Acceptance report 1 is effective."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Issue recorded",
+       "Brian Wafula",
+       "Issue 1 recorded: 2 laptop computers need replacement."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Receipt posted",
+       "Brian Wafula",
+       "Accepted goods received into stock: MAT-PRE-2026-00214."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Receipt reconciled",
+       "Brian Wafula",
+       "The stock, the assets and the ledger agree with the acceptance."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Custody return",
+       "Grace Wanjiku",
+       "2 rejected unit(s) collected by the supplier."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Invoice submitted",
+       "David Otieno",
+       "Invoice AFYA-1 for 900,000.00 held for review."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Invoice correction requested",
+       "Charles Mutiso",
+       "Correction of invoice AFYA-1 requested: Claim the eight accepted units."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Invoice corrected",
+       "David Otieno",
+       "Invoice AFYA-1-R1 for 800,000.00 matched."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Native invoice linked",
+       "David Otieno",
+       "Native invoice ACC-PINV-2026-00101 created for invoice AFYA-1-R1."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Certification signed",
+       "Charles Mutiso",
+       "Invoice AFYA-1-R1 certified for 800,000.00."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Accounting invoice saved",
+       "Josphat Mwangi",
+       "Accounting details of invoice AFYA-1-R1 saved."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Accounting invoice submitted",
+       "Josphat Mwangi",
+       "Accounting invoice for AFYA-1-R1 submitted for approval."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Accounting invoice posted",
+       "Beatrice Kamau",
+       "Accounting invoice ACC-PINV-2026-00101 posted."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Payment drafted",
+       "Josphat Mwangi",
+       "Draft payment ACC-PAY-2026-00098 prepared for 800,000.00."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Payment submitted for approval",
+       "Josphat Mwangi",
+       "Payment ACC-PAY-2026-00098 submitted for approval."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Payment approved",
+       "Beatrice Kamau",
+       "Payment ACC-PAY-2026-00098 approved and posted."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Settlement confirmed",
+       "Beatrice Kamau",
+       "Payment ACC-PAY-2026-00098 for 800,000.00 confirmed as settled."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Arrival recorded",
+       "Grace Wanjiku",
+       "DEL-002: 2 units received at Afya House store."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Inspection recorded",
+       "Peter Mugo",
+       "Inspection 1 of DEL-002: {'Meets': 2, 'Does not meet': 0, 'Needs review': 0}."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Technical certificate signed",
+       "Peter Mugo",
+       "Technical confirmation of arrival 2 signed."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report prepared",
+       "Julia Njeri",
+       "Acceptance report 2 prepared."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report signed",
+       "Julia Njeri",
+       "Julia Njeri signed acceptance report 2."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report signed",
+       "Peter Mugo",
+       "Peter Mugo signed acceptance report 2."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance report signed",
+       "Brian Wafula",
+       "Brian Wafula signed acceptance report 2."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Acceptance effective",
+       "Brian Wafula",
+       "Acceptance report 2 is effective."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Issue closed",
+       "Brian Wafula",
+       "Issue 1 closed: Replacement units CMT938427-0011, CMT938427-0012 were accepted on 2 July 2027."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Receipt posted",
+       "Brian Wafula",
+       "Accepted goods received into stock: MAT-PRE-2026-00215."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Receipt reconciled",
+       "Brian Wafula",
+       "The stock, the assets and the ledger agree with the acceptance."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Invoice submitted",
+       "David Otieno",
+       "Invoice AFYA-2 for 200,000.00 matched."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Native invoice linked",
+       "David Otieno",
+       "Native invoice ACC-PINV-2026-00102 created for invoice AFYA-2."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Certification signed",
+       "Charles Mutiso",
+       "Invoice AFYA-2 certified for 200,000.00."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Accounting invoice saved",
+       "Josphat Mwangi",
+       "Accounting details of invoice AFYA-2 saved."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Accounting invoice submitted",
+       "Josphat Mwangi",
+       "Accounting invoice for AFYA-2 submitted for approval."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Accounting invoice posted",
+       "Beatrice Kamau",
+       "Accounting invoice ACC-PINV-2026-00102 posted."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Payment drafted",
+       "Josphat Mwangi",
+       "Draft payment ACC-PAY-2026-00099 prepared for 200,000.00."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Payment submitted for approval",
+       "Josphat Mwangi",
+       "Payment ACC-PAY-2026-00099 submitted for approval."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Payment approved",
+       "Beatrice Kamau",
+       "Payment ACC-PAY-2026-00099 approved and posted."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Settlement confirmed",
+       "Beatrice Kamau",
+       "Payment ACC-PAY-2026-00099 for 200,000.00 confirmed as settled."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Completion certified",
+       "Charles Mutiso",
+       "The completion certificate was signed."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Certificate delivered",
+       "Charles Mutiso",
+       "The completion certificate was delivered to the contractor on 2 July 2027."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Close-out prepared",
+       "Charles Mutiso",
+       "Close-out review 1 prepared."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Contract closed",
+       "Amina Hassan",
+       "The contract was closed."
+      ],
+      [
+       "2 Jul 2027, 09:00 EAT",
+       "Funding closure acknowledged",
+       "Amina Hassan",
+       "The funding owner closed the commitment (SIMCLS-98B31C41)."
+      ]
+     ]
+    }
+   ],
+   "t": "History"
+  }
+ ],
+ "s2": [],
+ "st": "Closed",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "History",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "History",
+ "version": 49
+}

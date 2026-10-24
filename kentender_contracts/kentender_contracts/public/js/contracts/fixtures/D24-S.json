@@ -1,0 +1,120 @@
+{
+ "actions": {
+  "View appointment": {
+   "do": "route",
+   "route": [
+    "CM-TEST-APT",
+    "agreement",
+    "appointment"
+   ]
+  }
+ },
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-APT",
+ "d": "D24",
+ "dialogs": {},
+ "ev": [
+  "Appointment CM-TEST-APT/APP/1",
+  "Personal declaration 1"
+ ],
+ "id": "D24-S",
+ "name": "Declare interest",
+ "next": {
+  "h": "Julia Njeri recorded the declaration on 2 Jul 2027, 09:00 EAT.",
+  "k": "done",
+  "s": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-APT",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract",
+       "CM-TEST-APT"
+      ],
+      [
+       "Title",
+       "IT equipment delivery"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Contract"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Declaration",
+       "I have no conflict of interest"
+      ],
+      [
+       "Recorded",
+       "2 Jul 2027, 09:00 EAT"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Declaration"
+  }
+ ],
+ "s2": [
+  "View appointment"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-APT",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-APT",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-APT",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-APT",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-APT",
+    "history"
+   ]
+  }
+ ],
+ "title": "Declare interest",
+ "version": 10
+}

@@ -1,0 +1,231 @@
+{
+ "actions": {
+  "Approve extension": {
+   "dialog": "approve",
+   "do": "dialog"
+  },
+  "Decline": {
+   "dialog": "decline",
+   "do": "dialog"
+  },
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delivery_extensio",
+ "d": "D14",
+ "dialogs": {
+  "approve": {
+   "args": {
+    "change": 1,
+    "decision": "Approve"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractChange",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Approve extension"
+  },
+  "decline": {
+   "args": {
+    "change": 1,
+    "decision": "Decline"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractChange",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Decline extension"
+  },
+  "return": {
+   "args": {
+    "change": 1,
+    "decision": "Return"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractChange",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Supplier request 1",
+  "Technical review",
+  "Committee recommendation",
+  "Legal review"
+ ],
+ "id": "D14",
+ "name": "Extension review",
+ "next": {
+  "h": "Decide the requested delivery date.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Approve extension",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_extensio",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Term",
+      "Current",
+      "Requested"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Delivery date",
+       "20 July 2027",
+       "27 July 2027"
+      ],
+      [
+       "Contract value",
+       "KES 1,000,000",
+       "KES 1,000,000"
+      ],
+      [
+       "Quantity",
+       "10",
+       "10"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Reason",
+       "Supplier reports a seven-day shipment delay."
+      ],
+      [
+       "Recommendation",
+       "Approve date extension without price change"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Requested change"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      "Supplier request 1",
+      "Technical review",
+      "Committee recommendation",
+      "Legal review"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Supporting evidence"
+  }
+ ],
+ "s2": [
+  "Decline",
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1 \u00b7 change 1 draft 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review delivery extension",
+ "version": 18
+}

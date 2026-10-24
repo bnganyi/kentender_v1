@@ -76,6 +76,12 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 	# field (only `reservation` / `budget_version` respectively), so each
 	# needs its own hop through this Budget's own Funding Reservation / Budget
 	# Version rows, deleted before those parents.
+	# BUD-CHG-001 v1.17: the release rows a cancelled Tender's recovery wrote point at this Budget's reservations
+	if frappe.db.exists("DocType", "Reservation Cancellation Release"):
+		releases = frappe.db.count("Reservation Cancellation Release", {"budget": budget_name})
+		if releases:
+			frappe.db.delete("Reservation Cancellation Release", {"budget": budget_name})
+			deleted["Reservation Cancellation Release"] = deleted.get("Reservation Cancellation Release", 0) + releases
 	if frappe.db.exists("DocType", "Procurement Commitment") and frappe.db.exists("DocType", "Funding Reservation"):
 		reservation_names = frappe.get_all("Funding Reservation", filters={"budget": budget_name}, pluck="name")
 		if reservation_names:
@@ -84,6 +90,23 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 			):
 				purge_doc("Procurement Commitment", name)
 				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
+
+	# BUD-CHG-001 v1.16: a commitment carries its Budget. A conversion's reservation led to it above; an existing-contract entry's commitment has no reservation, so it is found here, with the entries,
+	# requests and outcomes of this Budget's year.
+	if frappe.db.exists("DocType", "Procurement Commitment") and frappe.db.has_column("Procurement Commitment", "budget"):
+		for name in frappe.get_all("Procurement Commitment", filters={"budget": budget_name}, pluck="name"):
+			purge_doc("Procurement Commitment", name)
+			deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
+	if frappe.db.exists("DocType", "Existing Contract Commitment Entry"):
+		for name in frappe.get_all("Existing Contract Commitment Entry", filters={"budget": budget_name}, pluck="name"):
+			purge_doc("Existing Contract Commitment Entry", name)
+			deleted["Existing Contract Commitment Entry"] = deleted.get("Existing Contract Commitment Entry", 0) + 1
+		fiscal_year = frappe.db.get_value("Procurement Budget", budget_name, "fiscal_year")
+		for request in frappe.get_all("Contract Funding Request", filters={"fiscal_year": fiscal_year}, pluck="name") if fiscal_year else []:
+			for outcome in frappe.get_all("Contract Funding Outcome", filters={"request": request}, pluck="name"):
+				purge_doc("Contract Funding Outcome", outcome)
+			purge_doc("Contract Funding Request", request)
+			deleted["Contract Funding Request"] = deleted.get("Contract Funding Request", 0) + 1
 
 	if frappe.db.exists("DocType", "Procurement Budget Line Version") and frappe.db.exists("DocType", "Procurement Budget Version"):
 		version_names = frappe.get_all("Procurement Budget Version", filters={"budget": budget_name}, pluck="name")
@@ -253,6 +276,16 @@ def clear_kentender_mvp_v1_budget(
 		include_canonical=include_canonical, include_playwright=include_playwright
 	):
 		_delete_budget_graph(budget_name, deleted)
+
+	# Budget answers a command it has already answered from its journal. A conversion made for a contract of the world just dropped (its operation identity names the contract,
+	# `CM-2025-0001|agreement 1|1|Funding conversion|effective`) would be answered with the result of a commitment that no longer exists when the rebuilt world forms a contract of the same
+	# identifier: the contract would read as funded and Budget would hold nothing (found 17 October 2026, SEED-002 v0.10 §B3).
+	if include_canonical and frappe.db.exists("DocType", "Budget Command Journal"):
+		stale = frappe.get_all("Budget Command Journal", filters={"idempotency_key": ["like", "CM-%|%"]}, pluck="name")
+		for start in range(0, len(stale), 500):
+			frappe.db.delete("Budget Command Journal", {"name": ["in", stale[start : start + 500]]})
+		if stale:
+			deleted["Budget Command Journal"] = len(stale)
 
 	# Orphan fixture lines / ledger by exact known canonical codes.
 	canonical_line_codes = (

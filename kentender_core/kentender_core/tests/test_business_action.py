@@ -22,6 +22,7 @@ class TestBusinessAction(IntegrationTestCase):
 				"doctype": "Procuring Entity",
 				"entity_code": code,
 				"entity_name": "Test PE for business action",
+				"reporting_currency": "KES",
 			}
 		)
 		pe.insert()

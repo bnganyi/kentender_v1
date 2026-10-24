@@ -22,6 +22,7 @@ APP_NAMES = {
     "kentender_budget",
     "kentender_procurement",
     "kentender_suppliers",
+    "kentender_contracts",
     "kentender_governance",
     "kentender_compliance",
     "kentender_stores",

@@ -8,6 +8,7 @@ alone."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.utils import add_to_date, get_datetime
 
@@ -28,12 +29,12 @@ class TestSubmitClarification(BidCase):
 
 	def test_a_candidate_asks_through_tenders_and_nothing_is_kept_here(self):
 		start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)
-		self.at("2027-05-20 08:50:00")
+		self.at(W("2027-05-20 08:50:00"))
 		request = key()
 		asked = self.ask(idempotency_key=request)
 		row = frappe.db.get_value("Tender Clarification", asked["clarification_id"], ["tender", "candidate_registration_id", "question", "received_at"], as_dict=True)
 		arrangement = frappe.db.get_value("Bidder Arrangement", {"tender": self.name}, "name")
-		self.assertEqual((row.tender, row.candidate_registration_id, row.question, str(row.received_at)), (self.name, arrangement, QUESTION, "2027-05-20 08:50:00"))
+		self.assertEqual((row.tender, row.candidate_registration_id, row.question, str(row.received_at)), (self.name, arrangement, QUESTION, W("2027-05-20 08:50:00")))
 		self.assertEqual(self.ask(idempotency_key=request), asked)
 		self.assertEqual(frappe.db.count("Tender Clarification", {"tender": self.name}), 1)
 		short = self.ask(text="Why?")

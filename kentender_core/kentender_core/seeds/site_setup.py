@@ -26,6 +26,8 @@ from contextlib import nullcontext
 
 import frappe
 
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from kentender_core.services import organisation_structure as structure
 from kentender_core.services.command_write_guard import maintenance_write
 from kentender_core.services import responsibility_administration as administration
@@ -43,6 +45,12 @@ SITE = {
 	"statutory_approval_route": "Cabinet Secretary",
 	"entity_is_county": False,
 }
+
+#: SEED-002 v0.10 §A2 — the principal address the agreement's party block reads (Award's source S10 refuses to build without it). It is the
+#: address the world already gives the Ministry: the governed contact office and delivery location below, and the issued Form No. 4 of
+#: template release 1.5 prints it, so the agreement does not contradict itself. The entity's legal name stays Ministry of Health (Project
+#: Owner, 17 October 2026: "Do not rename the entity").
+SITE_ADDRESS = "Afya House, Cathedral Road, Nairobi"
 
 UNITS = (
 	# (unit name, parent unit name or None for the root)
@@ -64,18 +72,23 @@ HOME_UNITS = (
 	("samuel.otieno", "ICT"),
 )
 
-FISCAL_START_YEARS = (2026, 2027)
-INTAKE = {"start_year": 2027, "closes_at": "2026-11-25 23:59:00"}
+#: The financial years the site configures. The v0.7 world has Year 1 and Year 2; an anchored world (SEED-002 v0.8 R3) also has
+#: Year 0, the closed year: an executed item's planned invitation date, moved with the world, can fall in it, and Tenders resolve the
+#: rules in force by the financial year that date is in.
+FISCAL_START_YEARS = tuple(_y.start_year for _y in calendar.seeded_years())
+INTAKE = {"start_year": calendar.YEAR2.start_year, "closes_at": F("2026-11-25 23:59:00")}
 # PLN-CHG-001 v1.12 §14.1 — departmental-plan intake for FY 2027/28 closes
 # 30 Nov 2026, 23:59:59 EAT, stored in site time like every instant (owner
 # decision 26 Sep 2026; it was stored as UTC, so the gate, which compares
 # against the site clock, closed it at 20:59 EAT).
-DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 23:59:59"}
+#: The authored close, in story coordinates: a seeded year's own intake close is this moved by `Year.window`, not by `F` again.
+DPP_INTAKE_AUTHORED_CLOSE = "2026-11-30 23:59:59"
+DPP_INTAKE = {"start_year": calendar.YEAR2.start_year, "closes_at": F(DPP_INTAKE_AUTHORED_CLOSE)}
 # CFG-CHG-002 v0.11 §4.3 — the third registered intake. Disposal plans are
 # called for the same year as the procurement plan; nothing consumes the
 # flag yet, but the Financial years tab lists the activity, so a seed that
 # left it closed showed one permanently unfinished row.
-DISPOSAL_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 23:59:59"}
+DISPOSAL_INTAKE = {"start_year": calendar.YEAR2.start_year, "closes_at": F("2026-11-30 23:59:59")}
 
 # CFG-CHG-002 v0.9 §3 — the requirement-type and procurement-method
 # catalogues Configuration & Governance owns (PLN-CHG-001 v1.12 §14.1: four
@@ -137,7 +150,7 @@ RESERVATION_CATEGORIES = (
 )
 REGULATORY_REFERENCE = {
 	"gazette_reference": "PPADR 2020 Second Schedule (rev. 2022) — FY 2027/28",
-	"effective_from": "2027-07-01",
+	"effective_from": F("2027-07-01"),
 	"reservation_target_percent": 30,
 	"county_resident_target_percent": 20,
 	"exclusive_preference_works_amount": 1_000_000_000,
@@ -165,6 +178,9 @@ ACTORS = (
 	# named actors, in the shared register rather than a module-owned copy.
 	("josphat.mwangi", "Josphat Mwangi"),
 	("beatrice.kamau", "Beatrice Kamau"),
+	# KT-STD-001 v1.31 §8.3 (Project Owner, 17 Oct 2026: "fix by adding a second permanent approver") — the canonical world had one
+	# Budget Approver, so a year she had confirmed could not be approved by anyone else (no self-approval). Not Beatrice Kamau.
+	("hellen.mutua", "Hellen Mutua"),
 	# REQ-CHG-001 v1.6 §16.1 / KT-STD-001 §8.3 (2026-09-06) — the Head of
 	# Procurement Function actor Requisitions authorisation names.
 	("charles.mutiso", "Charles Mutiso"),
@@ -211,6 +227,9 @@ TECHNICAL_ACTORS: tuple[str, ...] = ("daniel.otieno",)
 # no bidder rights, on the public portal only.
 PUBLIC_ACTORS: tuple[tuple[str, str], ...] = (("jane.wanjiku@observer.example", "Jane Wanjiku"),)
 
+#: The term of the Contract Management responsibilities below: from the first day of Year 0 (the closed year), open-ended.
+CM_TERM = {"effective_from": f"{calendar.YEAR0.start_date} 00:00:00"}
+
 ASSIGNMENTS = (
 	# (user local part, business role, unit name or None, kwargs)
 	("grace.wanjiku", "Departmental Author", "Digital Health", {}),
@@ -232,7 +251,7 @@ ASSIGNMENTS = (
 	# Two-year seed world (plan D8, 4 Oct 2026): the SEED-001 chronology is
 	# Year 1's planning history, 364 days before its 2026 instants (was
 	# 1 Dec 2026), so Peter also decides Year 2's Digital Health Needs.
-	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": "2025-12-02 00:00:00"}),
+	("peter.kimani", "Head of User Department", "Digital Health", {"effective_from": W("2025-12-02 00:00:00")}),
 	(
 		"julia.njeri",
 		"Head of User Department",
@@ -250,8 +269,8 @@ ASSIGNMENTS = (
 			# instant (kentender_core.seeds.clock), so her 25 Nov 2026
 			# decisions are authorised for real. The retired stop-gap row is
 			# revoked by `_reconcile_superseded_fixture_assignments`.
-			"effective_from": "2025-10-02 00:00:00",
-			"effective_to": "2025-12-01 23:59:59",
+			"effective_from": W("2025-10-02 00:00:00"),
+			"effective_to": W("2025-12-01 23:59:59"),
 		},
 	),
 	("mercy.kilonzo", "Procurement Planner", None, {}),
@@ -266,10 +285,11 @@ ASSIGNMENTS = (
 	("naomi.chebet", "Auditor", None, {}),
 	# BUD-CHG-001 v1.6 §15.1 — Josphat holds Budget Officer and, separately,
 	# Finance Confirmation Officer (the no-self-approval fixture); Beatrice
-	# is the Budget Approver. All Site-wide (§7).
+	# is the Budget Approver, and Hellen Mutua the second one (KT-STD-001 v1.31 §8.3), so one can approve what the other confirmed. All Site-wide (§7).
 	("josphat.mwangi", "Budget Officer", None, {}),
 	("josphat.mwangi", "Finance Confirmation Officer", None, {}),
 	("beatrice.kamau", "Budget Approver", None, {}),
+	("hellen.mutua", "Budget Approver", None, {}),
 	# REQ-CHG-001 v1.6 §16.1 — Charles authorises Requisitions and, later,
 	# approves Tenders (TPR-CHG-001). Site-wide (§8).
 	("charles.mutiso", "Head of Procurement Function", None, {}),
@@ -302,8 +322,8 @@ ASSIGNMENTS = (
 		"Directorate of Digital Health and Policy",
 		{
 			# 364 days before 1 Jan–31 Aug 2026 (two-year seed world plan D8).
-			"effective_from": "2025-01-02 00:00:00",
-			"effective_to": "2025-09-01 23:59:59",
+			"effective_from": W("2025-01-02 00:00:00"),
+			"effective_to": W("2025-09-01 23:59:59"),
 		},
 	),
 	# Samuel's Directorate term above ends 31 Aug 2026 and is deliberately
@@ -329,8 +349,22 @@ ASSIGNMENTS = (
 		"Head of User Department",
 		"Directorate of Digital Health and Policy",
 		# 364 days before 1 Sep 2026 (two-year seed world plan D8).
-		{"effective_from": "2025-09-02 00:00:00"},
+		{"effective_from": W("2025-09-02 00:00:00")},
 	),
+	# KT-STD-001 v1.32 §8.3B / SEED-002 v0.10 §A8.1 — Contract Management's responsibilities, held by people the register already names (CM-CHG-001 v0.11 §6). They take effect on the first day of Year 0
+	# (the closed year), so that the closed year's contracts are formed, received, inspected and paid by people who held the responsibility at the instant, as every command checks. Preparation and
+	# receiving are scoped to the unit that asked for the goods (Human Resources Management and Development); the rest are site-wide.
+	("brian.wafula", "Contract preparation", "Human Resources Management and Development", CM_TERM),
+	("brian.wafula", "Contract inspection", None, CM_TERM),
+	("amina.hassan", "Entity contract signing", None, CM_TERM),
+	("julia.njeri", "Contract inspection", None, CM_TERM),
+	# Dr Peter Kimani, the Head of the user department, is the technical inspector and certifier of the goods his department asked for. Peter Mugo is not: KT-STD-001 v1.13 §8.3 keeps the Evaluation committee's
+	# people (Grace Wambui, Peter Mugo, Ruth Achieng) without any standing responsibility.
+	("peter.kimani", "Contract inspection", None, CM_TERM),
+	("peter.kimani", "Technical certification", None, CM_TERM),
+	("grace.wanjiku", "Receiving", "Human Resources Management and Development", CM_TERM),
+	("josphat.mwangi", "Finance preparation", None, CM_TERM),
+	("beatrice.kamau", "Finance approval", None, CM_TERM),
 )
 
 # BUD-CHG-001 v1.6 §15.2 — the one governed funding source every Budget
@@ -380,8 +414,12 @@ def contact_office_display(office_name: str) -> str:
 # bound still ends with the last one. Nothing here is now-relative: these
 # are fixed dates that follow the seeded years, so a visual baseline
 # captured today still matches tomorrow.
+# In an anchored world (SEED-002 v0.8) the window starts on 1 January of the first seeded year instead: the executed
+# chain is moved earlier by whole weeks, so a planned invitation date can fall up to about six weeks before the financial
+# year it belongs to (a run on the first Friday that has 100 days of the year behind it puts Year 1's first invitation
+# on 25 May, and Year 0's a year before), and the method and schedule rules resolve by that date.
 PROFILE_EFFECTIVE = {
-	"effective_from": f"{FISCAL_START_YEARS[0]}-07-01",
+	"effective_from": f"{FISCAL_START_YEARS[0]}-{'01-01' if calendar.mode() == 'anchored' else '07-01'}",
 	"effective_until": f"{FISCAL_START_YEARS[-1] + 1}-06-30",
 }
 PROFILE_SOURCE = {
@@ -624,6 +662,7 @@ def _seed_site() -> str:
 			field: SITE[field]
 			for field in ("pe_name", "pe_type", "ppra_registration", "timezone", "statutory_approval_route", "entity_is_county")
 		}
+		payload["pe_address"] = SITE_ADDRESS  # System setup's own command carries it (SEED-002 v0.10 §A2; the field and its command are CFG-CHG-002 v0.20)
 		def _differs(field: str, value) -> bool:
 			stored = frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, field)
 			return int(stored or 0) != int(value) if isinstance(value, bool) else (stored or "") != value
@@ -640,7 +679,7 @@ def _seed_site() -> str:
 		if not structure._root():
 			configuration.repair_organisation_root()
 		return "updated"
-	configuration.configure_procuring_entity(**SITE)
+	configuration.configure_procuring_entity(**SITE, pe_address=SITE_ADDRESS)
 	return "configured"
 
 
@@ -1742,7 +1781,7 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 		pending = remaining
 
 	if configuration.is_configured():
-		for field in ("pe_name", "pe_code", "pe_type", "ppra_registration", "statutory_approval_route"):
+		for field in ("pe_name", "pe_code", "pe_type", "ppra_registration", "pe_address", "statutory_approval_route"):
 			frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, field, "")
 		frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "entity_is_county", 0)
 		frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "timezone", "Africa/Nairobi")

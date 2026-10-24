@@ -1,0 +1,67 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S4b.invoices",
+   "ACC-PINV-2026-00001": {
+    "docstatus": 1,
+    "status": "Unpaid",
+    "grand_total": 800000.0,
+    "outstanding_amount": 800000.0,
+    "is_return": 0,
+    "return_against": null,
+    "update_outstanding_for_self": 1
+   },
+   "ACC-PINV-2026-00002": {
+    "docstatus": 1,
+    "status": "Unpaid",
+    "grand_total": 200000.0,
+    "outstanding_amount": 200000.0,
+    "is_return": 0,
+    "return_against": null,
+    "update_outstanding_for_self": 1
+   },
+   "ACC-PINV-2026-00003": {
+    "docstatus": 1,
+    "status": "Return",
+    "grand_total": -200000.0,
+    "outstanding_amount": -200000.0,
+    "is_return": 1,
+    "return_against": "ACC-PINV-2026-00002",
+    "update_outstanding_for_self": 1
+   }
+  },
+  {
+   "step": "S4b.payment_ledger_entries",
+   "rows": [
+    {
+     "voucher_no": "ACC-PINV-2026-00001",
+     "against_voucher_no": "ACC-PINV-2026-00001",
+     "amount": 800000.0,
+     "account_type": "Payable"
+    },
+    {
+     "voucher_no": "ACC-PINV-2026-00002",
+     "against_voucher_no": "ACC-PINV-2026-00002",
+     "amount": 200000.0,
+     "account_type": "Payable"
+    },
+    {
+     "voucher_no": "ACC-PINV-2026-00003",
+     "against_voucher_no": "ACC-PINV-2026-00003",
+     "amount": -200000.0,
+     "account_type": "Payable"
+    }
+   ]
+  },
+  {
+   "step": "S4b.supplier_balance_in_ledger",
+   "gl_balance": -800000.0
+  }
+ ]
+}

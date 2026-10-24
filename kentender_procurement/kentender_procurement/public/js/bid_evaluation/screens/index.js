@@ -27,11 +27,6 @@ export function needs(sub, id, data) {
 	if (sub === "bid" && id) out.bid = id;
 	if (["report", "correction"].includes(sub) || (data && data.state === "Report sent" && sub === "update")) out.report = sub === "report" && id && id !== "preview" ? id : "";
 	if (["record", "replace"].includes(sub) || (data && data.state === "No evaluation required")) out.record = true;
-	// the main route shows the appointment form when that is the viewer's next
-	// step (pick()), so it needs the same pick list
-	const primary = ((data && data.guidance) || {}).primary_action || "";
-	if (sub === "appoint" || sub === "replace" || (sub === "" && primary === "appoint_committee")) out.candidates = "committee";
-	if (sub === "delegate") out.candidates = "secretary";
 	if (data && (data.work || {}).session && ["", "discussion"].includes(sub)) {
 		const item = (data.attention || [])[0] || ((data.work || {}).clarifications || []).find((c) => c.status === "Sent" && (c.reply || c.overdue));
 		if (item) out.bid = item.evaluation_bid;

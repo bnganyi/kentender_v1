@@ -178,24 +178,3 @@ def assignment_form_options() -> dict[str, Any]:
 		"organisation_units": units,
 		"statuses": list(administration.DERIVED_STATUSES),
 	}
-
-
-@frappe.whitelist()
-def search_users(query: str | None = None, limit: int = 20) -> list[dict[str, Any]]:
-	"""§14.3 control 1 — enabled System Users, by full name or login."""
-	administration.require_assignment_administrator_any()
-	filters: dict[str, Any] = {"enabled": 1, "user_type": "System User"}
-	needle = (query or "").strip()
-	rows = frappe.get_all(
-		"User",
-		filters=filters,
-		or_filters=(
-			[["full_name", "like", f"%{needle}%"], ["name", "like", f"%{needle}%"]]
-			if needle
-			else None
-		),
-		fields=["name", "full_name"],
-		order_by="full_name asc",
-		limit_page_length=int(limit or 20),
-	)
-	return [{"id": row["name"], "label": row["full_name"] or row["name"]} for row in rows]

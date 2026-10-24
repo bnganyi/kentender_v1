@@ -13,6 +13,7 @@ template's published definition, so nothing becomes a hidden criterion."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -27,8 +28,8 @@ STORAGE_TYPE = {"comparison": "One of", "control": "SELECT", "required_value": {
 NETWORK = {"comparison": "Required", "control": "MULTI_SELECT", "required_value": {"values": ["Wi-Fi 6", "Bluetooth 5 or later"]}, "unit": ""}
 PORTS = {"comparison": "Required", "control": "PORT_LIST", "required_value": {"ports": [{"minimum_count": 2, "port_type": "USB-C"}, {"minimum_count": 1, "port_type": "HDMI"}]}}
 PROCESSOR = {"comparison": "Minimum", "control": "TEXT", "required_value": {"value": "64-bit business-class processor, minimum 10 cores or equivalent benchmark"}}
-SECURITY = {"amount": "500000", "currency": "KES", "permitted_forms": ["Demand Bank Guarantee", "Insurance Guarantee"], "bank_guarantee_expiry_date": "2027-11-09",
-	"insurance_guarantee_expiry_date": "2027-11-07"}
+SECURITY = {"amount": "500000", "currency": "KES", "permitted_forms": ["Demand Bank Guarantee", "Insurance Guarantee"], "bank_guarantee_expiry_date": W("2027-11-09"),
+	"insurance_guarantee_expiry_date": W("2027-11-07")}
 
 
 class TestRuleFile(IntegrationTestCase):
@@ -76,14 +77,14 @@ class TestRuleFile(IntegrationTestCase):
 		self.assertIn("needs a member finding", out["reason"])
 
 	def test_dates_and_conditional_applicability(self):
-		self.assertEqual(self.check("DM-TENDER-SECURITY", "bank_guarantee_valid_until", SECURITY, "2027-11-09", group={"security_form": "Demand Bank Guarantee"})["result"], "Meets")
-		self.assertEqual(self.check("DM-TENDER-SECURITY", "bank_guarantee_valid_until", SECURITY, "2027-11-08", group={"security_form": "Demand Bank Guarantee"})["result"],
+		self.assertEqual(self.check("DM-TENDER-SECURITY", "bank_guarantee_valid_until", SECURITY, W("2027-11-09"), group={"security_form": "Demand Bank Guarantee"})["result"], "Meets")
+		self.assertEqual(self.check("DM-TENDER-SECURITY", "bank_guarantee_valid_until", SECURITY, W("2027-11-08"), group={"security_form": "Demand Bank Guarantee"})["result"],
 			"Does not meet")
 		self.assertEqual(self.check("DM-TENDER-SECURITY", "bank_guarantee_valid_until", SECURITY, None, group={"security_form": "Insurance Guarantee"})["result"],
 			"Not applicable")
-		self.assertEqual(self.check("DM-GOODS-OFFER", "offered_delivery_date", {"latest_delivery_date": "2027-09-30"}, "2027-09-30")["result"], "Meets")
-		self.assertEqual(self.check("DM-GOODS-OFFER", "offered_delivery_date", {"latest_delivery_date": "2027-09-30"}, "2027-10-01")["result"], "Does not meet")
-		window = {"window_start": "2022-06-12", "window_end": "2027-06-12"}
+		self.assertEqual(self.check("DM-GOODS-OFFER", "offered_delivery_date", {"latest_delivery_date": W("2027-09-30")}, W("2027-09-30"))["result"], "Meets")
+		self.assertEqual(self.check("DM-GOODS-OFFER", "offered_delivery_date", {"latest_delivery_date": W("2027-09-30")}, W("2027-10-01"))["result"], "Does not meet")
+		window = {"window_start": "2022-06-12", "window_end": W("2027-06-12")}
 		self.assertEqual(self.check("DM-EXPERIENCE", "completion_date", window, "2022-06-12")["result"], "Meets")
 		self.assertEqual(self.check("DM-EXPERIENCE", "completion_date", window, "2022-06-11")["result"], "Does not meet")
 

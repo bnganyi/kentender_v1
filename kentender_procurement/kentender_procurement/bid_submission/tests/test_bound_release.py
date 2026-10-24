@@ -12,6 +12,7 @@ Procurement Officer holds the resolution."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -66,7 +67,7 @@ class TestPermittedReleases(ReleaseCase):
 		self.assertIsNone(self.guard_blocker())
 		receipt = self.submitted()
 		self.assertTrue(receipt)
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.assertTrue(self.replace()["ok"])
 		self.assertEqual(self.binding(), bound)  # never rebound to a successor
 
@@ -131,7 +132,7 @@ class TestWithdrawnRelease(ReleaseCase):
 		step = reads.get_bid_workspace(bid_reference=self.bid, user=MARY)["next_step"]
 		self.assertEqual([f["fix_id"] for f in step["fixes"]], ["withdraw_bid"])
 		self.assertTrue(step["headline"].startswith("You may withdraw before "))
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.assertEqual(self.code(self.replace), "BDS_DEFINITION_UNSUPPORTED")
 		self.assertTrue(self.withdraw(receipt=receipt)["ok"])
 		row = next(r for r in reads.get_my_bids(user=MARY)["rows"] if r["bid_reference"] == self.bid)

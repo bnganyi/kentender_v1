@@ -10,7 +10,6 @@ import { globalMocks } from "../components/spec_helpers.js";
 const api = vi.hoisted(() => ({
 	listRows: vi.fn(),
 	formOptions: vi.fn(async () => ({ responsibilities: [], organisation_units: [], statuses: ["Active"] })),
-	searchUsers: vi.fn(async () => []),
 	preview: vi.fn(async () => ({ ok: false, problems: [], conflict: null, summary: "" })),
 	detail: vi.fn(),
 }));

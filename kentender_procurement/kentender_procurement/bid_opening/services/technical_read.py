@@ -13,8 +13,10 @@ record are never reachable here."""
 from __future__ import annotations
 
 
-def _form(doctype: str) -> str:
-	return "/app/" + doctype.lower().replace(" ", "-") + "/{name}"
+def _form(doctype: str):
+	"""The route to one record's form, as the Desk route segments the technical read hands to `frappe.set_route` (the resolver contract is a function from the record name to a list of segments, as every other module's is)."""
+	slug = doctype.lower().replace(" ", "-")
+	return lambda name: [slug, name]
 
 
 def reference_resolvers() -> list[dict]:

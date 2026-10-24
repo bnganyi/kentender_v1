@@ -8,9 +8,10 @@ gives no intake access."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
-from kentender_procurement.bid_opening.services import appointment
+from kentender_procurement.bid_opening.services import appointment, picker_sources
 from kentender_procurement.bid_opening.tests.support import AO, CHAIR, INDEPENDENT, MEMBER, OpeningCase
 from kentender_procurement.bid_submission.services import records, security_duty, security_matching
 from kentender_procurement.tenders.tests import fixtures as tender_fx
@@ -38,8 +39,13 @@ class TestIntakeDutyAndOpening(OpeningCase):
 		refused = self.appoint(roster)
 		self.assertFalse(refused["ok"])
 		self.assertIn("holds or has held the tender-security intake duty for this Tender", refused["errors"][OFFICER])
-		self.assertNotIn(OFFICER, [c["user"] for c in appointment.candidates(self.name)])  # the Accounting Officer is not offered the person
+		# the picker lists the person unavailable, in the command's own words: a person missing from the list with no explanation is worse than a refusal
+		offered = {c["id"]: c for c in picker_sources.committee_members(query="", context={"tender": self.name, "role": "Member"}, actor=AO, limit=20)}
+		self.assertEqual(offered[OFFICER]["disabled_reason"], refused["errors"][OFFICER])
+		self.assertIn("holds or has held the tender-security intake duty for this Tender", offered[OFFICER]["disabled_reason"])
 		security_duty.revoke_intake_officer(assignment=given["assignment"], reason="Assigned in error before the committee was named.", user=tender_fx.HOPF)
+		after = {c["id"]: c for c in picker_sources.committee_members(query="", context={"tender": self.name, "role": "Member"}, actor=AO, limit=20)}
+		self.assertIsNone(after[OFFICER]["disabled_reason"])  # once the duty is revoked and unused, they are choosable again
 		self.assertTrue(self.appoint(roster)["ok"])
 		self.assertIn(OFFICER, [m["member_user"] for m in appointment.roster(frappe.db.get_value("Bid Opening Case", {"tender": self.name}, "name"))])
 
@@ -65,5 +71,5 @@ class TestIntakeDutyAndOpening(OpeningCase):
 	def test_the_boundary_is_crossed_only_when_the_opening_starts(self):
 		self.prepared()
 		self.assertFalse(security_matching.opening_crossed(self.name))
-		frappe.db.set_value("Bid Opening Case", {"tender": self.name}, "started_at", "2027-06-12 11:00:12")
+		frappe.db.set_value("Bid Opening Case", {"tender": self.name}, "started_at", W("2027-06-12 11:00:12"))
 		self.assertTrue(security_matching.opening_crossed(self.name))

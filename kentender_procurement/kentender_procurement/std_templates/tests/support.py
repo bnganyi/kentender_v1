@@ -12,6 +12,7 @@ audit event a test created; this bench has no per-test rollback.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import os
 import shutil
@@ -105,7 +106,7 @@ def make_test_package(
 		gates_path = root / "05_review/release_gates.json"
 		doc = json.loads(gates_path.read_text(encoding="utf-8"))
 		for row in doc["gates"]:
-			row.update({"result": "Passed", "checked_by": "test", "checked_at": "2026-09-26", "evidence_refs": row["evidence_refs"] or ["test"]})
+			row.update({"result": "Passed", "checked_by": "test", "checked_at": W("2026-09-26"), "evidence_refs": row["evidence_refs"] or ["test"]})
 		gates_path.write_text(pretty_json(doc), encoding="utf-8")
 	reseal(root)
 	if mutate:
@@ -124,7 +125,7 @@ def make_test_package(
 			"manifest_digest": manifest_digest,
 			"decision": decision,
 			"decided_by": "test release owner",
-			"decided_at": "2026-09-26",
+			"decided_at": W("2026-09-26"),
 			"decision_record": "Test decision.",
 		}
 		(root / bundle.OWNER_DECISION_PATH).write_text(pretty_json(owner), encoding="utf-8")

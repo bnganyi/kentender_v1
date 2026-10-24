@@ -8,6 +8,8 @@ Submission uses (BDS01-IMP-006/011; BDS01-AC-004/005)."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from unittest import mock
 
@@ -75,7 +77,7 @@ class TestAccountRead(AccountsCase):
 		self.assertEqual((active["next_step"]["kind"], active["next_step"]["headline"], markers(active)), ("done", "The supplier account is ready.", ["done", "done", "done"]))
 		self.assertEqual(active["notice_contacts"], [{"email": "tenders@afyadigital.example", "status": "Verified"}])
 		self.assertEqual(active["status"], {"label": "Active", "tone": "live"})
-		self.assertEqual([(p["person"], p["responsibility"], p["effective_period"]) for p in active["people"]], [("Mary Wanjiku", "Authorised Signatory", "From 18 May 2027")])
+		self.assertEqual([(p["person"], p["responsibility"], p["effective_period"]) for p in active["people"]], [("Mary Wanjiku", "Authorised Signatory", f"From {ad.d_short('2027-05-18')}")])
 		self.assertEqual(active["allowed_actions"], ["edit_organisation", "edit_business_profile", "add_evidence", "add_person"])
 		text = json.dumps(active).lower()
 		for word in FORBIDDEN_WORDS:
@@ -93,11 +95,11 @@ class TestAccountRead(AccountsCase):
 
 	def test_suspended_waits_on_the_named_support_officer_with_no_self_activation(self):
 		org = self.active_account()
-		self.at("2027-05-19 08:00:00")
+		self.at(W("2027-05-19 08:00:00"))
 		access.suspend_supplier_account(organisation=org, reason="Reported misuse of the account.", expected_version=frappe.db.get_value("Supplier Organisation", org, "record_version"), idempotency_key=key(), user=AMINA)
 		account = read.get_supplier_account(user=MARY)
 		step = account["next_step"]
-		self.assertEqual((step["kind"], step["headline"], step["holder"]["people"], step["since"]["display"]), ("waiting", "Supplier Account support officer Amina Yusuf is reviewing suspended access.", ["Amina Yusuf"], "19 May 2027, 08:00 EAT"))
+		self.assertEqual((step["kind"], step["headline"], step["holder"]["people"], step["since"]["display"]), ("waiting", "Supplier Account support officer Amina Yusuf is reviewing suspended access.", ["Amina Yusuf"], f"{ad.dt_eat('2027-05-19 08:00:00')}"))
 		self.assertEqual((markers(account), step["fixes"], step["primary_action"]), (["done", "done", "blocked"], [], ""))
 		# BDS-DES-04-SUSPENDED: receipts stay readable and support is one link away; nothing reactivates
 		self.assertEqual([link["label"] for link in account["links"]], ["View receipts", "Supplier support"])
@@ -110,16 +112,16 @@ class TestAccountRead(AccountsCase):
 class TestEvidenceAndEditor(AccountsCase):
 	def test_evidence_is_account_only_and_shows_expiry_and_scan_state(self):
 		org = self.active_account()
-		ok = evidence.upload_account_evidence(organisation=org, evidence_type="Reservation evidence", filename="agpo-youth.pdf", content=PDF, reference="AGPO-Y-2026-04172", valid_until="2027-06-30", title="Youth reservation evidence", idempotency_key=key(), user=MARY)
+		ok = evidence.upload_account_evidence(organisation=org, evidence_type="Reservation evidence", filename="agpo-youth.pdf", content=PDF, reference="AGPO-Y-2026-04172", valid_until=W("2027-06-30"), title="Youth reservation evidence", idempotency_key=key(), user=MARY)
 		self.assertEqual(ok["status"], "Available")
 		with mock.patch("kentender_core.services.file_integrity.scanner_result", return_value="Not scanned — no scanner configured"):
-			unscanned = evidence.upload_account_evidence(organisation=org, evidence_type="Tax compliance certificate", filename="tcc.pdf", content=PDF, reference="P051234567X", valid_until="2027-12-31", idempotency_key=key(), user=MARY)
+			unscanned = evidence.upload_account_evidence(organisation=org, evidence_type="Tax compliance certificate", filename="tcc.pdf", content=PDF, reference="P051234567X", valid_until=W("2027-12-31"), idempotency_key=key(), user=MARY)
 		self.assertEqual(unscanned["status"], "Not scanned")
 		bad = evidence.upload_account_evidence(organisation=org, evidence_type="Other", filename="notes.docx", content=b"PK\x03\x04", idempotency_key=key(), user=MARY)
 		self.assertEqual((bad["code"], bad["errors"]), ("BDS_EVIDENCE_REJECTED", {"file": "Upload a PDF, PNG or JPEG file."}))
-		self.at("2027-07-01 09:00:00")
+		self.at(W("2027-07-01 09:00:00"))
 		rows = {r["reference"]: r for r in read.get_supplier_account(user=MARY)["evidence"]}
-		self.assertEqual((rows["AGPO-Y-2026-04172"]["label"], rows["AGPO-Y-2026-04172"]["valid_until"], rows["AGPO-Y-2026-04172"]["status"]), ("Youth reservation evidence", "30 Jun 2027", "Expired"))
+		self.assertEqual((rows["AGPO-Y-2026-04172"]["label"], rows["AGPO-Y-2026-04172"]["valid_until"], rows["AGPO-Y-2026-04172"]["status"]), ("Youth reservation evidence", f"{ad.d_short('2027-06-30')}", "Expired"))
 		self.assertEqual(rows["P051234567X"]["status"], "Not scanned")
 		download = evidence.get_account_evidence_file(organisation=org, evidence=ok["evidence"], user=MARY)
 		self.assertEqual((download["file_name"], download["content"]), ("agpo-youth.pdf", PDF))

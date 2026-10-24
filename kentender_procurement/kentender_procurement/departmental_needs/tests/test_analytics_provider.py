@@ -16,6 +16,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from datetime import datetime
 from typing import Any
 
@@ -104,7 +105,7 @@ class TestNeedsAnalytics(IntegrationTestCase):
 				"doctype": "Departmental Need Revision", "need_revision_id": f"{reference}-V{number_}", "departmental_need": need.name, "revision_number": number_,
 				"revision_status": status, "title": text, "description": "Procure and implement the analytics fixture requirement.",
 				"expected_operational_result": "The department can operate the tested capability.", "indicative_quantity": 1, "unit": "Each",
-				"required_by_date": "2027-12-31", "fixture_namespace": NS,
+				"required_by_date": F("2027-12-31"), "fixture_namespace": NS,
 			}).insert(ignore_permissions=True).name)
 		accepted = names[0] if revision_status == "Accepted" else None
 		frappe.db.set_value("Departmental Need", need.name, {"owner": AUTHOR_DH, "current_revision": names[-1], "current_accepted_revision": accepted}, update_modified=False)

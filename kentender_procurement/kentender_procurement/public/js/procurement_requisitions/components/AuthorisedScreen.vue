@@ -46,6 +46,28 @@
 		<DecisionChain :rows="view.decision_chain || []" style="margin-bottom: var(--kt-space-6)" />
 
 		<ReviewSections :sections="leading" />
+		<!-- REQ-CHG-001 v1.20 §13.15 — the recovery of the unused allowance and funding after the Tender was cancelled; server words, permitted rows only -->
+		<section v-if="recovery" style="margin: var(--kt-space-3) 0 var(--kt-space-6)" data-testid="req-resource-recovery" :data-status="recovery.status">
+			<CardTitle :title="recovery.title" icon="wallet" />
+			<p style="margin: 0 0 6px"><span class="kt-status" :class="recoveryTone" data-testid="req-resource-recovery-label">{{ recovery.label }}</span></p>
+			<p class="kt-muted" style="font-size: 13px; margin: 0 0 8px" data-testid="req-resource-recovery-explanation">{{ recovery.explanation }}</p>
+			<Notice v-if="recovery.reason" tone="warning"><span data-testid="req-resource-recovery-reason">{{ recovery.reason }}</span></Notice>
+			<table v-if="(recovery.rows || []).length" class="table" data-testid="req-resource-recovery-rows">
+				<thead><tr><th>Source</th><th>Quantity</th><th class="is-num">Value</th><th v-if="recovery.status === 'Completed'">Allowance restored</th><th v-if="recovery.status === 'Completed'" class="is-num">Funding released</th></tr></thead>
+				<tbody>
+					<tr v-for="row in recovery.rows" :key="row.key"><td>{{ row.source }}</td><td>{{ row.quantity }}</td><td class="is-num">{{ row.value }}</td><td v-if="recovery.status === 'Completed'">{{ row.restored }}</td><td v-if="recovery.status === 'Completed'" class="is-num">{{ row.released }}</td></tr>
+				</tbody>
+			</table>
+			<p v-if="recovery.partial_view" class="kt-muted" style="font-size: 12px; margin: 6px 0 0">Only the sources of your department are shown.</p>
+			<div v-if="recovery.next_step" class="req-actions" style="justify-content: flex-end; margin-top: var(--kt-space-3)">
+				<button type="button" class="btn btn-primary" data-testid="req-resource-recovery-next" @click="ctx.goPath(recovery.next_step.route)">{{ recovery.next_step.label }}</button>
+			</div>
+			<Disclosure v-if="(recovery.technical || []).length" title="Technical details" testid="req-resource-recovery-technical">
+				<div class="kt-meta-row req-facts" style="flex-wrap: wrap">
+					<div v-for="item in recovery.technical" :key="item.label"><span class="kt-label">{{ item.label }}</span><span class="kt-meta-value" style="font-size: 13px">{{ item.value }}</span></div>
+				</div>
+			</Disclosure>
+		</section>
 		<section v-if="(view.reservations || []).length" style="margin: var(--kt-space-3) 0 var(--kt-space-6)">
 			<CardTitle title="Funding reservations" icon="wallet" />
 			<table class="table" data-testid="req-reservations">
@@ -103,6 +125,8 @@ const props = defineProps({ view: { type: Object, required: true } });
 const ctx = useReq();
 const busy = computed(() => ctx.pending.value);
 const actions = computed(() => props.view.actions || {});
+const recovery = computed(() => props.view.cancellation_recovery || null);
+const recoveryTone = computed(() => ({ Completed: "is-live", "Needs attention": "is-critical" }[(recovery.value || {}).status] || "is-attention"));
 
 // Funding reservations sit after Request summary (REQ-DES-10 note).
 const split = computed(() => {

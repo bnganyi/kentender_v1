@@ -6,7 +6,7 @@ published or cancelled Tender:
 
 - prepare its content-free opening case if it has none (PrepareOpeningCase);
 - follow an effective addendum's new deadline until the box closes;
-- close the case as Not held when Tenders cancelled the Tender before Start;
+- take up a cancelled Tender through Tenders' delivery of its TenderCancelled event (Not held before Start, a partial closure after it);
 - after the deadline, attach the sealed close (ReceiveClosedBox);
 - record members whose presence lapsed;
 - after the deadline and before Start, open an Opening access support
@@ -53,12 +53,12 @@ def sweep_tender(tender: str) -> dict[str, int]:
 			return out
 		out["prepared"] += int(case.prepare_opening_case(tender=tender)["prepared"])
 	if facts["cancelled"]:
-		out["not_held"] += int(not_held.consume_tender_cancellation(tender=tender)["consumed"])
-		reference = (facts["cancellation"] or {}).get("reference")
-		if reference:
-			from kentender_procurement.bid_opening.services import cancellation
-
-			cancellation.close_cancelled_opening(tender=tender, cancellation_reference=reference)
+		# TPR-CHG-001 v0.24 §7.6: the existing event reaches Bid Opening through Tenders' delivery ledger, retried from the same event; the sweep is the
+		# retry when the cancelling request died before it could deliver, and the one that gives a Tender cancelled before the ledger existed its rows.
+		before = records.case_for(tender) and frappe.db.get_value(records.CASE, records.case_for(tender), "state")
+		opening_seam.deliver_pending_cancellation(tender)
+		after = records.case_for(tender) and frappe.db.get_value(records.CASE, records.case_for(tender), "state")
+		out["not_held"] += int(before != after and after in ("Not held", "Cancelled after start"))
 		return out
 	case.refresh_deadline(tender)
 	out["received"] += int(close_intake.receive_closed_box(tender=tender).get("received", False))

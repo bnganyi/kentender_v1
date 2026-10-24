@@ -61,6 +61,9 @@ SUBJECT_NOT_ACTOR = {
 	("kentender_core.api.responsibility_api", "grant_responsibility", "user"),
 	("kentender_core.api.responsibility_api", "update_scheduled_responsibility", "user"),
 	("kentender_core.api.responsibility_api", "preview_responsibility_assignment", "user"),
+	# System setup, Staff home units: `user` is the staff member whose home unit is being set. The actor is the session
+	# user, who must be a configuration administrator (`require_configuration_administrator` in the service).
+	("kentender_core.api.staff_home_unit_api", "set_staff_home_unit", "user"),
 	# Bid Opening: `made_by` is the speaker the Secretary records a ceremony comment for (an observer or
 	# a bidder's representative), a label on the record. The actor is the session user, checked by `_call`.
 	("kentender_procurement.bid_opening.api", "record_comment_for_evaluation", "made_by"),

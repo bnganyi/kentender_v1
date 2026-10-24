@@ -1,0 +1,226 @@
+{
+ "actions": {
+  "Approve change": {
+   "dialog": "approve",
+   "do": "dialog"
+  },
+  "Decline": {
+   "dialog": "decline",
+   "do": "dialog"
+  },
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_quantity_change_f",
+ "d": "D34",
+ "dialogs": {
+  "approve": {
+   "args": {
+    "change": 1,
+    "decision": "Approve"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractChange",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Approve change"
+  },
+  "decline": {
+   "args": {
+    "change": 1,
+    "decision": "Decline"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractChange",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Decline change"
+  },
+  "return": {
+   "args": {
+    "change": 1,
+    "decision": "Return"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractChange",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Supplier request 1"
+ ],
+ "id": "D34-A",
+ "name": "Quantity variation",
+ "next": {
+  "h": "Decide the quantity change.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Approve change",
+ "page": "record",
+ "ref": "CM-TEST-test_a_quantity_change_f",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "",
+      "Current",
+      "Proposed"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Quantity",
+       "10",
+       "11"
+      ],
+      [
+       "Total",
+       "KES 1,000,000",
+       "KES 1,100,000"
+      ],
+      [
+       "Cumulative change",
+       "\u2014",
+       "10%"
+      ]
+     ]
+    }
+   ],
+   "t": "Comparison"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Technical review",
+       "Peter Mugo: Supported at the unchanged rate"
+      ],
+      [
+       "Source and legal basis",
+       "Faith Atieno: Supported at the unchanged rate"
+      ],
+      [
+       "Funding confirmation",
+       "Brian Wafula: Supported at the unchanged rate (QTY-01)"
+      ],
+      [
+       "Funding",
+       "KES 100,000 additional on RSV-DEMO-1"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Review"
+  }
+ ],
+ "s2": [
+  "Decline",
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review quantity change",
+ "version": 18
+}

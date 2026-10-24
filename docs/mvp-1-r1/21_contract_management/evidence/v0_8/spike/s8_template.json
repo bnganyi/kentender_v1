@@ -1,0 +1,88 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S8.master_asset_retrievable_and_verifiable",
+   "path": "02_master/complete_tender.html",
+   "role": "Document master",
+   "size": 202976,
+   "recorded_size": 202976,
+   "recorded_sha256": "97213079bb5cabcf3a0dfcb0142cab5a5c90fe1654ac30080e2839205f037789",
+   "recomputed_sha256": "97213079bb5cabcf3a0dfcb0142cab5a5c90fe1654ac30080e2839205f037789",
+   "digest_matches": true
+  },
+  {
+   "step": "S8.stable_anchors_in_the_master",
+   "element_ids": 25,
+   "ids": [
+    "tender-document",
+    "decl-reservation",
+    "qualification-requirements",
+    "form-of-tender",
+    "decl-form-of-tender",
+    "decl-citd",
+    "decl-sd1",
+    "decl-sd2",
+    "decl-code-of-ethics",
+    "form-tenderer-information",
+    "decl-cbq",
+    "form-jv-members",
+    "schedule-price-goods",
+    "schedule-price-services",
+    "form-tender-security",
+    "form-manufacturer-authorisation",
+    "form-technical-compliance",
+    "form-related-services-confirmation",
+    "form-acceptance-confirmation",
+    "schedule-goods",
+    "schedule-related-services",
+    "schedule-related-services",
+    "schedule-technical",
+    "schedule-warranty-support",
+    "schedule-acceptance"
+   ],
+   "form_4_has_an_id": false,
+   "gcc_scc_anchors": []
+  },
+  {
+   "step": "S8.form_no_4_by_its_heading",
+   "found": true,
+   "bytes": 3170,
+   "blank_fields": 15,
+   "template_placeholders": [
+    "procuring_entity.address",
+    "procuring_entity.name",
+    "tender.reference",
+    "tender.title"
+   ],
+   "incorporated_documents_listed": 8,
+   "witness_lines": 2,
+   "instruction_text_present": true,
+   "starts": " Form No. 4 - Contract Agreement To be completed by the successful Tenderer after contract award, in accordance with the instructions indica",
+   "ends": "NED ON _______________________ on behalf of the Supplier By _______________________ in the capacity of _______________________ In the presence of _______________________ "
+  },
+  {
+   "step": "S8.missing_heading_would_fail_visibly",
+   "fails_when_absent": true
+  },
+  {
+   "step": "S8.html_generation_is_byte_reproducible",
+   "sha_a": "0efa7f5e2b16e2961210fd5a08c858bd911b4050d95750544625e3ede0206024",
+   "sha_b": "0efa7f5e2b16e2961210fd5a08c858bd911b4050d95750544625e3ede0206024",
+   "identical": true
+  },
+  {
+   "step": "S8.pdf_generation_through_the_existing_path",
+   "bytes": 22830,
+   "sha_a": "e512c9d20d3ecc48ab0b56b855094bcc79c069eb36bb395e288b92251e65dedd",
+   "sha_b": "e512c9d20d3ecc48ab0b56b855094bcc79c069eb36bb395e288b92251e65dedd",
+   "identical": true,
+   "differing_metadata": []
+  }
+ ]
+}

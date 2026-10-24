@@ -33,7 +33,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr
 
-from kentender_procurement.award.services import checks, clock, decision, guards, issues, notices, notify, profile, records, restrictions, sources, state
+from kentender_procurement.award.services import checks, clock, decision, guards, issue_worker, issues, notices, notify, profile, records, restrictions, sources, state
 from kentender_procurement.award.services.errors import fail, invalid
 
 REPORT_CORRECTION = "Report correction"
@@ -177,7 +177,7 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 			records.update(d, notice_batch=batch.name, notices_authorised=1)
 			for i in issues.open_issues(doc, subtype=REVISED_TREATMENT):
 				issues.resolve(i, disposition="Owner correction confirmed", reason="The revised notices were authorised.", evidence=batch.name, user=user)
-			notices.issue(state.reload(doc), batch, actor=user)
+			issue_worker.request(state.reload(doc), batch, actor=user)
 			result.update(decision=d.name, batch=batch.name)
 		else:
 			guards.stage(doc, "Decision")
@@ -205,7 +205,7 @@ def record(*, award: str, outcome: str, reason: str = "", next_action: str = "",
 					batch = notices.prepare_batch(doc, d, kind="Revised")
 					notices.authorise(batch, user)
 					records.update(d, notice_batch=batch.name, notices_authorised=1)
-					notices.issue(state.reload(doc), batch, actor=user)
+					issue_worker.request(state.reload(doc), batch, actor=user)
 					result["batch"] = batch.name
 				else:
 					issues.open_issue(doc, source_event=f"revised-treatment:{d.name}", issue_type="Rules and notice audience", subtype=REVISED_TREATMENT,

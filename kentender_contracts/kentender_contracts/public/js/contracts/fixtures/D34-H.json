@@ -1,0 +1,110 @@
+{
+ "actions": {
+  "View amendment": {
+   "do": "route",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "agreement",
+    "amendment",
+    "1"
+   ]
+  },
+  "View update status": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_quantity_change_f",
+ "d": "D34",
+ "dialogs": {},
+ "ev": [],
+ "id": "D34-H",
+ "name": "Quantity variation",
+ "next": {
+  "h": "Restore contract operation",
+  "k": "wait",
+  "s": "Daniel Otieno; assigned 2 Jul 2025, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_quantity_change_f",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Operative quantity",
+       "11"
+      ],
+      [
+       "Budget adjustment",
+       "Pending"
+      ],
+      [
+       "Order update",
+       "Done"
+      ],
+      [
+       "New spending",
+       "Held for the changed quantity"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Change"
+  }
+ ],
+ "s2": [
+  "View update status",
+  "View amendment"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "history"
+   ]
+  }
+ ],
+ "title": "Contract change recorded",
+ "version": 21
+}

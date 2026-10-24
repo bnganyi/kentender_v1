@@ -25,6 +25,7 @@ The repository root is `frappe-bench/apps/kentender_v1/`. It is a container repo
 - `kentender_budget`
 - `kentender_procurement`
 - `kentender_suppliers`
+- `kentender_contracts`
 - `kentender_governance`
 - `kentender_compliance`
 - `kentender_stores`
@@ -38,7 +39,7 @@ Primary dependency direction:
 
 `core -> strategy -> budget -> procurement -> stores -> assets`
 
-`suppliers`, `governance`, `compliance`, `integrations`, and `transparency` are side applications that consume published interfaces. `transparency` is read-only/publication-oriented; `integrations` adapts external systems and does not own business rules.
+`contracts` (Contract Management, CM-CHG-001) is a side application that depends only on `kentender_core` and ERPNext and runs without the tendering apps; Award, Budget and supplier accounts reach it through published hooks and guarded adapters, and it never imports their code or reads their tables. `suppliers`, `governance`, `compliance`, `integrations`, and `transparency` are side applications that consume published interfaces. `transparency` is read-only/publication-oriented; `integrations` adapts external systems and does not own business rules.
 
 Rules:
 
@@ -296,6 +297,53 @@ Every table that can grow is paged with the one shared pager. Never build a page
 - **Adopted (6 Oct 2026).** Departmental Needs; Procurement Requisitions (server-paged); Tenders; Evaluation; Award tasks; Procurement Planning (the departmental plans, an annual plan's purchases and ready requirements, a departmental plan's requirements); Procurement meetings (server-paged: the pager replaced "Show more"); Bid portal (Available tenders, My bids, Receipt history); Tender security receipts; Budget (a version's lines and its funding activity); Strategy (plans and the reader's own work); System setup (user responsibilities).
 - **Deliberately not paged.** Detail-page tables (a bid opening's register of bids, criteria, evidence, history and timelines), Budget's five-line preview, Technical search (a handful of matches for a reference), and small bounded catalogues (Fiscal years, Procuring entities, Contexts, STD template releases). Legacy Stitch/Civic Ledger tables and Analytics' own register are outside this system.
 - **Still browser-paged where the server could page.** Every adopter except Requisitions and Meetings pages in the browser over the rows the server already returns. A list that can really pass about 100 rows (Tenders, bid-portal lists, Planning purchases, Budget activity) should move to server paging with `page_of` when its volume warrants it; the pager and its contract do not change.
+
+
+### 6.12 Record picker
+
+Any choice of **one person or one record from a list that can grow beyond about a dozen entries** uses the shared picker: a search field that opens a list of matches, searched on the server. Never build a dropdown, a typed list or a search box for such a choice, and never send the whole list to the browser. Approved by the Project Owner on 13 October 2026; the plan and its owner decisions are `docs/mvp-1-r1/00_common/KenTender_Shared_Record_Picker_Plan_v0_1.md`, the board is `docs/mvp-1-r1/00_common/record_picker_design/`, and the behaviour is the clause in `KenTender_KT-STD-001_Record_Picker_Amendment_Proposal_v0_1.md`.
+
+- **What the reader gets.** One field with a search icon. Before typing, a list in up to three headed parts: **Your department** (people sharing the reader's home unit), **Recent** (the last five they chose from this source), **Everyone else**; a list that is only everyone else has no heading. Typing searches by word start, ignoring case and accents, after a quarter of a second, and ranks a whole login first, then a name that starts with the text, then a word of the name, then the detail. At most 20 rows, with "Showing 20 of 143. Keep typing to narrow." A row that cannot be chosen is listed greyed with the command's own reason. Keyboard: Down/Up/Home/End move over the choosable rows, Enter chooses, Esc closes the list and only the list, Tab chooses nothing. The list floats over the page (fixed, placed from the field, sized to the room), so no dialog or table clips it.
+- **Adding several (approved 14 Oct 2026, board item 14).** `inline` + `multiple` is a second mode: the list stays open in the page beside the field, a choice **adds** the person (`@add`, the whole row) and leaves the list, the search text and the reader's place where they were, and a person the screen has already added (`staged` ids) stays in the list greyed "Added to this list". Enter adds the active row and moves to the next choosable one with the search text selected; Esc clears the search first, and only a second Esc reaches the dialog; the live region says "Added Amina Hassan. 3 to appoint." (`staged-noun`). The screen keeps the staged list and each person's own role. Reference: `bid_opening/components/AddMemberDialog.vue`. Because each person has a role, a source cannot let one role decide the whole list: it hands each row's role-specific facts back in `extra` (`bid_opening.committee_member` sends `independent_blocker`).
+- **It is never the authority.** The command that saves the choice checks again. A source calls **the same function the command calls** for eligibility and returns that function's own words as `disabled_reason`; every source ships a **parity test** (every row without a reason is accepted by the command, every row with one is refused in the same words). Reference: `bid_opening/tests/test_bop_pre_session.py` `test_the_picker_and_the_command_agree_about_every_person`.
+- **Where the code lives.** Server: `kentender_core/services/record_picker.py` (registry, clamping, matching, ranking, the near/recent/rest order, `matches`/`words`/`people_near`/`person_row` helpers) and `api/record_picker.py` (`search`, `resolve`; no actor argument, the actor is the session user; an unknown source or a refusing provider is a masked not-found). Client: `kt_industry/components/RecordPicker.vue`, published as `kentender_core.industry.mountRecordPicker(el, opts)` by `kt_industry_record_picker.bundle.js` (a mount helper with its own Vue instance, for the reason in §6.6). Each app reaches it through its one wrapper `public/js/record_picker_shared/RecordPickerHost.vue` (`v-model`, `@change` carrying the whole row); `record_picker_shared.spec.js` fails if the four copies differ, so edit them together. Styling is Part 12 of the generated `kt_industry_tokens.css` (`PICKER` in `scripts/industry_design_css.py`): change it there and regenerate, never in the CSS file.
+
+#### Add a source (the module that owns the choice)
+
+1. Write the provider in the owning module (`services/picker_sources.py`): `provider(*, query, context, actor, limit)` returns rows `{id, label, detail?, keywords?, near?, disabled_reason?, extra?}`. Apply the actor's permission and scope **inside the provider**; raise `frappe.DoesNotExistError` (or `PermissionError`) for someone who may not ask. `extra` is a few short text facts handed back to the screen when the row is chosen (a department, a designation); a screen never parses `detail`.
+2. Register it: return it from `sources()` (`key` is `<module>.<what is chosen>`, `noun`, optional `plural`, `near_title`, `rest_title`, `hint`, and `match`) and list `sources` under `kt_record_picker_sources` in the app's `hooks.py`. `match: "core"` for a bounded set (up to about 2,000 rows; core matches and ranks what the provider returns); `match: "provider"` to filter in the database (return `(rows, total)`, apply `record_picker.matches` to what you fetched, and supply a `resolver(*, ids, context, actor)`).
+3. Make `disabled_reason` the command's own refusal (a public function both call), and write the parity test.
+4. `record_picker.check_sources()` (run by `test_record_picker`) fails a badly shaped or duplicate source.
+
+#### Use it on a screen
+
+1. Add `"kt_industry_record_picker.bundle.js"` to the page controller's `bundles` list and import the same bundle in the module's Vitest setup file. Without it `mountRecordPicker` is undefined: the host logs one console error and draws nothing.
+2. Where the `<select>` was: `<RecordPickerHost v-model="user" input-id="…" source="…" :context="{ tender, role, taken }" :value-label="picked.label" @change="onPicked" />`. Keep the label (and any `extra`) from `@change`; **bind to your own selection**, never to a server echo (§6.4). `null` is "nothing chosen"; with `all-label`, `""` is the "All …" choice, a choice distinct from nothing.
+3. What a provider decides can depend on the screen's context (the committee role, who is already drafted), so pass it in `context`; a change of context re-checks the saved choice and emits `@change` again with its `disabled_reason`, which the screen treats as a blocker. Set the **dependent field first** where one decides who may be listed (role, then person).
+4. Show a failed save as the screen's inline field error (§6.10). Register the departure for a screen that has a board (`tests/ui/fidelity/departures/<module>.js`).
+5. Tests: stub `frappe.call` (or pass `fetch`) in a component spec; in Playwright use `tests/ui/helpers/picker.ts` `pickRecord(page, "#input-id", "login or name")` (an exact login ranks first, so a login finds exactly that person) and `pickerReason`. An `aria-disabled` row cannot be clicked by Playwright (assert it with `click({ force: true })`).
+
+#### When not to use it
+
+A fixed vocabulary (a role, a status, a country, units of measure) or a choice from a handful already on the screen (who reads the minutes aloud) stays a plain select. `kentender_core.tests.test_record_picker_guard` fails when a `.vue` `<select>` is fed from a list named like people, users, members, holders, candidates, units or departments and is not on its `ALLOWED` register with a reason; it also fails on a stale entry.
+
+#### Sources (13 Oct 2026)
+
+| Key | Owner | Gate | Used by |
+|---|---|---|---|
+| `bid_opening.committee_member` | `kentender_procurement` | the Accounting Officer, on a Tender whose committee can still be named | Add members (inline, multiple; the table's people in `context.taken`) and Replace member (the absent member's role in `context.role`) |
+| `bid_evaluation.committee_member` | `kentender_procurement` | the Accounting Officer | the appointment form's rows and a replacement (`mode`: `appoint`/`replace`) |
+| `bid_evaluation.secretary` | `kentender_procurement` | the Head of Procurement Function | Delegate secretary duties |
+| `core.responsible_user` | `kentender_core` | an assignment administrator | System setup, Assign responsibility: User |
+| `core.organisation_unit` | `kentender_core` | an assignment administrator | Assign responsibility: Organisation Unit; the register's unit filter |
+| `core.home_unit` | `kentender_core` | a configuration administrator | Set home unit |
+| `core.reference_unit` | `kentender_core` | read access to Organisation Unit | a Budget line's "Available to" (in a table row) |
+
+A person the tender-security duty bars from a committee is listed unavailable like anyone else, with the command's own reason (an Accounting Officer who cannot find a person with no explanation is worse than one shown a refusal). The duty's conflict is the first refusal the commands give, so it is the reason shown. The Add members dialog appoints everyone in one action. If the appointment is refused, its people stay in the page's committee table (with the refused person's reason on their row) and the screen keeps that table in the tab's session storage, so a refresh does not lose it; it is dropped once the committee is appointed.
+
+#### Known limits
+
+A `match: "core"` provider does its eligibility check for every candidate on each search: about 10 ms a person for `bid_opening.committee_member` (measured on the test site, 35 people: 0.36 s), so it is comfortable to a few hundred people and slow past a thousand. Move such a source to `match: "provider"` with a database prefilter when its volume warrants it. The first search after a cold start can take several seconds. Frappe's own `rate_limit` limits by IP or by a request argument, never by signed-in user, so it is not applied; the client waits a quarter of a second between searches and a response never carries more than 50 rows.
 
 ## 7. Test-driven development
 

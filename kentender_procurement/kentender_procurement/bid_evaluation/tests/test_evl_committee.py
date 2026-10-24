@@ -16,15 +16,16 @@ unless its instruction permits them."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from typing import Any
 
 import frappe
 
 from kentender_procurement.bid_evaluation.services import (
-	appointment, declaration, my_work_provider, preparation, records, roster, secretary,
+	appointment, declaration, my_work_provider, people, picker_sources, preparation, records, roster, secretary,
 )
-from kentender_procurement.bid_evaluation.services.errors import EvaluationError
+from kentender_procurement.bid_evaluation.services.errors import EvaluationError, Guards
 from kentender_procurement.bid_evaluation.tests.support import (
 	AO, CHAIR, HOP, MEMBER, MEMBER_2, OUTSIDER, REPLACEMENT, SECRETARY, EvaluationCase,
 )
@@ -89,9 +90,46 @@ class TestAppointment(CommitteeCase):
 		refused = opening_appointment.validate(self.name, members)
 		self.assertEqual(refused["code"], "BOP_INDEPENDENT_MEMBER_REQUIRED", refused)
 		self.assertEqual(refused["errors"], {MEMBER: "Appointed to evaluate this Tender."})
-		self.assertTrue(next(c for c in opening_appointment.candidates(self.name) if c["user"] == MEMBER)["involved"])
+		# the opening is complete by now, so the picker itself offers nothing; its rows say the same thing the command says
+		listed = {r["id"]: r for r in opening_appointment.picker_rows(self.name, AO, "Independent member", set())}
+		self.assertEqual(listed[MEMBER]["disabled_reason"], opening_appointment.EVALUATING_TEXT)  # listed unavailable as the independent member
 		# someone outside the evaluation committee is still acceptable
 		self.assertIsNone(opening_appointment.validate(self.name, opening_roster))
+
+	def listed(self, mode: str = "appoint", taken: tuple[str, ...] = (), actor: str = AO) -> dict[str, dict]:
+		rows = picker_sources.committee_members(query="", context={"tender_reference": self.reference, "mode": mode, "taken": list(taken)}, actor=actor, limit=20)
+		return {r["id"]: r for r in rows}
+
+	def test_the_picker_and_the_appointment_command_agree_about_every_person(self):
+		"""The list is only a pick list: every person it offers, the command accepts; every one it lists unavailable, the command
+		refuses in the same words (and the tender-security duty's conflict is named only by the command, never in the list)."""
+		self.prepared()  # the opening committee, with its independent member
+		rows = self.listed()
+		doc = frappe.get_doc("Evaluation Case", self.evaluation)
+		self.assertTrue(any(r["disabled_reason"] for r in rows.values()) and any(not r["disabled_reason"] for r in rows.values()))
+		for user, row in rows.items():
+			checks = Guards()
+			appointment._rows(doc, [{"user": user, "capacity": "Member"}], checks)
+			said = next((r["detail"].get("explanation") for r in checks.reasons), None)
+			self.assertEqual(said, row["disabled_reason"], f"{user}: the command said {said!r}, the picker {row['disabled_reason']!r}")
+		self.assertEqual(rows[INDEPENDENT]["disabled_reason"], "{} was the independent member of this tender's bid opening.".format(people.full_name(INDEPENDENT)))
+		self.assertNotIn(DAVID, rows)  # a supplier account is not staff: not offered at all
+		self.assertEqual(rows[CHAIR]["extra"].keys(), {"designation", "department"})
+		for user, row in self.listed(taken=(CHAIR,)).items():
+			if user == CHAIR:
+				self.assertEqual(row["disabled_reason"], "{} is listed more than once.".format(people.full_name(CHAIR)))
+
+	def test_a_replacement_lists_the_current_committee_as_already_on_it(self):
+		self.evl_appoint()
+		rows = self.listed("replace")
+		for user in (CHAIR, MEMBER, MEMBER_2):
+			self.assertEqual(rows[user]["disabled_reason"], "{} is already on this committee.".format(people.full_name(user)))
+		self.assertIsNone(rows[REPLACEMENT]["disabled_reason"])
+
+	def test_only_the_accounting_officer_may_ask_the_picker_who_to_appoint(self):
+		for user in (HOP, CHAIR, "Administrator"):
+			with self.assertRaises(frappe.DoesNotExistError):
+				self.listed(actor=user)
 
 	def test_only_the_accounting_officer_appoints(self):
 		with self.assertRaises(frappe.DoesNotExistError):
@@ -144,7 +182,8 @@ class TestAppointment(CommitteeCase):
 		self.addCleanup(lambda: (frappe.delete_doc("User", email, force=True, ignore_permissions=True), frappe.db.commit()))
 		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": email}))
 		self.assertEqual(people.internal(email), (True, ""))
-		self.assertIn(email, [r["user"] for r in reads.candidates(tender_reference=self.reference, user=AO, purpose="committee")])
+		offered = picker_sources.committee_members(query="", context={"tender_reference": self.reference, "mode": "appoint"}, actor=AO, limit=20)
+		self.assertIn(email, [r["id"] for r in offered])
 		self.assertFalse(people.internal(DAVID)[0])
 		self.assertFalse(people.internal("Administrator")[0])
 
@@ -252,7 +291,7 @@ class TestSuspensionScope(CommitteeCase):
 		doc = frappe.get_doc("Evaluation Case", self.evaluation)
 		event = records.insert(frappe.get_doc({
 			"doctype": "Evaluation Source Event", "source_event_id": f"{doc.name}-SE-T1", "evaluation_case": doc.name, "event_key": f"test-suspend:{doc.name}",
-			"source": "Simulation", "kind": "Suspension", "instruction_reference": "MOH/REVIEW/TEST-PREP", "authority": AO, "received_at": "2027-06-11 08:55:00",
+			"source": "Simulation", "kind": "Suspension", "instruction_reference": "MOH/REVIEW/TEST-PREP", "authority": AO, "received_at": W("2027-06-11 08:55:00"),
 			"permitted_actions_json": json.dumps(permitted),
 		}))
 		records.bump(doc, suspended=1, suspension_event=event.name)

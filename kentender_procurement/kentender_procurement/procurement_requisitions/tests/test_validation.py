@@ -7,6 +7,7 @@ tasks, exact arithmetic; pure and DB-free (REQ19-AC-008, -014, -015, -016,
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import unittest
 
@@ -16,11 +17,11 @@ from kentender_procurement.procurement_requisitions.services import catalogue, v
 def eligibility(**overrides):
 	base = {
 		"contributing_org_unit_ids": ["OU-HRMD", "OU-DHI"],
-		"plan_completion_boundary": "2027-12-31",
-		"estimated_completion_date": "2027-09-24",
+		"plan_completion_boundary": W("2027-12-31"),
+		"estimated_completion_date": W("2027-09-24"),
 		"sources": [
-			{"plan_item_line_id": "PSA-1", "remaining_quantity": "100", "remaining_amount": "20000000.00", "required_by_date": "2027-12-31"},
-			{"plan_item_line_id": "PSA-2", "remaining_quantity": "150", "remaining_amount": "30000000.00", "required_by_date": "2027-12-31"},
+			{"plan_item_line_id": "PSA-1", "remaining_quantity": "100", "remaining_amount": "20000000.00", "required_by_date": F("2027-12-31")},
+			{"plan_item_line_id": "PSA-2", "remaining_quantity": "150", "remaining_amount": "30000000.00", "required_by_date": F("2027-12-31")},
 		],
 	}
 	base.update(overrides)
@@ -30,7 +31,7 @@ def eligibility(**overrides):
 def version(**overrides):
 	base = {
 		"requirement_title": "Clinical training and deployment laptops for digital health rollout",
-		"delivery_location": "LOC-AFYA", "latest_delivery_date": "2027-09-30", "related_services_required": False,
+		"delivery_location": "LOC-AFYA", "latest_delivery_date": W("2027-09-30"), "related_services_required": False,
 		"drawdown_lines": [
 			{"drawdown_line_id": "DL-001", "plan_item_line_id": "PSA-1", "contributing_org_unit": "OU-HRMD", "department_name": "Human Resources Management and Development", "requested_quantity": "100", "requested_value": "20000000.00"},
 			{"drawdown_line_id": "DL-002", "plan_item_line_id": "PSA-2", "contributing_org_unit": "OU-DHI", "department_name": "Digital Health", "requested_quantity": "150", "requested_value": "30000000.00"},
@@ -148,11 +149,11 @@ class TestExactReconciliation(unittest.TestCase):
 
 class TestDates(unittest.TestCase):
 	def test_after_the_plan_boundary_blocks(self):
-		report = validation.validate(version=version(latest_delivery_date="2028-01-01"), package=package(), eligibility=eligibility())
+		report = validation.validate(version=version(latest_delivery_date=W("2028-01-01")), package=package(), eligibility=eligibility())
 		self.assertIn("DATE_BEYOND_BOUNDARY", [f["code"] for f in report["findings"]])
 
 	def test_the_estimate_only_warns(self):
-		report = validation.validate(version=version(latest_delivery_date="2027-12-31"), package=package(), eligibility=eligibility())
+		report = validation.validate(version=version(latest_delivery_date=W("2027-12-31")), package=package(), eligibility=eligibility())
 		self.assertEqual(report["blocking_count"], 0)
 		self.assertEqual(report["warning_count"], 1)
 
@@ -186,7 +187,7 @@ class TestRequirementsRules(unittest.TestCase):
 		self.assertIn("DUPLICATE_CHARACTERISTIC", [f["code"] for f in report["findings"]])
 
 	def test_integration_service_is_unsupported(self):
-		service = {"service_requirement_id": "SVC-001", "service_type": "Configuration", "required_result": "Integrate the laptops with the national HMIS", "quantity_or_coverage": "All", "completion_date": "2027-09-30", "acceptance_evidence": "Test result"}
+		service = {"service_requirement_id": "SVC-001", "service_type": "Configuration", "required_result": "Integrate the laptops with the national HMIS", "quantity_or_coverage": "All", "completion_date": W("2027-09-30"), "acceptance_evidence": "Test result"}
 		report = validation.validate(version=version(related_services_required=True), package=package(related_services=[service]), eligibility=eligibility())
 		self.assertIn("SERVICE_COMPLEX", [f["code"] for f in report["findings"]])
 
@@ -271,7 +272,7 @@ class TestRestrictiveWordingEverywhereItReachesTheTender(unittest.TestCase):
 		self.assertTrue(self._blocked(report, "acceptance", rows[0]["acceptance_requirement_id"]))
 
 	def test_a_related_service_result_and_coverage(self):
-		service = {"service_requirement_id": "SVC-001", "service_type": "Installation", "required_result": "Install and enrol all laptops in Microsoft Intune", "quantity_or_coverage": "All units", "completion_date": "2027-09-30", "acceptance_evidence": "Test result"}
+		service = {"service_requirement_id": "SVC-001", "service_type": "Installation", "required_result": "Install and enrol all laptops in Microsoft Intune", "quantity_or_coverage": "All units", "completion_date": W("2027-09-30"), "acceptance_evidence": "Test result"}
 		report = validation.validate(version=version(related_services_required=True), package=package(related_services=[service]), eligibility=eligibility())
 		self.assertFalse(self._blocked(report, "service", "SVC-001"))
 		service = {**service, "required_result": "Install the Dell Command Update tool on all laptops"}

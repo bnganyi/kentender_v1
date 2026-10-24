@@ -23,7 +23,9 @@ EVENT_REVOKED = "ProcurementRequisitionRevoked.v1"
 EVENT_WITHDRAWN = "ProcurementRequisitionWithdrawn.v1"
 EVENT_CORRECTION_REQUESTED = "ProcurementRequisitionCorrectionRequested"
 EVENT_OUTCOME_RECEIVED = "PlanItemCorrectionOutcomeReceived"
-EVENT_TYPES = frozenset({EVENT_AUTHORISED, EVENT_REVOKED, EVENT_WITHDRAWN, EVENT_CORRECTION_REQUESTED, EVENT_OUTCOME_RECEIVED})
+# REQ-CHG-001 v1.20 §10.3 — one ordered outcome per committed status revision of a cancellation recovery.
+EVENT_RECOVERY_OUTCOME = "CancellationResourceRecoveryOutcome.v1"
+EVENT_TYPES = frozenset({EVENT_AUTHORISED, EVENT_REVOKED, EVENT_WITHDRAWN, EVENT_CORRECTION_REQUESTED, EVENT_OUTCOME_RECEIVED, EVENT_RECOVERY_OUTCOME})
 
 
 def _next_sequence(requisition: str) -> int:
@@ -31,12 +33,12 @@ def _next_sequence(requisition: str) -> int:
 	return last + 1
 
 
-def _append(*, requisition: str, event_type: str, requisition_version: str, payload: dict[str, Any]) -> str:
+def _append(*, requisition: str, event_type: str, requisition_version: str, payload: dict[str, Any], event_id: str = "") -> str:
 	if event_type not in EVENT_TYPES:
 		raise ValueError(f"{event_type!r} is not a registered Requisition event type.")
 	doc = envelope.insert(frappe.get_doc(
 		{
-			"doctype": "Requisition Event", "event_id": f"RQE-{uuid4().hex.upper()}",
+			"doctype": "Requisition Event", "event_id": event_id or f"RQE-{uuid4().hex.upper()}",
 			"event_type": event_type, "requisition": requisition,
 			"sequence": _next_sequence(requisition), "requisition_version": requisition_version,
 			"occurred_at": now_datetime(), "payload": json.dumps(payload, default=str), "status": "Pending",
@@ -55,6 +57,16 @@ def publish_authorised(*, requisition: str, requisition_version: str, handoff_pa
 
 def publish_revoked(*, requisition: str, requisition_version: str, reason: str) -> str:
 	return _append(requisition=requisition, event_type=EVENT_REVOKED, requisition_version=requisition_version, payload={"reason": reason})
+
+
+def publish_recovery_outcome(*, requisition: str, requisition_version: str, recovery: str, status_revision: int, payload: dict[str, Any]) -> str:
+	"""One outcome per committed status revision, ordered by the Requisition's sequence. The event id is the recovery and the revision, so a
+	repeat of the same revision is the same event (a consumer ignores duplicates and older revisions) and never a second business effect."""
+	event_id = f"{recovery}:{int(status_revision)}"
+	existing = frappe.db.get_value("Requisition Event", {"event_id": event_id}, "name", for_update=True)
+	if existing:
+		return existing
+	return _append(requisition=requisition, event_type=EVENT_RECOVERY_OUTCOME, requisition_version=requisition_version, payload=payload, event_id=event_id)
 
 
 def acknowledge(*, consumer: str, event_ids: list[str]) -> int:

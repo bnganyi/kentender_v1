@@ -10,6 +10,7 @@ A20. Test stand-ins only (owner decision OD-C)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import hashlib
 import json
 
@@ -196,7 +197,7 @@ class TestEmpty(CeremonyCase):
 		from kentender_procurement.bid_submission.tests.support import MARY
 
 		receipt = self.submit(self.signed())["receipt_reference"]
-		self.at("2027-05-31 09:00:00")
+		self.at(W("2027-05-31 09:00:00"))
 		withdrawn = withdrawal.withdraw_bid(bid_reference=self.bid, receipt_reference=receipt, reason="Our pricing changed after the addendum was issued.",
 			confirmed=True, expected_record_version=self.version(), idempotency_key=key(), user=MARY)
 		self.assertTrue(withdrawn["ok"], withdrawn)

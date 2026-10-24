@@ -6,6 +6,7 @@ answers only on a test environment, and its verdicts name the simulation."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -38,8 +39,8 @@ class TestSimulation(IntegrationTestCase):
 
 		self.switch(1)
 		self.addCleanup(simulation.reset_controls)
-		self.assertTrue(test_clock.set_instant("2027-05-19 10:00:00"))
-		self.assertEqual(str(test_clock.current_instant()), "2027-05-19 10:00:00")
+		self.assertTrue(test_clock.set_instant(W("2027-05-19 10:00:00")))
+		self.assertEqual(str(test_clock.current_instant()), W("2027-05-19 10:00:00"))
 		self.assertTrue(test_clock.set_instant(None))
 		self.assertIsNone(test_clock.current_instant())
 
@@ -47,7 +48,7 @@ class TestSimulation(IntegrationTestCase):
 		from kentender_core.services import test_clock
 
 		self.switch(0)
-		self.assertFalse(test_clock.set_instant("2027-05-19 10:00:00"))
+		self.assertFalse(test_clock.set_instant(W("2027-05-19 10:00:00")))
 		self.assertIsNone(test_clock.current_instant())
 
 

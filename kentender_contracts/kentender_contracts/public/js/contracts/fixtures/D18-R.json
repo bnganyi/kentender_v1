@@ -1,0 +1,94 @@
+{
+ "actions": {},
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D18",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D18-R",
+ "name": "Supplier invoice",
+ "next": {
+  "h": "Waiting for the invoice review.",
+  "k": "wait",
+  "s": "David Otieno; assigned 2 Jul 2027, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Status",
+       "Needs review"
+      ],
+      [
+       "Received",
+       "2 Jul 2027, 09:00 EAT"
+      ],
+      [
+       "Claimed",
+       "9 laptop computer \u00b7 KES 900,000"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "strong",
+     "v": "9 claimed but only 8 accepted and unclaimed."
+    }
+   ],
+   "t": "Invoice AFYA-1"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Submit invoice",
+ "version": 19
+}

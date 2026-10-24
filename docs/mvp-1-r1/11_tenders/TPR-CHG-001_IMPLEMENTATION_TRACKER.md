@@ -7,6 +7,38 @@
 **Started:** 26 September 2026.
 **v0.16 cycle (proposed, not approved):** 2 October 2026, built on approved v0.15 (`KenTender_TPR-CHG-001_Tenders_v0_16.md`). See *Work register: TPR-CHG-001 v0.16* and the TPR16 rows in the acceptance and re-implementation maps; follow-ups FU-37–FU-45. Uncommitted work at the time of writing is stated in the register.
 
+## Cancellation recovery (TPR-CHG-001 v0.21, carried by v0.22) — built 17–18 October 2026, code complete on the test site
+
+**Authority:** `KenTender_TPR-CHG-001_Tenders_v0_22.md` (approved by the Project Owner, 17 October 2026; the approval record is in its control table). Built across Planning, Requisitions, Tenders and Budget as one coordinated change. The shared acceptance map is `98_work_progress/CANCELLATION_RECOVERY_EVIDENCE_MAP.md`; the Project Owner's running list is `98_work_progress/CANCELLATION_RECOVERY_OWNER_ATTENTION.md`.
+
+**What is and is not claimed:** the development site was migrated on 18 October 2026 on the Project Owner's instruction and the two cancelled demo Tenders (TND-MOH-2026-007 and -012) were recovered there; nothing is released to production and nothing was pushed. Approval closed no row. Every status below is from a run on `kentender-test.local`, except the dev migration and recovery recorded in the evidence map.
+
+| Row | Item | Status | Evidence |
+|---|---|---|---|
+| TPRCR-01 | The Accounting Officer's cancellation registers the recovery in the same transaction; a registration failure is `TND_MUST_FIX` and nothing is cancelled | Done | `test_open_period` (also asserts a recommendation registers nothing) |
+| TPRCR-02 | The `TenderCancelled` event carries the exact consumed lineage | Done | integration |
+| TPRCR-03 | `GetTenderCancellationRecoveryBasis.v1` through a core seam: positive only when cancelled by exactly this cancellation, Award reports no notice issued or in progress and no package, and the lineage is the registered one; unknown is unavailable | Done | integration (unavailable, notice, package, lineage cases) |
+| TPRCR-04 | The cancel screen and the cancelled detail: the section in the three statuses, the new warning wording and "A replacement purchase requires a new requisition" | Done | vitest 16 (4 new), `tnd-cancel.spec.ts` 4 of 4, `tnd-cancel-recovery.spec.ts` 2 of 2, `tenders-fidelity.spec.ts` 14 of 14 |
+| TPRCR-05 | Cancellation after the submission period has closed | Not built | Still blocked, as Bid Opening says; recorded for the owner |
+| TPRCR-06 | Document wording | Open | TPR section 10.13 still carries the old "Cancellation is final… does not restore the Requisition" sentence; the build follows section 5.7A |
+
+### Acceptance rows
+
+| ID | Required result (short) | Status | Evidence |
+|---|---|---|---|
+| TPR-CR-AC-001 | Exact unused set restored and released once; scope lock kept | Done | Integration CR-F01 and CR-F02, last test of each; owner half in the module named below |
+| TPR-CR-AC-002 | No recovery effect without authority; Pending vs Needs attention | Done | Unavailable → Pending; notice, package, converted, other-reason, different lineage → Needs attention; a recommendation registers nothing. No test cancels a failed opening and looks |
+| TPR-CR-AC-003 | Crash before / after commit; cancellation stays committed | Partial | Failures on either owner leg commit neither effect; same key returns the recorded result; the Tender stays Cancelled. A killed process was not simulated |
+| TPR-CR-AC-004 | Retry, new key, changed payload; sequential draws | Done | Replay, new key, changed facts, two sequential draws, two workers on two real connections |
+| TPR-CR-AC-005 | Notice, contract or conversion racing cancellation or recovery | Partial | Recovery against a Budget conversion in both orders on two real connections. Cancellation against Award issuing a notice is ordered by the lock order and Award's re-read under lock, but was not raced |
+| TPR-CR-AC-006 | Legacy and partial effects never blanket-recovered | Done | Legacy module 6 of 6 and the run on the canonical data (rolled back); no screen offers a restore or release |
+| TPR-CR-AC-007 | Block only affected sources; no automatic replacement | Done | Held source refuses a second authorisation; unrelated item usable; completion creates no replacement |
+| TPR-CR-AC-008 | Fresh requisition on restored scope; scope lock never reset | Done | Fresh Requisition with fresh identities; successor Plan tests; old recovery replay leaves new balances alone |
+| TPR-CR-AC-009 | Notices, Bid Opening and sealed evidence unaffected | Done | The compliance task stays open and the notices due while a recovery is Pending or Needs attention (integration module); Bid Opening and Award suites unchanged and green; recovery reads show permitted rows only |
+| TPR-CR-AC-010 | Closed-year recovery is historical only | Partial | Budget records a closed Budget's context and gives no spending authority. No Requisitions-to-Planning run against a closed year |
+| TPR-CR-AC-011 | Owner screens show the three statuses and a real next step | Done | Python reads for each owner, component tests, and the browser spec on Tenders, Requisitions, Planning (progress and Plan Item) and Budget. Budget Needs attention and browser back/forward not walked |
+| TPR-CR-AC-012 | Single-source and shared-Budget-Line on real adapters | Done | Integration CR-F01 (single source) and CR-F02 (two sources, one shared Budget Line) on the real adapters |
+
 ## Tracker rules
 
 1. Rows are permanent. Vocabulary: `Planned` / `In progress` / `Blocked` / `Partial` / `Done`. Reversed decisions are struck through in place.

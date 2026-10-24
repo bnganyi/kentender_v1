@@ -528,7 +528,7 @@ function nodePath(node) {
 										<p v-if="detailErrors.effective_to" class="kt-field-error">{{ detailErrors.effective_to }}</p>
 									</div>
 								</div>
-								<div class="kt-field-hint">{{ __("These dates must fall within the plan period. Approval makes this version current immediately; a future start date prevents approval until that date.") }}</div>
+								<div class="kt-field-hint">{{ __("These dates must fall within the plan period. Approval makes this version current from its start date; until then the current version stays in use.") }}</div>
 							</div>
 							<div style="display: flex; justify-content: flex-end; gap: 10.2px; margin-top: 13.6px">
 								<button type="button" class="btn btn-secondary" :disabled="acting || !detailsDirty" data-testid="str-save-plan-details" @click="savePlanDetails">{{ __("Save plan details") }}</button>

@@ -57,6 +57,7 @@
 								<span v-if="c.chip" class="kt-status" :class="c.cls">{{ c.t }}</span>
 								<button v-if="c.btn" type="button" class="btn btn-ghost" style="padding:4px 10px;font-size:13px" :disabled="pending" :data-testid="c.testid || undefined" @click="emit('action', { action: c.action, args: c.args })">{{ c.t }}</button>
 								<div v-if="c.inp" class="input" style="padding:6px 10px">{{ c.t }}</div>
+								<RecordPickerHost v-if="c.pick" :model-value="form[c.name] || null" :value-label="form[`${c.name}__label`] || c.label" :source="c.source" :context="c.context" :input-id="c.testid || undefined" noun="person" plural="people" placeholder="Search by name, role or department" :invalid="!!c.err" @change="pick(c.name, $event)" />
 								<select v-if="c.sel" class="input" style="padding:6px 10px" :value="form[c.name] ?? ''" :data-testid="c.testid || undefined" @change="set(c.name, $event.target.value)"><option v-for="o in c.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
 								<input v-if="c.field" class="input" style="padding:6px 10px" :value="form[c.name] ?? ''" :data-testid="c.testid || undefined" @input="set(c.name, $event.target.value)">
 								<p v-if="c.err" style="margin:4px 0 0;font-size:13px;font-weight:600;color:var(--kt-status-critical)">{{ c.err }}</p>
@@ -88,6 +89,7 @@
 				<input v-if="b.isInput" :id="`evl-${b.name}`" class="input" :type="b.type || 'text'" :placeholder="b.ph || ''" :readonly="!b.name" :value="valueOf(b)" :data-testid="`evl-field-${b.name || bi}`" @input="set(b.name, $event.target.value)">
 				<textarea v-if="b.isArea" :id="`evl-${b.name}`" class="input" :rows="b.rowsN" :readonly="!b.name" :value="valueOf(b)" :data-testid="`evl-field-${b.name || bi}`" @input="set(b.name, $event.target.value)"></textarea>
 				<div v-if="b.isSelect && !b.options" class="input" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>{{ b.value }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div>
+				<RecordPickerHost v-if="b.isPicker" :model-value="form[b.name] || null" :value-label="form[`${b.name}__label`] || b.chosenLabel" :source="b.source" :context="b.context" :input-id="`evl-${b.name}`" noun="person" plural="people" placeholder="Search by name, role or department" :invalid="!!(b.hasErr || fieldError(b))" @change="pick(b.name, $event)" />
 				<select v-if="b.isSelect && b.options" :id="`evl-${b.name}`" class="input" :value="valueOf(b)" :data-testid="`evl-field-${b.name}`" @change="set(b.name, $event.target.value)"><option v-for="o in b.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
 				<div v-if="b.isFile" class="input" style="display:flex;align-items:center;gap:12px"><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:13px" @click="emit('action', { action: b.action || 'choose-file', args: { name: b.name } })">Choose file</button><span style="color:var(--kt-color-neutral-700)" :data-testid="`evl-file-${b.name}`">{{ b.fileName || "No file chosen" }}</span></div>
 				<p v-if="b.hasHelp" style="margin:0;font-size:13px;color:var(--kt-color-neutral-700)">{{ b.help }}</p>
@@ -201,6 +203,7 @@ import { computed, reactive, watch } from "vue";
 import { norm } from "./model.js";
 import EvlGuidance from "./EvlGuidance.vue";
 import TablePagerHost from "../../pager_shared/TablePagerHost.vue";
+import RecordPickerHost from "../../record_picker_shared/RecordPickerHost.vue";
 import { pagedView, resetPaged, setPagedPage, setPagedSize } from "../../pager_shared/usePagedRows.js";
 
 const props = defineProps({
@@ -234,5 +237,11 @@ const checked = (b, o) => (b.name && props.form[b.name] !== undefined ? props.fo
 const fieldError = (b) => (b.name && props.fields ? props.fields[b.name] || "" : "");
 function set(name, value) {
 	if (name) emit("update", { name, value });
+}
+// A person chosen in the picker: their id, and the name and facts the screen shows beside them (a cleared choice clears all three).
+function pick(name, row) {
+	set(name, row ? row.id : "");
+	set(`${name}__label`, row ? row.label : "");
+	set(`${name}__extra`, row ? row.extra || {} : undefined);
 }
 </script>

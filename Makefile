@@ -5,8 +5,8 @@
 
 SITE ?= kentender.midas.com
 BENCH_ROOT ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../..)
-KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
-INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
+KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_contracts,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
+INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_contracts kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
 .PHONY: dev-mail-start dev-mail-stop dev-mail-status fidelity-affected test-site-rebuild test-site-serve test-site-stop test-site-status ui-awd-personas-gate home-preflight ui-home-fidelity-gate ui-home-gate ui-home-release-evidence-gate analytics-preflight analytics-services-gate ui-analytics-fidelity-gate ovs-preflight ovs-services-gateseed-ovs-register-branch seed-ovs-register-branch-restore awd-preflight awd-services-gate awd-seams-gate awd-leakage-gate awd-dead-end-gate ui-awd-fidelity-gate ui-awd-opinion-gate ui-awd-decision-gate ui-awd-notices-gate ui-awd-supplier-gate ui-awd-wait-gate ui-awd-debrief-gate ui-awd-correction-gate ui-awd-demo-walk-gate ui-awd-gate ui-awd-release-evidence-gate seed-awd-profiles seed-awd-profile seed-awd-profile-restore bop-preflight bop-profiles-gate seed-bop-profiles seed-bop-profile seed-bop-profile-restore ui-bop-prepare-gate ui-bop-before-start-gate ui-bop-ceremony-gate ui-bop-pauses-gate ui-bop-no-bids-gate ui-bop-record-gate ui-bop-completed-gate ui-bop-fidelity-gate ui-bop-public-gate ui-bop-release-evidence-gate ui-bop-gate prc-services-gate bop-services-gate bop-dead-end-gate bop-leakage-gate bds-preflight bds-retirement-gate bds-portal-gate bds-services-gate supplier-accounts-services-gate ui-bds-portal-skeleton-gate ui-bds-security-intake-gate ui-bds-overview-gate ui-bds-account-gate ui-bds-my-bids-gate ui-bds-workspace-gate ui-bds-documents-gate ui-bds-company-gate ui-bds-requirements-price-gate ui-bds-review-gate ui-bds-submit-gate ui-bds-receipt-changes-gate ui-bds-bound-release-gate ui-bds-acceptance-gaps-gate ui-bds-common-states-gate ui-bds-fidelity-gate ui-bds-release-evidence-gate bds-dead-end-gate ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-preflight tenders-schema-gate tenders-services-gate tenders-dead-end-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate vue-desk-bundle-translation-binding-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
@@ -26,6 +26,10 @@ help:
 	@echo "  make smoke SITE=$(SITE) — guard_frappe_scaffolds + Wave 0 smoke tests"
 	@echo "  make vue-desk-bundle-translation-binding-gate SITE=$(SITE) — every Vue-in-Desk bundle using __() in templates binds globalProperties.__ (AGENTS.md §6.1)"
 	@echo "  make fidelity-affected [SINCE=<ref>] [RUN=1] — which design-match gates this change makes due (only modules whose screens, styles or boards changed); RUN=1 runs them on the test site (AGENTS.md §8)"
+	@echo "  make cancellation-recovery-run SITE=<site> — carry out the cancelled-Tender recoveries that are due, once (the scheduler does this on a site that runs one; the development site does not)"
+	@echo "  make cancellation-recovery-inventory SITE=<site> — read-only: each cancelled Tender before the recovery existed, with its class (eligible, converted, released for another reason, unmapped…)"
+	@echo "  make cancellation-recovery-reconcile SITE=<site> [APPLY=1] — dry run of registering the recovery for those Tenders; APPLY=1 writes it. A second run creates nothing"
+	@echo "  make cancellation-recovery-gate — Planning, Requisitions (real adapters, concurrency, legacy) and Budget recovery tests, one module at a time on the TEST site"
 	@echo "  make test-site-rebuild — overwrite the SEPARATE test site (kentender-test.local) with a copy of the dev site; run tests there, not on the dev site (AGENTS.md §8.2)"
 	@echo "  make test-site-serve|test-site-stop|test-site-status — the test site's own server on :8001 and whether its canonical world is intact"
 	@echo "  scripts/test-site.sh run <command> — run any test command (npx playwright test ..., make <gate>) against the test site"
@@ -117,9 +121,9 @@ help:
 	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
 	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
 	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
-	@echo "  make seed-canonical SITE=$(SITE) [CURRENT=award] [NEXT=annual_plan] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed the two-year world read as at 18 Jun 2027 10:00 and validate, draining the background-job queue before and after. CURRENT moves FY 2026/27, the year carried out (annual_plan → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; its Active plan is always built); NEXT moves FY 2027/28, the year being prepared (none → budget → needs → departmental_plans → annual_plan). Default: the full world. THROUGH= (retired) still maps onto them (OPEN=True is retired: the portfolio's tablets Tender is open past the as-at instant); WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
+	@echo "  make seed-canonical SITE=$(SITE) [CURRENT=contracts|award|…] [NEXT=] [ANCHOR=real|story] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed the three-year world around the real date and validate, draining the background-job queue before and after. ANCHOR=real (the default) first stores the world's anchor, the latest Friday 10:00 not later than the run's start (a rebuild or a wipe takes a new one; a plain rerun keeps it), so no simulated instant is later than the real clock; ANCHOR=story is the v0.7 world read as at 18 Jun 2027 10:00. Year 0, the closed financial year, is always built; CURRENT moves Year 1, the year that contains the anchor and is carried out (annual_plan → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award → contracts; its Active plan is always built; `contracts` (the default on an anchored world with Contract Management installed, else award) carries the closed year's three awards through Contract Management: one paid, one in delivery, one waiting for its agreement — SEED-002 v0.10 §A8.1); NEXT moves Year 2, the year being prepared (none → budget → needs → departmental_plans → annual_plan), and by default goes as far as the anchor allows (Departmental Needs in October). THROUGH= (retired) still maps onto them; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
-	@echo "  make seed-canonical-validate SITE=$(SITE) [CURRENT=award] [NEXT=annual_plan] — validate the canonical world only"
+	@echo "  make seed-canonical-validate SITE=$(SITE) [CURRENT=contracts|award|…] [NEXT=…] — validate the canonical world only (CURRENT empty: the stage the world was seeded to)"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
@@ -220,6 +224,7 @@ symlinks:
 	ln -sfn kentender_v1/kentender_assets kentender_assets && \
 	ln -sfn kentender_v1/kentender_integrations kentender_integrations && \
 	ln -sfn kentender_v1/kentender_suppliers kentender_suppliers && \
+	ln -sfn kentender_v1/kentender_contracts kentender_contracts && \
 	ln -sfn kentender_v1/kentender_transparency kentender_transparency && \
 	ln -sfn kentender_v1/apps/frontend frontend
 
@@ -234,6 +239,7 @@ validate-links:
 	@test -L $(BENCH_ROOT)/apps/kentender_assets
 	@test -L $(BENCH_ROOT)/apps/kentender_integrations
 	@test -L $(BENCH_ROOT)/apps/kentender_suppliers
+	@test -L $(BENCH_ROOT)/apps/kentender_contracts
 	@test -L $(BENCH_ROOT)/apps/kentender_transparency
 	@test -L $(BENCH_ROOT)/apps/frontend
 	@echo "All KenTender symlinks look present."
@@ -263,8 +269,6 @@ ui-strategy-fidelity-gate:
 
 # Shared Stitch Desk chrome baseline — must stay green for Strategy/Budget/… canvases.
 ui-stitch-desk-chrome-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
-		--module kentender_core.tests.test_stitch_desk_chrome_gate
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/stitch-desk/stitch-desk-chrome.spec.ts
 
@@ -309,7 +313,7 @@ artboard-provenance-gate:
 # lives outside tests/ui/smoke/design-fidelity/ and was being missed.
 ui-structure-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-evaluation --project award --project bid-portal --project supplier-account-portal --project tender-security-receipts --project home --project analytics
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-evaluation --project award --project contracts --project bid-portal --project supplier-account-portal --project tender-security-receipts --project home --project analytics
 
 # Visual references. Nothing ran the Departmental Needs baselines before this
 # target existed, so a spacing or rule change could only be found by a person
@@ -1236,10 +1240,11 @@ vue-desk-bundle-translation-binding-gate:
 
 # Canonical world (KT-STD-001 §8 + SEED-001): two financial years read as at 18 Jun 2027, 10:00 EAT (two-year seed world,
 # docs/mvp-1-r1/20_seed_data/), each moved by its own control:
-# CURRENT (FY 2026/27, carried out): annual_plan | requisitions | tenders | bid_submission | bid_opening | bid_evaluation | award
+# CURRENT (FY 2026/27, carried out): annual_plan | requisitions | tenders | bid_submission | bid_opening | bid_evaluation | award | contracts
+#   (contracts: the closed year's awards into Contract Management; the default where the app is installed and the world is anchored)
 #   — its budget, Needs, departmental plans and Active, locked Annual Plan are always built (annual_plan).
 # NEXT (FY 2027/28, being prepared): none | budget | needs | departmental_plans | annual_plan — never past an approved plan.
-# Default: the full world, CURRENT=award NEXT=annual_plan. A test site's live pages are left on 18 Jun 2027, 10:00.
+# Default: the full world, CURRENT=contracts (award without Contract Management) NEXT as far as the anchor allows. A test site's live pages are left on 18 Jun 2027, 10:00.
 # THROUGH (the retired single-year ladder: site … planning … award) still maps onto CURRENT/NEXT for one release.
 # bid_submission builds the Tenders stage with the canonical bid's lifecycle interleaved (BDS-CHG-001 v0.8 D19);
 # over a world seeded only through tenders it rebuilds by itself, and it runs only on a test site (the simulated services);
@@ -1257,8 +1262,13 @@ vue-desk-bundle-translation-binding-gate:
 # clear and stop, empty database. Pass RESEED=True to also force the old
 # "wipe then immediately rebuild everything" behaviour. All three must stay
 # Python-literal True/False/None, not JSON true/false/null.
-CURRENT ?= award
-NEXT ?= annual_plan
+# Empty CURRENT lets the seed decide: `contracts` on an anchored world with Contract Management installed, `award` otherwise (kentender_core.seeds.canonical.default_current).
+CURRENT ?=
+# Empty NEXT lets the anchor decide: the furthest prepared-year stage it allows (kentender_core.seeds.calendar.default_next_stage).
+NEXT ?=
+# ANCHOR=real (the default; the development and test sites were reseeded on it on 17 Oct 2026) stores the world's anchor (the latest Friday 10:00 not later than the run's start) in its own process first, so
+# no instant is later than the real clock (SEED-002 v0.9); ANCHOR=story is the v0.7 world, read as at 18 Jun 2027 (it clears a stored anchor).
+ANCHOR ?= real
 THROUGH ?=
 WIPE ?= False
 FORCE ?= False
@@ -1311,8 +1321,16 @@ SEED_QUEUE_DRAIN = if node -e "require.resolve('esbuild')" >/dev/null 2>&1; then
 comma := ,
 SEED_YEARS = $(if $(THROUGH),"through": "$(THROUGH)","current": "$(CURRENT)"$(comma) "next_year": "$(NEXT)")
 
+# The anchor is resolved when the seed modules are imported, so it is stored by a process of its own and the seed runs in the next one.
+# A rebuild or a wipe takes a new anchor; a plain rerun keeps the stored one.
+ANCHOR_REAL = $(if $(filter real,$(ANCHOR)),True,False)
+ANCHOR_FRESH = $(if $(filter True,$(REBUILD) $(WIPE)),True,False)
+
 seed-canonical:
 	@$(SEED_QUEUE_DRAIN)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_core.seeds.calendar.prepare \
+		--kwargs '{"anchor": $(ANCHOR_REAL), "fresh": $(ANCHOR_FRESH)}'
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
 		--kwargs '{$(SEED_YEARS), "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True}'
@@ -1422,3 +1440,190 @@ std-release-switch:
 std-templates-gate:
 	cd $(BENCH_ROOT) && for m in test_compiler test_release_vocabulary test_installer test_services test_binding test_bid_work_status; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.std_templates.tests.$$m || exit 1; done
+
+# CM-CHG-001 v0.8 plan Phase 1 (tracker CM8-105). Contract Management's Python gates write real rows (no rollback on this bench), so they
+# run on the test site: `scripts/test-site.sh run make cm-services-gate`. They refuse the dev site and a live browser run.
+# Later gates (seams, native, leakage, dead ends, UI, seeds) are added with the phase that builds them (tracker rule 13).
+.PHONY: cm-preflight cm-services-gate cm-native-gate cm-ui-gate cm-independence-gate cm-seams-gate cm-leakage-gate cm-dead-end-gate seed-cm-profile seed-cm-clean seed-cm-profiles cm-demo-gate cm-persona-gate ui-cm-fidelity-gate cm-regression-gate ui-cm-release-evidence-gate cm-platform-manifest
+CM_SERVICE_MODULES ?= test_cm_import_boundary test_cm_schema test_cm_errors test_cm_records test_cm_intents test_cm_holds test_cm_recovery_matrix test_cm_signing_simulation test_cm_rules test_cm_authority test_cm_audience test_cm_tasks test_cm_workspace test_cm_register_filters test_cm_support test_cm_formation test_cm_funding_revalidation test_cm_formation_rules test_cm_formation_end test_cm_outside_signature test_cm_security test_cm_existing test_cm_award_receiver test_cm_delivery test_cm_appointment test_cm_arrival_exceptions test_cm_inspection test_cm_acceptance test_cm_services test_cm_invoice test_cm_liability test_cm_settlement test_cm_advance test_cm_finance_boards test_cm_issues test_cm_change test_cm_adjustment test_cm_warranty test_cm_security_actions test_cm_termination test_cm_reporting test_cm_change_boards test_cm_obligation_boards test_cm_thread test_cm_boards test_cm_picker test_cm_service_principal test_cm_reservation_authority test_cm_outputs test_cm_date_guard test_cm_completion test_cm_reopen_funding test_cm_completion_boards test_cm_dead_end test_cm_idempotency test_cm_leakage test_cm_adversarial test_cm_navigation test_cm_notifications test_cm_no_test_notices test_cm_publication_tasks test_cm_early_liability test_cm_credit_adjustment test_cm_world_hygiene test_cm_home_provider test_cm_demo_profiles test_cm_runbook test_cm_contract_funding test_cm_whole_chain
+# Core modules Contract Management depends on: the shared signing facade (plan D8).
+CM_CORE_MODULES ?= test_signing_facade
+CM_ONLY_SITE ?= kentender-cm-only.local
+cm-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active; run the Contract Management Python gates after it finishes."; exit 1; fi
+	@if [ "$(SITE)" = "kentender.midas.com" ] && [ -z "$(CM_ALLOW_DEV_SITE)" ]; then echo "Contract Management tests write real rows: run them on the test site (scripts/test-site.sh run make $(MAKECMDGOALS)), not on dev."; exit 1; fi
+
+cm-services-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_SERVICE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+
+# CM-CHG-001 v0.8 plan Phase 10 (tracker CM8-1001..1004, CM-G10). Who may read what and what a read-only reader can never do (per-audience leakage of what the contract carries, the list without a task, the technical and
+# audit readers offered no business action, the adversarial authority scenarios failing without side effects), and no reader stranded (every task names a command the server can run; one contract walked from receipt to
+# a reopened close-out, every person on every stage; every command safe to send twice). Test site only.
+CM_LEAKAGE_MODULES ?= test_cm_audience test_cm_workspace test_cm_leakage test_cm_adversarial
+CM_DEAD_END_MODULES ?= test_cm_dead_end test_cm_idempotency test_cm_holds test_cm_recovery_matrix test_cm_tasks
+cm-leakage-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_LEAKAGE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+
+cm-dead-end-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_DEAD_END_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+
+# CM-CHG-001 v0.8 plan Phase 11 (tracker CM8-1101..1103, CM-G11): Contract Management demonstration profiles, one contract at one stage, on a simulation site only (the test site):
+#   make seed-cm-profile SITE=kentender-test.local PROFILE=ACCEPTED      RECEIVED SIGNING ACTIVE ACCEPTED PAID CHANGE WARRANTY TERMINATION CLOSED
+#   make seed-cm-profiles SITE=kentender-test.local                      build and check every profile once, then clean
+#   make seed-cm-clean SITE=kentender-test.local
+# A profile already in place is left as it is. The canonical seed world stays as it was: a contract exists only from 2 July 2027 and that world is read as at 18 June 2027 (see seeds/demo.py).
+CM_DEMO_WALK_PROFILES ?= SIGNING ACCEPTED CLOSED
+seed-cm-profile: cm-preflight
+	@test -n "$(PROFILE)" || (echo "Name a profile: make seed-cm-profile SITE=... PROFILE=ACCEPTED"; exit 1)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.run --kwargs '{"profile": "$(PROFILE)", "passwords": $(if $(PASSWORDS),True,False)}'
+
+seed-cm-clean:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.clean
+
+seed-cm-profiles: cm-preflight
+	cd $(BENCH_ROOT) && for p in RECEIVED SIGNING ACTIVE ACCEPTED PAID CHANGE WARRANTY TERMINATION CLOSED; do \
+		bench --site $(SITE) execute kentender_contracts.seeds.demo.run --kwargs "{\"profile\": \"$$p\"}" || exit 1; done
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.validate
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.clean
+
+# The demonstration walked in a real browser, one session per person, from the sidebar, My work and the bell: each profile built, walked, cleaned. Test site only: `scripts/test-site.sh run make cm-demo-gate`.
+cm-demo-gate: cm-preflight
+	@status=0; for p in $(CM_DEMO_WALK_PROFILES); do \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.run --kwargs "{\"profile\": \"$$p\", \"passwords\": True}" && \
+		cd $(CURDIR) && scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/cm-demo-walk.spec.ts --workers=1 --retries=0 || status=1; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.clean; done; exit $$status
+
+# CM-CHG-001 v0.8 plan Phase 12 (tracker CM8-1201, CM8-1204): the structural fidelity of every board of the design (compared, or recorded as not compared with its reason: tests/ui/fidelity/departures/contracts.js) and the persona
+# pass as real users on the ACCEPTED profile. Test site only for the pass: `scripts/test-site.sh run make cm-persona-gate`.
+ui-cm-fidelity-gate:
+	npx vitest run --project contracts
+
+cm-persona-gate: cm-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.run --kwargs "{\"profile\": \"ACCEPTED\", \"passwords\": True}"
+	@cd $(CURDIR) && scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/cm-persona-pass.spec.ts --workers=1 --retries=0; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_contracts.seeds.demo.clean; exit $$status
+
+# CM-CHG-001 v0.8 plan Phase 12 (tracker CM8-1206): the one cross-module regression run, at release time. What Contract Management reaches into or changed in another app's world: Award's source and delivery
+# seams, Budget's funding provider, the shared signing facade, the supplier-account provider and Home (which now carries the Contracts module: its structural comparison here, and test_cm_home_provider and the demo
+# walk for the contract rows themselves). Test site only; nothing here is run after a small edit.
+# Home's own browser specs (`make ui-home-gate`) are deliberately not in this gate: they read the canonical world as it was seeded, and a test site whose canonical world has drifted (Tenders, Bid opening and
+# Requisitions rows missing) answers them with its own differences, not Contract Management's. Run them after `make seed-canonical SITE=kentender-test.local REBUILD=True`.
+CM_REGRESSION_AWARD ?= test_awd_delivery test_awd_seams test_awd_integration test_contract_sources
+CM_REGRESSION_BUDGET ?= test_budget_contract_funding_provider test_budget_service_principal test_budget_close_commitment
+cm-regression-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_REGRESSION_AWARD); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CM_REGRESSION_BUDGET); do \
+		bench --site $(SITE) run-tests --app kentender_budget --module kentender_budget.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_suppliers --module kentender_suppliers.supplier_accounts.tests.test_account_read_and_contract
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_signing_facade
+	npx vitest run --project home
+
+# Every Contract Management gate once, in the order that keeps one gate's leftovers out of the next, with each result and its proof level written to artifacts/cm-release-evidence.md (scripts/cm-release-evidence.sh).
+# `scripts/test-site.sh run make ui-cm-release-evidence-gate`; about 70 minutes, under the shared test-site lock (/tmp/kt-test-site.lock) so other work on the site waits. It does not cover Phase 13, which is owner-gated.
+ui-cm-release-evidence-gate:
+	# -o: the script's children (the test server it starts) must not inherit the lock, or the server would keep it after the run
+	flock -o /tmp/kt-test-site.lock env CM_LOCK_HELD=/tmp/kt-test-site.lock scripts/cm-release-evidence.sh
+
+# The versions and commit a result was obtained on (FU-CM-39), kept beside the evidence report. Needs no site.
+cm-platform-manifest:
+	scripts/cm-platform-manifest.sh > artifacts/cm-platform-manifest.md
+	@cat artifacts/cm-platform-manifest.md
+
+# The real owners (proof level L2): Award's provider of the source material through Tenders, Bid Evaluation, site configuration, Supplier Accounts and Budget, the core seams they answer, Budget's funding
+# provider and the principal gateway guard. The canonical award's sources are listed one by one: a source nobody can supply blocks formation, and the report names it and its owner.
+CM_SEAMS_MODULES ?= test_cm_source_availability test_cm_award_receiver
+CORE_SEAM_MODULES ?= test_contract_source_contract test_contract_funding_contract test_contract_reservation_authority
+BUDGET_SEAM_MODULES ?= test_budget_contract_funding_provider test_budget_service_principal test_budget_contract_reservation_authority
+AWARD_SEAM_MODULES ?= test_contract_sources
+cm-seams-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_SEAMS_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CORE_SEAM_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(BUDGET_SEAM_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_budget --module kentender_budget.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(AWARD_SEAM_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+
+# BUD-CHG-001 v1.16 (BUD25-AC-003, -009, -011): the two journeys with the real owners, on the test site only (each script refuses any other site and puts the site back). The first follows the canonical two-source
+# award from the Award owner's verification through Budget's conversion, increase, closure, Additional request and correction (Contract Management stands in for itself: FU-CM-70, FU-CM-72); the second funds a contract signed
+# before KenTender year by year through Contract Management and Budget, both real. Reports: artifacts/bud-v116-canonical-award-journey.md and artifacts/bud-v116-independent-contract-journey.md.
+.PHONY: bud-funding-journeys
+bud-funding-journeys:
+	cd $(BENCH_ROOT)/sites && flock -o /tmp/kt-test-site.lock ../env/bin/python ../apps/kentender_v1/scripts/bud_v116_canonical_award_journey.py ../apps/kentender_v1/artifacts/bud-v116-canonical-award-journey.md
+	cd $(BENCH_ROOT)/sites && flock -o /tmp/kt-test-site.lock ../env/bin/python ../apps/kentender_v1/scripts/bud_v116_independent_contract_journey.py ../apps/kentender_v1/artifacts/bud-v116-independent-contract-journey.md
+
+# Real ERPNext documents (proof level L2): the native adapter, the payment bypass guards (every route, entitlement, maker/approver, a two-process
+# race, a hard-crash recovery) and the configuration readiness check. Test site only; MariaDB only; takes about a minute.
+CM_NATIVE_MODULES ?= test_cm_native test_cm_readiness test_cm_receipt_reconciliation test_cm_claim_race
+cm-native-gate: cm-preflight
+	cd $(BENCH_ROOT) && for m in $(CM_NATIVE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+
+# The Contracts shell (plan Phase 3, tracker CM8-315): the structural fidelity of D-ERR and D-DENIED against their boards (no browser), then the shell in a real browser on
+# the test site (empty workspace under the rail, reload and back/forward, the shared denial, the load error and Retry). Build the bundle first:
+#   (cd $(BENCH_ROOT)/apps/frappe && node esbuild --apps kentender_contracts)   # or ./scripts/bench-with-node.sh build --app kentender_contracts
+cm-ui-gate: cm-preflight
+	npx vitest run --project contracts
+	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/shell.spec.ts --workers=1 --retries=0
+	$(MAKE) cm-ui-world
+	scripts/test-site.sh run npx playwright test tests/ui/smoke/contracts/ordinary-thread.spec.ts tests/ui/smoke/contracts/cm-formation.spec.ts tests/ui/smoke/contracts/cm-existing-contract.spec.ts tests/ui/smoke/contracts/cm-list-filters.spec.ts tests/ui/smoke/contracts/cm-funding.spec.ts tests/ui/smoke/contracts/cm-delivery-acceptance.spec.ts tests/ui/smoke/contracts/cm-invoice-finance.spec.ts tests/ui/smoke/contracts/cm-payment-settlement.spec.ts tests/ui/smoke/contracts/cm-change.spec.ts tests/ui/smoke/contracts/cm-warranty-security.spec.ts tests/ui/smoke/contracts/cm-termination.spec.ts tests/ui/smoke/contracts/cm-reports.spec.ts tests/ui/smoke/contracts/cm-closeout.spec.ts --workers=1 --retries=0; status=$$?; $(MAKE) cm-ui-world-clean; exit $$status
+
+# The people, the ERPNext world and the received Award package the browser specs walk (plan Phase 4): the test site only; the builder refuses any other. Written to artifacts/cm-ui-world.json.
+# Build it, run the specs, clean it: the walk leaves the whole thread in the database until `cm-ui-world-clean`.
+.PHONY: cm-ui-world cm-ui-world-clean
+cm-ui-world:
+	cd $(BENCH_ROOT) && bench --site kentender-test.local execute kentender_contracts.tests.browser_world.build
+
+cm-ui-world-clean:
+	cd $(BENCH_ROOT) && bench --site kentender-test.local execute kentender_contracts.tests.browser_world.clean
+
+# CM-AC-25 / CM-AC-32: the app installs and runs on a site that holds only ERPNext, core, supplier accounts and itself.
+cm-independence-gate: cm-preflight
+	@test -d $(BENCH_ROOT)/sites/$(CM_ONLY_SITE) || (echo "Site $(CM_ONLY_SITE) does not exist yet (tracker CM8-107, FU-CM-38): it needs MariaDB root access to create its database."; exit 1)
+	@apps="$$(cd $(BENCH_ROOT) && bench --site $(CM_ONLY_SITE) list-apps 2>/dev/null | awk '{print $$1}' | sort | tr '\n' ' ')"; \
+	echo "Apps on $(CM_ONLY_SITE): $$apps"; \
+	for forbidden in kentender_strategy kentender_budget kentender_procurement kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency; do \
+		case " $$apps " in *" $$forbidden "*) echo "$$forbidden must not be installed on the independence site"; exit 1;; esac; done
+	cd $(BENCH_ROOT) && bench --site $(CM_ONLY_SITE) migrate
+	cd $(BENCH_ROOT) && for m in $(CM_SERVICE_MODULES); do \
+		bench --site $(CM_ONLY_SITE) run-tests --app kentender_contracts --module kentender_contracts.tests.$$m || exit 1; done
+	cd $(BENCH_ROOT) && for m in $(CM_CORE_MODULES); do \
+		bench --site $(CM_ONLY_SITE) run-tests --app kentender_core --module kentender_core.tests.$$m || exit 1; done
+
+# REQ-CHG-001 v1.20 §9.1D / PLN-CHG-001 v1.32 §5.4.7 / BUD-CHG-001 v1.17 §8.9 — whole-Tender cancellation recovery.
+# The scheduler runs the worker every tick; the development site's scheduler is off and this bench runs no RQ worker (AGENTS.md §8.1), so a
+# recovery shown as Pending there waits for this target (or for a scheduled run). It carries out the recoveries that are due, one transaction each.
+# The reconciliation of Tenders cancelled before this existed is a dry run unless APPLY=1 is given, and the second run creates nothing.
+.PHONY: cancellation-recovery-run cancellation-recovery-inventory cancellation-recovery-reconcile cancellation-recovery-gate
+cancellation-recovery-run:
+	cd $(BENCH_ROOT)/sites && ../env/bin/python -c "import frappe; frappe.init(site='$(SITE)', sites_path='.'); frappe.connect(); \
+	from kentender_procurement.procurement_requisitions.services import recovery_sweep; \
+	print(recovery_sweep.run())"
+
+cancellation-recovery-inventory:
+	cd $(BENCH_ROOT)/sites && ../env/bin/python -c "import frappe, json; frappe.init(site='$(SITE)', sites_path='.'); frappe.connect(); \
+	from kentender_procurement.tenders.services import recovery_reconciliation as r; \
+	print(json.dumps(r.inventory(), indent=1, default=str))"
+
+cancellation-recovery-reconcile:
+	cd $(BENCH_ROOT)/sites && ../env/bin/python -c "import frappe, json; frappe.init(site='$(SITE)', sites_path='.'); frappe.connect(); \
+	from kentender_procurement.tenders.services import recovery_reconciliation as r; \
+	result = r.reconcile(dry_run=not bool('$(APPLY)')); frappe.db.commit() if '$(APPLY)' else None; \
+	print(json.dumps(result, indent=1, default=str))"
+
+# The owner halves and the real-adapter scenario, one module at a time on the TEST site (AGENTS.md §8.2).
+cancellation-recovery-gate:
+	scripts/test-site.sh run bash -c 'cd $(BENCH_ROOT) && for m in \
+		kentender_procurement.procurement_planning.tests.test_cancellation_recovery \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_integration \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_concurrency \
+		kentender_procurement.procurement_requisitions.tests.test_cancellation_recovery_legacy; do \
+		bench --site kentender-test.local run-tests --app kentender_procurement --module $$m || exit 1; done; \
+		bench --site kentender-test.local run-tests --app kentender_budget --module kentender_budget.tests.test_budget_cancellation_release'

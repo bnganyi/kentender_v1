@@ -109,6 +109,17 @@ export const DEPARTURES = {
 			authority: "KT-STD-001 §2.5 modal pattern; the same convention the Departmental Needs dialogs record",
 		},
 	],
+	"BudgetLineDetailScreen#BUD-DES-06B": [
+		{
+			testid: "bud-line-commitments",
+			because:
+				"The board draws a conversion as figures on the reservation and has no list of the commitments charged to the " +
+				"line. The line lists them, each with its contract, where it came from, its status and the amount retained, so a " +
+				"Budget Officer can see a Closed commitment and correct it. It sits below the reservations in the same card style. " +
+				"Found by the browser gate on 18 Oct 2026: the card was built on 16 Oct 2026 and never registered here.",
+			authority: "BUD-CHG-001 v1.16 §11.22 — the commitments charged to a line, of either origin; a Closed one offers Correct commitment to the Budget Officer only",
+		},
+	],
 	"BudgetDetailScreen#BUD-DES-07A-history": VERSION_HISTORY_CARD_TITLE,
 	"BudgetApprovalTaskScreen#BUD-DES-13-history": VERSION_HISTORY_CARD_TITLE,
 };

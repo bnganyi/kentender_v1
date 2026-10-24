@@ -1,0 +1,164 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-ADV-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "An advance the issued terms allow: the claim, the guarantee it rests on, the certified amount and the recovery plan. Its cash is paid and confirmed like any payment; its recovery is set against later invoices.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "advance_no",
+  "claim_reference",
+  "state",
+  "amount",
+  "percent",
+  "clause_json",
+  "guarantee",
+  "recovery_json",
+  "certified_amount",
+  "certifier",
+  "proof_reference",
+  "certified_at",
+  "submitted_by",
+  "received_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "advance_no",
+   "label": "Advance no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "claim_reference",
+   "label": "Claim reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Prepared\nCertified\nPaid\nSuperseded"
+  },
+  {
+   "fieldname": "amount",
+   "label": "Amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "percent",
+   "label": "Percent",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "clause_json",
+   "label": "Clause json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "guarantee",
+   "label": "Guarantee",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Security"
+  },
+  {
+   "fieldname": "recovery_json",
+   "label": "Recovery json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certified_amount",
+   "label": "Certified amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certifier",
+   "label": "Certifier",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proof_reference",
+   "label": "Proof reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certified_at",
+   "label": "Certified at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "label": "Submitted by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Advance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

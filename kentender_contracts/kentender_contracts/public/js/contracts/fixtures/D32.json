@@ -1,0 +1,169 @@
+{
+ "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "Sign final acceptance": {
+   "args": {},
+   "command": "SignFinalContractAcceptance",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_accounting_offi",
+ "d": "D32",
+ "dialogs": {
+  "return": {
+   "args": {
+    "stage": "final acceptance"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractCloseout",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Acceptance report 1",
+  "Warranty history"
+ ],
+ "id": "D32",
+ "name": "Final acceptance",
+ "next": {
+  "h": "Review the final acceptance evidence.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Sign final acceptance",
+ "page": "record",
+ "ref": "CM-TEST-test_the_accounting_offi",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Units accepted",
+       "10"
+      ],
+      [
+       "Initial 10 \u2014 warranty ended",
+       "20 July 2028"
+      ],
+      [
+       "Unresolved completion defects",
+       "None"
+      ],
+      [
+       "Final-acceptance treatment",
+       "The final-acceptance term of the issued conditions"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Completion facts"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "I record final acceptance on 28 July 2028 for the scope identified in the schedule under The final-acceptance term of the issued conditions and the evidence listed. The remaining obligations, if any, are listed below."
+    },
+    {
+     "items": [
+      [
+       "Scope",
+       "Whole contract \u2014 10 laptop computers"
+      ],
+      [
+       "Remaining obligations",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Final acceptance record"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      "Acceptance report 1",
+      "Warranty history"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Evidence"
+  }
+ ],
+ "s2": [
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Final acceptance 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "history"
+   ]
+  }
+ ],
+ "title": "Record final acceptance",
+ "version": 17
+}

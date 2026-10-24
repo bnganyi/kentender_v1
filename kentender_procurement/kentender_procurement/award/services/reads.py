@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, cstr
 
 from kentender_procurement.award.services import (
-	checks, clock, clocks, corrections, eligibility, guards, issues, letters, next_steps, notices, people, profile, records, restrictions, simulation, state, tasks,
+	checks, clock, clocks, corrections, eligibility, funding_allocation, guards, issues, letters, next_steps, notices, people, profile, records, restrictions, simulation, state, tasks,
 )
 
 
@@ -193,6 +193,18 @@ def department_record(doc) -> dict[str, Any]:
 		"notification_status": doc.notification_status if d else ""}
 
 
+def _funding(doc, cycle) -> dict[str, Any] | None:
+	"""The read-only 'Funding sources' disclosure of AWD-CHG-001 v0.7 section 10.4, for the internal record only (supplier notices and the portal never carry it). Not drawn for a closed or cancelled award or while a
+	corrected report is awaited. An owner that cannot answer is the unavailable variant, never an empty table."""
+	if doc.cancelled or doc.stage == "Closed" or (doc.stage == "Opinion" and cycle.awaiting_report):
+		return None
+	try:
+		return funding_allocation.disclosure(doc)
+	except Exception:  # noqa: BLE001 - the screen still opens
+		frappe.log_error(title="Award funding disclosure unavailable")
+		return {"state": "Unavailable", "message": "Funding details are unavailable. The system will retry."}
+
+
 def record(*, award: str, user: str) -> dict[str, Any]:
 	if not award or not frappe.db.exists(records.CASE, award):
 		raise frappe.DoesNotExistError("Not found")
@@ -232,5 +244,6 @@ def record(*, award: str, user: str) -> dict[str, Any]:
 		"revised": corrections.revised_preview(doc) if (doc.stage in ("Decision", "Notices") and (cint(c.number) > 1)) else None,
 		"eligibility": {k: {"met": x["met"]} for k, x in eligibility.conditions(doc).items() if k != "ready"} if doc.stage == "Waiting to proceed" else None,
 		"validity_rule": (checks.validity(doc).get("rule") or {}).get("counting", ""),
+		"funding": _funding(doc, c),
 	}
 	return out

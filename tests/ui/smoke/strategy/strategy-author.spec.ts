@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fiscal } from "../../helpers/anchor";
 
 import { login } from "../../helpers/auth";
 import {
@@ -178,8 +179,8 @@ test.describe("STR-UI-01..03 — Strategy Author", () => {
 		await expectNoFrappeModal(page);
 
 		await page.locator('[data-testid="str-plan-title"]').fill(NEW_PLAN_TITLE);
-		await page.locator('[data-testid="str-period-start"]').fill("2028-07-01");
-		await page.locator('[data-testid="str-period-end"]').fill("2033-06-30");
+		await page.locator('[data-testid="str-period-start"]').fill(fiscal("2028-07-01"));
+		await page.locator('[data-testid="str-period-end"]').fill(fiscal("2033-06-30"));
 		await page.locator('[data-testid="str-save-draft"]').click();
 
 		// STR18-AC-003 — creation opens the structure of the exact new Draft.

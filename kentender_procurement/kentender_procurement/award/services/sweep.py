@@ -12,9 +12,10 @@ import frappe
 
 
 def run() -> None:
-	from kentender_procurement.award.services import corrections, eligibility, events, explanation, intake, notices, records, tender_events
+	from kentender_procurement.award.services import corrections, eligibility, events, explanation, intake, issue_worker, notices, records, tender_events
 
-	for step in (intake.retry_pending, tender_events.sweep, eligibility.sweep, notices.retry_failed, events.retry_pending, explanation.retry_pending):
+	# issue_worker.sweep first: it issues a notice batch a dead request left Authorised and marks an interrupted issue Unknown (AWD v0.9 §5.11)
+	for step in (intake.retry_pending, tender_events.sweep, issue_worker.sweep, eligibility.sweep, notices.retry_failed, events.retry_pending, explanation.retry_pending):
 		try:
 			step()
 			frappe.db.commit()

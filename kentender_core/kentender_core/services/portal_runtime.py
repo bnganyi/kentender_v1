@@ -10,7 +10,7 @@ supplier route. The route belongs to the app that registers it on the
 surface, asks the surface's resolver for the verdict and first payload
 (KT-STD-001 §3A.1), and projects the shared shell around it:
 
-- the compact header — **KenTender** and **Tenders**, **My bids**,
+- the compact header — **KenTender** and **Tenders**, **My bids**, **Contracts**,
   **Account**, with the section that owns the path marked current;
 - the quiet footer from CFG `GetPublicPortalInformation` — only the links
   the active projection supplies, never a placeholder (BDS §10.7);
@@ -41,6 +41,7 @@ VERDICTS = ("OK", "NOT_FOUND", "SIGN_IN")
 NAV: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
 	("tenders", "Tenders", "/tenders", ("/tenders",)),
 	("my-bids", "My bids", "/my-bids", ("/my-bids",)),
+	("contracts", "Contracts", "/supplier/contracts", ("/supplier/contracts",)),  # CM-CHG-001 v0.8 section 9 "Supplier list /supplier/contracts" (a proposed addition to the BDS header, recorded in the CM tracker)
 	("account", "Account", "/account", ("/account",)),
 )
 

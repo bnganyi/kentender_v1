@@ -1,0 +1,105 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S5b.probe.direct_entry",
+   "ok": true,
+   "result": {
+    "stage_reached": "posted",
+    "payment_entry": "ACC-PAY-2026-00005"
+   },
+   "invoice": "ACC-PINV-2026-00009",
+   "native_hold": true
+  },
+  {
+   "step": "S5b.probe.direct_entry.events",
+   "events": [
+    "Payment Entry:before_submit",
+    "Payment Entry:on_submit",
+    "Payment Entry:validate"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0,
+    "on_hold": 1
+   }
+  },
+  {
+   "step": "S5b.probe.api_entry",
+   "ok": true,
+   "result": {
+    "stage_reached": "posted",
+    "payment_entry": "ACC-PAY-2026-00006"
+   },
+   "invoice": "ACC-PINV-2026-00010",
+   "native_hold": true
+  },
+  {
+   "step": "S5b.probe.api_entry.events",
+   "events": [
+    "Payment Entry:before_submit",
+    "Payment Entry:on_submit",
+    "Payment Entry:validate"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0,
+    "on_hold": 1
+   }
+  },
+  {
+   "step": "S5b.probe.journal_entry",
+   "ok": true,
+   "result": {
+    "stage_reached": "posted",
+    "journal_entry": "ACC-JV-2026-00001",
+    "invoice_outstanding": 0.0
+   },
+   "invoice": "ACC-PINV-2026-00011",
+   "native_hold": true
+  },
+  {
+   "step": "S5b.probe.journal_entry.events",
+   "events": [
+    "Journal Entry:before_submit",
+    "Journal Entry:on_submit",
+    "Journal Entry:validate"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Paid",
+    "outstanding_amount": 0.0,
+    "on_hold": 1
+   }
+  },
+  {
+   "step": "S5b.probe.reconcile_advance",
+   "ok": false,
+   "error": "ValidationError: No records found in Allocation table",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: No records found in Allocation table"
+   ],
+   "invoice": "ACC-PINV-2026-00012",
+   "native_hold": true
+  },
+  {
+   "step": "S5b.probe.reconcile_advance.events",
+   "events": [],
+   "posted": false,
+   "invoice": {
+    "status": "Unpaid",
+    "outstanding_amount": 100000.0,
+    "on_hold": 1
+   }
+  }
+ ]
+}

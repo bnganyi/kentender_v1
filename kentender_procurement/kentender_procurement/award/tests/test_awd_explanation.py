@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import explanation, simulation, state, supplier
@@ -20,16 +22,16 @@ class TestExplanation(AwardCase):
 		self.deliver()
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 10:00:00")
+		self.at(W("2027-06-18 10:00:00"))
 		self.request = self.run_as(DAVID, supplier.request_explanation, notice=notice.name, request="Please explain the recorded award result.")["request"]
 
 	def test_send_and_close(self):
 		self.run_as(HOP, explanation.save, award=self.case().name, request=self.request, reply=REPLY)
-		self.at("2027-06-18 10:15:00")
+		self.at(W("2027-06-18 10:15:00"))
 		out = self.run_as(HOP, explanation.send, award=self.case().name, request=self.request)
 		self.assertEqual(out["message"], "This request is closed.")
 		c = frappe.get_doc(state.CORRESPONDENCE, self.request)
-		self.assertEqual((c.state, c.reply_text, str(c.closed_at)), ("Closed", REPLY, "2027-06-18 10:15:00"))
+		self.assertEqual((c.state, c.reply_text, str(c.closed_at)), ("Closed", REPLY, W("2027-06-18 10:15:00")))
 		with self.assertRaises(AwardError):
 			self.run_as(HOP, explanation.save, award=self.case().name, request=self.request, reply="changed")
 

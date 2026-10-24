@@ -5,29 +5,33 @@ import { describe, expect, it } from "vitest";
 
 import { NOT_RECORDED_NOTICE, SECRETARY_NOTE, appoint, delegate, departmentCell, historyLines, replace, secretaryFact } from "./screens/committee.js";
 
-const candidates = [
-	{ user: "grace", name: "Grace Wambui", department: "Human Resources Management and Development" },
-	{ user: "esther", name: "Esther Muthoni", department: "" },
-];
+// A person chosen in the shared record picker leaves their id, name and facts in the form (`<field>__label`, `<field>__extra`),
+// so the screen reads the department from the choice itself, never from a list of everyone.
+const HR = "Human Resources Management and Development";
+const form = {
+	m0_user: "grace", m0_user__label: "Grace Wambui", m0_user__extra: { department: HR },
+	m1_user: "esther", m1_user__label: "Esther Muthoni", m1_user__extra: { department: "" },
+};
 const data = { tender: "TND-MOH-2027-033", title: "Supply of laptops", guidance: {}, committee: { members: [] }, viewer: {} };
 
 const names = (board) => JSON.stringify(board).match(/"name":"[^"]+"/g) || [];
 
 describe("the department of a chosen person", () => {
 	it("is blank until a person is chosen", () => {
-		expect(departmentCell(candidates, "")).toBe("");
+		expect(departmentCell(undefined, "")).toBe("");
 	});
 	it("is the home unit's name as plain text", () => {
-		expect(departmentCell(candidates, "grace")).toBe("Human Resources Management and Development");
+		expect(departmentCell({ department: HR }, "grace")).toBe(HR);
 	});
 	it("reads Not recorded with its notice when no home unit is recorded", () => {
-		expect(departmentCell(candidates, "esther")).toEqual({ text: "Not recorded", note: NOT_RECORDED_NOTICE });
+		expect(departmentCell({ department: "" }, "esther")).toEqual({ text: "Not recorded", note: NOT_RECORDED_NOTICE });
+		expect(departmentCell(undefined, "esther")).toEqual({ text: "Not recorded", note: NOT_RECORDED_NOTICE });
 		expect(NOT_RECORDED_NOTICE).toBe("Department not recorded. Ask your KenTender administrator to record it.");
 	});
 });
 
 describe("the appointment forms", () => {
-	const ctx = { data, form: { m0_user: "grace", m1_user: "esther" }, errors: {}, candidates, record: { appointments: [] } };
+	const ctx = { data, form, errors: {}, record: { appointments: [] } };
 
 	it("D02-A has no department input and no appointment-reference field", () => {
 		const board = appoint(ctx);
@@ -41,24 +45,36 @@ describe("the appointment forms", () => {
 	});
 	it("D02-A shows each chosen person's department as text beside the person", () => {
 		const table = appoint(ctx).blocks.find((b) => b.k === "table");
-		expect(table.rows[0][1]).toBe("Human Resources Management and Development");
+		expect(table.rows[0][1]).toBe(HR);
 		expect(table.rows[1][1]).toEqual({ text: "Not recorded", note: NOT_RECORDED_NOTICE });
 		expect(table.rows[2][1]).toBe("");
 	});
+	it("D02-A names each person with the shared picker, for this Tender, with the other rows already taken", () => {
+		const table = appoint(ctx).blocks.find((b) => b.k === "table");
+		expect(table.rows[0][0]).toMatchObject({ picker: "m0_user", source: "bid_evaluation.committee_member", testid: "evl-member-0-user",
+			context: { tender_reference: "TND-MOH-2027-033", mode: "appoint", taken: ["esther"] } });
+		expect(table.rows[1][0].context.taken).toEqual(["grace"]);
+		expect(table.rows[2][0].context.taken).toEqual(["grace", "esther"]);
+		expect(table.rows[0][0]).toMatchObject({ value: "grace", chosenLabel: "Grace Wambui" });
+		expect(table.rows.every((r) => !("select" in r[0]))).toBe(true); // the person column no longer a dropdown; Capacity (Chair or Member) stays one
+	});
 	it("D02-DELEGATE and D02-REPLACE take no typed department or reference", () => {
-		const sec = delegate({ data: { ...data, committee: { members: [], secretary: { name: "Charles Mutiso", basis: "By office" }, can_delegate: true } }, form: { secretary: "brian" },
-			candidates: [...candidates, { user: "brian", name: "Brian Wafula", department: "" }] });
+		const sec = delegate({ data: { ...data, committee: { members: [], secretary: { name: "Charles Mutiso", basis: "By office" }, can_delegate: true } }, form: { secretary: "brian", secretary__label: "Brian Wafula" } });
 		const text = JSON.stringify(sec);
 		expect(text).not.toContain("appointment_reference");
 		expect(text).not.toContain("department");
 		expect(sec.title).toBe("Delegate secretary duties");
+		const person = sec.blocks.find((b) => b.picker);
+		expect(person).toMatchObject({ picker: true, name: "secretary", source: "bid_evaluation.secretary", context: { tender_reference: "TND-MOH-2027-033" } });
 		expect(sec.pri.args.method).toBe("delegate_secretary");
 		expect(sec.pri.args.fields).toEqual(["secretary"]);
 		expect(sec.guidance).toEqual({ answer: null, journey: null });
 		expect(sec.cons).toBe("Brian Wafula will organise the evaluation record. This is your written appointment and a new reference is created. They will have no vote, finding or signature.");
 		expect(sec.blocks[0].rows || sec.blocks[0].pairs || JSON.stringify(sec.blocks[0])).toContain("Charles Mutiso, Head of Procurement Function, by office");
-		const rep = replace({ data: { ...data, committee: { members: [{ user: "m", name: "M", capacity: "Member", department: "ICT", declaration: "Conflict declared" }] } }, form: { incoming: "grace" }, errors: {}, candidates, record: {} });
+		const rep = replace({ data: { ...data, committee: { members: [{ user: "m", name: "M", capacity: "Member", department: "ICT", declaration: "Conflict declared" }] } }, form: { incoming: "grace", incoming__label: "Grace Wambui", incoming__extra: { department: HR } }, errors: {}, record: {} });
 		expect(JSON.stringify(rep)).not.toContain("appointment_reference");
+		expect(rep.blocks.find((b) => b.picker)).toMatchObject({ picker: true, name: "incoming", source: "bid_evaluation.committee_member", context: { tender_reference: "TND-MOH-2027-033", mode: "replace" } });
+		expect(JSON.stringify(rep.blocks)).toContain(HR); // the incoming person's department, from the choice
 		expect(JSON.stringify(rep.pri)).not.toContain("department");
 	});
 	it("names the current secretary and how they hold the duties", () => {

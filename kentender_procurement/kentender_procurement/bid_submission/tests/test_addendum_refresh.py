@@ -9,6 +9,7 @@ each affected task needs attention until the bidder saves it."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_submission.services import addendum, errors, reads, save, start_bid
@@ -36,15 +37,15 @@ class AddendumCase(BidCase):
 		return save.save_bid_task(bid_reference=self.bid, task=task, values=values, expected_record_version=self.version(), idempotency_key=key(), user=DAVID)
 
 	def issue_addendum(self) -> str:
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
-		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": "2027-06-12 11:00:00"})
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		root = self._root()
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=tender_fx.key(), user=tender_fx.OFFICER)
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 09:00:00")
 		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=tender_fx.key(), user=tender_fx.HOPF)
 		for channel in CHANNELS:
-			self._confirm("addendum", channel, addendum=name, available_at="2027-05-31 09:00:00")
+			self._confirm("addendum", channel, addendum=name, available_at=W("2027-05-31 09:00:00"))
 		self.assertEqual(bid_definition.current(self.name)["definition_version"], 2)
 		return name
 
@@ -57,7 +58,7 @@ class TestRefreshForAddendum(AddendumCase):
 		self.save("requirements", {model["handle"]: "ApexBook Pro 14"})
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-06-01 12:05:00")
+		self.at(W("2027-06-01 12:05:00"))
 
 		# a read says Needs attention and changes nothing
 		before = frappe.db.get_value("Bid Workspace", self.bid, ["record_version", "current_draft_version", "definition_version"])
@@ -66,7 +67,7 @@ class TestRefreshForAddendum(AddendumCase):
 		self.assertEqual(frappe.db.get_value("Bid Workspace", self.bid, ["record_version", "current_draft_version", "definition_version"]), before)
 
 		# the first change refreshes the Draft and asks for review first
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		refreshed = self.save("company", {year["handle"]: "12 Riverside Drive, Nairobi"})
 		self.assertEqual((refreshed["ok"], refreshed["code"], refreshed["refreshed"]), (False, "BDS_ADDENDUM_REVIEW_REQUIRED", True))
 		self.assertIn("documents", refreshed["tasks"])
@@ -101,7 +102,7 @@ class TestRefreshForAddendum(AddendumCase):
 	def test_an_old_handle_after_the_refresh_is_unknown(self):
 		year = self.field("company", "Authorised representative's address")
 		self.issue_addendum()
-		self.at("2027-06-01 12:10:00")
+		self.at(W("2027-06-01 12:10:00"))
 		self.save("company", {year["handle"]: "11 Riverside Drive, Nairobi"})  # refreshes
 		self.assertIsNone(addendum.pending(type("Ctx", (), {"workspace": frappe.get_doc("Bid Workspace", self.bid)})()))
 		with self.assertRaises(errors.BidSubmissionError) as ctx:

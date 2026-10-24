@@ -125,16 +125,16 @@ test.describe.serial("Technical record search + technical-user access sweep", ()
 		await planRow.locator('[data-testid="kt-ts-open"]').click();
 		await expect(page).toHaveURL(/\/annual-procurement-plan\/PLN-MOH-2027-001$/, { timeout: 20_000 });
 
-		// Procurement Requisition — business reference REQ-MOH-2027-002-001,
+		// Procurement Requisition — business reference REQ-MOH-2026-002-001,
 		// doc name PRQ-22169. Route: procurement-requisitions/<requisition_reference>
 		// (kentender_procurement.procurement_requisitions.services.technical_read
 		// ._requisition_route resolves the doc name to its business reference).
 		await gotoTechnicalSearch(page);
-		await runSearch(page, "REQ-MOH-2027-002-001");
-		const reqRow = page.locator('[data-testid="kt-ts-row"]', { hasText: "REQ-MOH-2027-002-001" });
+		await runSearch(page, "REQ-MOH-2026-002-001");
+		const reqRow = page.locator('[data-testid="kt-ts-row"]', { hasText: "REQ-MOH-2026-002-001" });
 		await expect(reqRow).toBeVisible({ timeout: 20_000 });
 		await reqRow.locator('[data-testid="kt-ts-open"]').click();
-		await expect(page).toHaveURL(/\/procurement-requisitions\/REQ-MOH-2027-002-001$/, { timeout: 20_000 });
+		await expect(page).toHaveURL(/\/procurement-requisitions\/REQ-MOH-2026-002-001$/, { timeout: 20_000 });
 
 
 		expect(errors, `console errors: ${errors.join(" | ")}`).toEqual([]);

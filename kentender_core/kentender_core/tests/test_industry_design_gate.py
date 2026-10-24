@@ -57,6 +57,7 @@ KENTENDER_APPS: tuple[str, ...] = (
 	"kentender_stores",
 	"kentender_assets",
 	"kentender_suppliers",
+	"kentender_contracts",
 	"kentender_governance",
 	"kentender_compliance",
 	"kentender_integrations",

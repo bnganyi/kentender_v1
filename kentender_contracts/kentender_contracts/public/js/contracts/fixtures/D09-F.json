@@ -1,0 +1,238 @@
+{
+ "actions": {
+  "Save draft": {
+   "args": {
+    "invoice": "CM-INV-990594",
+    "kind": "payment"
+   },
+   "command": "SaveNativeFinanceDraft",
+   "do": "command"
+  },
+  "Submit payment for approval": {
+   "args": {
+    "invoice": "CM-INV-990594",
+    "kind": "payment"
+   },
+   "command": "SaveNativeFinanceDraft",
+   "do": "command",
+   "then": {
+    "args": {
+     "kind": "payment"
+    },
+    "carry": [
+     "payment"
+    ],
+    "command": "SubmitNativeFinanceForApproval"
+   }
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D09",
+ "dialogs": {},
+ "ev": [
+  "Certification 1",
+  "Accounting invoice",
+  "Verified beneficiary reference"
+ ],
+ "id": "D09-F",
+ "name": "Payment follow-up",
+ "next": {
+  "h": "Prepare the payment record.",
+  "k": "turn",
+  "s": "Responsible: Josphat Mwangi"
+ },
+ "p": "Submit payment for approval",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Company",
+       "KenTender"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Currency",
+       "KES"
+      ],
+      [
+       "Source",
+       "AFYA-1-R1"
+      ],
+      [
+       "Certification",
+       "Signed"
+      ],
+      [
+       "Accounting invoice",
+       "Posted"
+      ],
+      [
+       "Payable / certified outstanding",
+       "KES 800,000"
+      ],
+      [
+       "Payment hold",
+       "None"
+      ],
+      [
+       "Beneficiary",
+       "Verified account on file"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Source"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Posting date",
+       "name": "posting_date",
+       "o": {},
+       "t": "dt",
+       "v": "2026-10-15"
+      },
+      {
+       "l": "Payment method",
+       "name": "mode_of_payment",
+       "o": {},
+       "opts": [
+        "Bank Draft",
+        "Cash",
+        "Cheque",
+        "Credit Card",
+        "Wire Transfer"
+       ],
+       "t": "sel",
+       "v": ""
+      },
+      {
+       "context": {
+        "kind": "account.bank"
+       },
+       "l": "Bank account",
+       "name": "paid_from",
+       "noun": "bank account",
+       "o": {},
+       "source": "contracts.native_record",
+       "t": "pick",
+       "v": "",
+       "valueLabel": ""
+      },
+      {
+       "l": "Payable account",
+       "name": "payable_account",
+       "o": {},
+       "t": "ro",
+       "v": "2110 - Creditors - K"
+      },
+      {
+       "l": "Amount",
+       "name": "amount",
+       "o": {},
+       "t": "tx",
+       "v": "800000.00"
+      },
+      {
+       "l": "Invoice allocation \u2014 AFYA-1-R1",
+       "name": "allocation",
+       "o": {},
+       "t": "ro",
+       "v": "KES 800,000"
+      },
+      {
+       "l": "Reference",
+       "name": "reference_no",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Payment details"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Supported deductions",
+       "KES 0"
+      ],
+      [
+       "Advance recovery",
+       "KES 0"
+      ],
+      [
+       "Unapplied amount",
+       "KES 0"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Calculated"
+  }
+ ],
+ "s2": [
+  "Save draft"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Prepare payment",
+ "version": 25
+}

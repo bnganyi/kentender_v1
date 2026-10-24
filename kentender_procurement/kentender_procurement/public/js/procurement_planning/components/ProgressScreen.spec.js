@@ -223,3 +223,37 @@ describe("ProgressScreen — no plan in force", () => {
 		expect(w.find('[data-testid="prg-context"]').exists()).toBe(false);
 	});
 });
+
+// PLN-CHG-001 v1.32 §10.19 — the unused allowance of a purchase whose tender was cancelled, in that purchase's own row.
+describe("ProgressScreen — unused allowance after a tender was cancelled", () => {
+	const recovery = (status, extra = {}) => ({
+		recovery: "CRR-00001", status, title: "Unused allowance and funding",
+		label: { Pending: "Restoring unused allowance", Completed: "Unused allowance restored after tender cancellation", "Needs attention": "Unused allowance could not be restored" }[status],
+		explanation: "Planning's own words.", reason: status === "Needs attention" ? "The affected source is held until the cause is corrected." : "",
+		rows: [{ key: "PSA-1", source: "Ministry of Health Headquarters", quantity: "60", value: "6000000.00", restored: status === "Completed" ? "60 · 6000000.00" : "—" }],
+		technical: [{ label: "Recovery", value: "CRR-00001" }], next_step: null, ...extra,
+	});
+	const withRecovery = (status, extra) => make({ progress: progress({ items: [purchase({ recoveries: [recovery(status, extra)] })] }) });
+
+	it("Pending: the label sits above the purchase's own row, with the held source, and offers nothing", () => {
+		const w = withRecovery("Pending");
+		expect(w.find('[data-testid="prg-recovery"]').attributes("data-status")).toBe("Pending");
+		expect(w.find('[data-testid="prg-recovery-label"]').text()).toBe("Restoring unused allowance");
+		expect(w.find('[data-testid="prg-recovery-rows"] tbody').text()).toContain("Ministry of Health Headquarters");
+		expect(w.find('[data-testid="prg-recovery-next"]').exists()).toBe(false);
+	});
+	it("Completed: shows what was restored and the ordinary route only when the server gave one", async () => {
+		const w = withRecovery("Completed", { next_step: { label: "Start a new requisition for this purchase", route: ["procurement-requisitions", "new", "PPI-MOH-2027-033"] } });
+		expect(w.find('[data-testid="prg-recovery-rows"] tbody').text()).toContain("60 · 6000000.00");
+		await w.find('[data-testid="prg-recovery-next"]').trigger("click");
+		expect(w.emitted("navigate")[0][0]).toEqual(["procurement-requisitions", "new", "PPI-MOH-2027-033"]);  // segments, as frappe.set_route takes them
+	});
+	it("Needs attention: the reason, and the identifiers only inside Technical details", () => {
+		const w = withRecovery("Needs attention");
+		expect(w.find('[data-testid="prg-recovery-reason"]').text()).toContain("held until the cause is corrected");
+		expect(w.find('[data-testid="prg-recovery-technical"]').text()).toContain("CRR-00001");
+	});
+	it("a purchase with no recovery draws no row", () => {
+		expect(make().find('[data-testid="prg-recovery"]').exists()).toBe(false);
+	});
+});

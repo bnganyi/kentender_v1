@@ -1,0 +1,83 @@
+{
+ "actions": {
+  "View settlement": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View termination": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_terminated_contra",
+ "d": "D38",
+ "dialogs": {},
+ "ev": [],
+ "id": "D38-T",
+ "name": "Close-out correction",
+ "next": null,
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_terminated_contra",
+ "regions": [
+  {
+   "b": [
+    {
+     "k": "help",
+     "v": "A terminated contract cannot be reopened through close-out correction; this needs a legal referral."
+    }
+   ],
+   "t": "Correction"
+  }
+ ],
+ "s2": [
+  "View termination",
+  "View settlement"
+ ],
+ "st": "Terminated",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_terminated_contra",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_terminated_contra",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_terminated_contra",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_terminated_contra",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_terminated_contra",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review close-out correction",
+ "version": 21
+}

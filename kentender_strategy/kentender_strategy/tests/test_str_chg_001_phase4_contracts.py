@@ -8,6 +8,7 @@ ones, now that they exist.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import frappe
@@ -348,9 +349,9 @@ class TestPlanDraftAndSuccessorCommands(Phase4TestBase):
 			{
 				"title": f"New Draft Plan {self.suffix}",
 				"plan_role": "Primary",
-				"period_start": "2028-07-01",
+				"period_start": W("2028-07-01"),
 				"period_end": "2033-06-30",
-				"effective_from": "2028-07-01",
+				"effective_from": W("2028-07-01"),
 				"effective_to": "2033-06-30",
 			}
 		)

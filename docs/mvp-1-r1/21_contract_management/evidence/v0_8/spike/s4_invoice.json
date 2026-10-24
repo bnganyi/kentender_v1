@@ -1,0 +1,126 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S4.invoice_for_accepted_8_units",
+   "ok": true,
+   "result": "ACC-PINV-2026-00001"
+  },
+  {
+   "step": "S4.pi1_facts",
+   "docstatus": 1,
+   "status": "Unpaid",
+   "grand_total": 800000.0,
+   "outstanding_amount": 800000.0,
+   "bill_no": "INV-01-v2"
+  },
+  {
+   "step": "S4.pi1_gl",
+   "gl": [
+    {
+     "account": "2110 - Creditors - K",
+     "debit": 0.0,
+     "credit": 800000.0,
+     "party": "CM Spike Supplier"
+    },
+    {
+     "account": "2211 - Asset Received But Not Billed - K",
+     "debit": 800000.0,
+     "credit": 0.0,
+     "party": ""
+    }
+   ]
+  },
+  {
+   "step": "S4.after_invoice_1",
+   "po": {
+    "status": "To Bill",
+    "per_received": 100.0,
+    "per_billed": 80.0
+   },
+   "pr1": {
+    "status": "Completed",
+    "per_billed": 100.0
+   }
+  },
+  {
+   "step": "S4.second_invoice_beyond_received_billed_quantity_is_refused",
+   "ok": false,
+   "error": "ValidationError: Over Billing Allowance exceeded for Purchase Receipt Item q4q4a8t6cg (<strong>CM-SPIKE-LAPTOP-FA</strong>) by 12.000000000000014%",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: Over Billing Allowance exceeded for Purchase Receipt Item q4q4a8t6cg (<strong>CM-SPIKE-LAPTOP-FA</strong>) by 12.000000000000014%"
+   ]
+  },
+  {
+   "step": "S4.invoice_for_the_2_replacement_units",
+   "ok": true,
+   "result": "ACC-PINV-2026-00002"
+  },
+  {
+   "step": "S4.after_invoice_2",
+   "po": {
+    "status": "Completed",
+    "per_received": 100.0,
+    "per_billed": 100.0
+   },
+   "pi2": {
+    "grand_total": 200000.0,
+    "outstanding_amount": 200000.0
+   }
+  },
+  {
+   "step": "S4.credit_note_after_liability_native_return",
+   "ok": true,
+   "result": {
+    "debit_note": "ACC-PINV-2026-00003",
+    "grand_total": -200000.0,
+    "return_against": "ACC-PINV-2026-00002",
+    "gl": [
+     {
+      "account": "2110 - Creditors - K",
+      "debit": 200000.0,
+      "credit": 0.0,
+      "party": "CM Spike Supplier"
+     },
+     {
+      "account": "2211 - Asset Received But Not Billed - K",
+      "debit": 0.0,
+      "credit": 200000.0,
+      "party": ""
+     }
+    ],
+    "original_outstanding_after": 200000.0,
+    "po": {
+     "status": "Completed",
+     "per_billed": 100.0
+    }
+   }
+  },
+  {
+   "step": "S4.supplier_invoice_uniqueness_setting_before",
+   "value": 0
+  },
+  {
+   "step": "S4.duplicate_bill_no_with_uniqueness_check_off",
+   "ok": true,
+   "result": "ACC-PINV-2026-00004"
+  },
+  {
+   "step": "S4.duplicate_bill_no_with_uniqueness_check_on",
+   "ok": false,
+   "error": "ValidationError: Supplier Invoice No exists in Purchase Invoice <a href=\"http://kentender-test.local/desk/purchase-invoice/ACC-PINV-2026-00001\">ACC-PINV-2026-00001</a>",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "frappe.exceptions.ValidationError: Supplier Invoice No exists in Purchase Invoice <a href=\"http://kentender-test.local/desk/purchase-invoice/ACC-PINV-2026-00001\">ACC-PINV-2026-00001</a>"
+   ]
+  }
+ ]
+}

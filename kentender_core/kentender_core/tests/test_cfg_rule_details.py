@@ -2,6 +2,7 @@
 # status beside "Source check": the rule list and the saved detail say which
 # required details a version still lacks, from the server, using the same
 # labels the preview reports. Read-only: nothing is written.
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
@@ -69,9 +70,9 @@ class TestKindFieldsTheBoardDraws(FrappeTestCase):
 	def test_market_price_index_keeps_its_publication_facts(self):
 		out = register._validate_payload(
 			"Market price index",
-			{"publication_date": "2026-07-01", "publication_reference": "PPRA MPI 2026/27", "rows": []},
+			{"publication_date": W("2026-07-01"), "publication_reference": "PPRA MPI 2026/27", "rows": []},
 		)
-		self.assertEqual(out["publication_date"], "2026-07-01")
+		self.assertEqual(out["publication_date"], W("2026-07-01"))
 		self.assertEqual(out["publication_reference"], "PPRA MPI 2026/27")
 		# Nothing published is still "not published", whatever the header says.
 		self.assertFalse(out["published"])

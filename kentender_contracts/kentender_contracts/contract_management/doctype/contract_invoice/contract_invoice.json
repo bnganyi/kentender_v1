@@ -1,0 +1,164 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-INV-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A supplier's claim against the contract, with its automatic matching and its native invoice.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "invoice_no",
+  "claim_reference",
+  "invoice_date",
+  "received_at",
+  "claimed_amount",
+  "state",
+  "lines_json",
+  "matching_json",
+  "first_received_at",
+  "native_invoice",
+  "accounting_state",
+  "finance_maker",
+  "successor_of",
+  "submitted_by",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "invoice_no",
+   "label": "Invoice no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "claim_reference",
+   "label": "Claim reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_date",
+   "label": "Invoice date",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "claimed_amount",
+   "label": "Claimed amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Submitted\nHeld\nCertified\nPartly paid\nPaid\nSuperseded\nSet aside"
+  },
+  {
+   "fieldname": "lines_json",
+   "label": "Lines json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "matching_json",
+   "label": "Matching json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "first_received_at",
+   "label": "First received at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "native_invoice",
+   "label": "Native invoice",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accounting_state",
+   "label": "Accounting state",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Not prepared\nDraft saved\nSubmitted for approval\nPosted"
+  },
+  {
+   "fieldname": "finance_maker",
+   "label": "Finance maker",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "successor_of",
+   "label": "Successor of",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "label": "Submitted by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Invoice",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

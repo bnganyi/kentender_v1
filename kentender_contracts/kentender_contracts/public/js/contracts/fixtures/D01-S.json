@@ -1,0 +1,57 @@
+{
+ "actions": {},
+ "at": "2 Jul 2027, 09:00 EAT",
+ "back": "Back to contracts",
+ "cols": [
+  "Contract",
+  "Title",
+  "Status",
+  "Next action",
+  ""
+ ],
+ "d": "D01-S",
+ "dialogs": {},
+ "empty": "No contracts are available.",
+ "emptyAct": "",
+ "ev": [],
+ "filters": [
+  {
+   "l": "Search contracts",
+   "name": "search",
+   "o": {},
+   "t": "tx",
+   "v": ""
+  }
+ ],
+ "headP": "",
+ "id": "D01-S",
+ "p": "",
+ "page": "list",
+ "paging": {
+  "page": 1,
+  "page_size": 10,
+  "pages": 1,
+  "total": 1
+ },
+ "ref": "",
+ "regions": [],
+ "rowRoutes": [
+  [
+   "CM-TEST-BOARDS"
+  ]
+ ],
+ "rows": [
+  [
+   "@CM-TEST-BOARDS",
+   "MOH/ICT/2027/DEMO-01",
+   "!Preparing",
+   "\u2014",
+   "@Open contract"
+  ]
+ ],
+ "s2": [],
+ "sub": "",
+ "title": "My contracts",
+ "view": 1,
+ "views": []
+}

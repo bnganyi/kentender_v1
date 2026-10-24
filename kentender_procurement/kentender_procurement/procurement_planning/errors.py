@@ -89,6 +89,9 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"PLN_LATE_EXPLANATION_REQUIRED",
 		"PLN_STALE_WRITE",
 		"PLN_IDEMPOTENCY_CONFLICT",
+		# PLN-CHG-001 v1.32 §8 supplement (whole-Tender cancellation recovery)
+		"PLN_CANCELLATION_RECOVERY_PENDING",
+		"PLN_CANCELLATION_RECOVERY_CONFLICT",
 	}
 )
 
@@ -153,6 +156,9 @@ MESSAGES: dict[str, str] = {
 	"PLN_LATE_EXPLANATION_REQUIRED": "Explain why this initial plan is being adopted after the financial year started.",
 	"PLN_STALE_WRITE": "This record changed after you opened it. Refresh before continuing.",
 	"PLN_IDEMPOTENCY_CONFLICT": "This action could not be processed. Refresh before trying again; contact support if the problem continues.",
+	# PLN-CHG-001 v1.32 §8 supplement (whole-Tender cancellation recovery).
+	"PLN_CANCELLATION_RECOVERY_PENDING": "Unused allowance is being restored. Try authorising this request when restoration is complete.",
+	"PLN_CANCELLATION_RECOVERY_CONFLICT": "Unused allowance could not be restored. Review the linked issue.",
 	# PLN-CHG-001 v1.23 §8 removed both of these from the user-facing table with
 	# the forecast facility (PLN23-CHG-001). Retained only so the dormant code
 	# that raises them still imports; nothing routed can reach them.

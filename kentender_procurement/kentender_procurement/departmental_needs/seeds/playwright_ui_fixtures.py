@@ -32,6 +32,7 @@ Fixtures are driven through the real §8.2 commands, never written directly.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 from uuid import uuid4
 
@@ -77,7 +78,7 @@ CONTENT = {
 	"indicative_quantity": 12,
 	"unit": "Each",
 	"estimated_total_cost": 12000000,
-	"required_by_date": "2028-03-31",
+	"required_by_date": F("2028-03-31"),
 }
 
 _NAMESPACED = (
@@ -468,7 +469,7 @@ def reset_accepted_source_fixture(*, commit: bool = True) -> dict[str, Any]:
 			need=need,
 			expected_version=opened["record_version"],
 			idempotency_key=_key(),
-			**{**CONTENT, "required_by_date": "2028-05-31"},
+			**{**CONTENT, "required_by_date": F("2028-05-31")},
 		)
 		lifecycle.submit_need(
 			need=need, expected_version=saved["record_version"], idempotency_key=_key()
@@ -742,7 +743,7 @@ def reset_older_revision_fixture(*, commit: bool = True) -> dict[str, Any]:
 			need=need,
 			expected_version=opened["record_version"],
 			idempotency_key=_key(),
-			**{**CONTENT, "required_by_date": "2028-06-30"},
+			**{**CONTENT, "required_by_date": F("2028-06-30")},
 		)
 		lifecycle.submit_need(need=need, expected_version=saved["record_version"], idempotency_key=_key())
 	task = _open_task(need)
@@ -926,7 +927,7 @@ def reset_successor_submitted_fixture(*, commit: bool = True) -> dict[str, Any]:
 			need=need,
 			expected_version=opened["record_version"],
 			idempotency_key=_key(),
-			**{**CONTENT, "required_by_date": "2028-06-30"},
+			**{**CONTENT, "required_by_date": F("2028-06-30")},
 		)
 		lifecycle.submit_need(need=need, expected_version=saved["record_version"], idempotency_key=_key())
 	_stamp_children(need)

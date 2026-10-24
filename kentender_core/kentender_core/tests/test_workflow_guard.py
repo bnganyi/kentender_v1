@@ -19,6 +19,7 @@ class TestWorkflowGuard(IntegrationTestCase):
 				"doctype": "Procuring Entity",
 				"entity_code": code,
 				"entity_name": "Test PE for workflow guard",
+				"reporting_currency": "KES",
 			}
 		)
 		pe.insert()

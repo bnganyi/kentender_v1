@@ -1,0 +1,127 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "Request extension": {
+   "args": {
+    "kind": "Extension"
+   },
+   "command": "RequestContractChange",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delivery_extensio",
+ "d": "D27",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D27",
+ "name": "Request delivery extension",
+ "next": {
+  "h": "Explain the requested delivery date.",
+  "k": "turn",
+  "s": "Responsible: Carol Coordinator"
+ },
+ "p": "Request extension",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_extensio",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Current delivery",
+       "name": "",
+       "o": {},
+       "t": "ro",
+       "v": "20 Jul 2027"
+      },
+      {
+       "l": "Proposed date",
+       "name": "proposed_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Supplier request",
+       "name": "evidence",
+       "o": {},
+       "t": "file",
+       "v": ""
+      },
+      {
+       "l": "Amount and quantity",
+       "name": "",
+       "o": {},
+       "t": "ro",
+       "v": "KES 1,000,000; 10 laptop computers; no price change"
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Request"
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "history"
+   ]
+  }
+ ],
+ "title": "Request delivery extension",
+ "version": 9
+}

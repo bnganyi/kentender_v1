@@ -172,16 +172,14 @@ def build_procurement_use_payload(budget_line_name: str) -> dict[str, Any]:
 						(nm,),
 					)[0][0]
 				)
-				reservation_names = frappe.get_all("Funding Reservation", filters={"budget_line": nm}, pluck="name")
-				amount_committed = 0.0
-				if reservation_names:
-					amount_committed = frappe.utils.flt(
-						frappe.db.sql(
-							"select coalesce(sum(current_amount), 0) from `tabProcurement Commitment` "
-							"where reservation in %s and status = 'Active'",
-							(reservation_names,),
-						)[0][0]
-					)
+				# BUD-CHG-001 v1.16 4.6: a commitment carries the Budget Line it is charged to (conversions and existing-contract entries alike)
+				amount_committed = frappe.utils.flt(
+					frappe.db.sql(
+						"select coalesce(sum(current_amount), 0) from `tabProcurement Commitment` "
+						"where budget_line = %s and status in ('Active', 'Closed')",
+						(nm,),
+					)[0][0]
+				)
 				amount_available = amount_allocated - amount_reserved - amount_committed
 
 	# Journeys linked to this budget line

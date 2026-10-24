@@ -72,7 +72,7 @@ def view(doc, user: str) -> dict[str, Any] | None:
 	pause = ceremony.open_pause(doc.name)
 	pause_view = None
 	if pause:
-		incident = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": pause.incident}, ["incident_id", "status", "resolved_at", "raised_at"],
+		incident = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": pause.incident}, ["incident_id", "status", "current_finding", "resolved_at", "raised_at"],
 			as_dict=True) if pause.incident else None
 		last = ceremony.last_committed(doc.name)
 		pause_view = {"class": pause.exception_class, "message": pause.observed_fact, "member": pause.speaker_name, "since_label": labels.time(pause.recorded_at),

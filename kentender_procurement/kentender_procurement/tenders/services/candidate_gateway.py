@@ -48,11 +48,17 @@ def _provider():
 	return frappe.get_module(paths[-1]) if paths else None
 
 
-def candidate_audience(*, tender: str, at=None) -> list[dict[str, Any]]:
+def candidate_audience(*, tender: str, at=None, include_closed: bool = False) -> list[dict[str, Any]]:
 	"""The authoritative Active candidates of `tender` at `at` (§4.9A: a
-	candidate registered later is never a recipient of an earlier notice)."""
+	candidate registered later is never a recipient of an earlier notice).
+
+	`include_closed` (a cancellation after the submission period ended, TPR-CHG-001 v0.24 §5.7): closing the period does not unregister anyone, so the
+	audience is every candidate registered by `at`, whether or not the close has since marked its arrangement Closed."""
 	provider = _provider()
-	return list(provider.candidate_audience(tender=tender, at=at or clock.now())) if provider is not None else []
+	if provider is None:
+		return []
+	extra = {"include_closed": True} if include_closed else {}
+	return list(provider.candidate_audience(tender=tender, at=at or clock.now(), **extra))
 
 
 def candidate_registration(*, tender: str, candidate_registration_id: str) -> dict[str, Any] | None:

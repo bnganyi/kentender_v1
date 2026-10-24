@@ -61,12 +61,28 @@ def at(instant: str | _dt.datetime) -> Iterator[None]:
 	the canonical plan at 10:00:02 and the canonical validation failed.)"""
 	if freeze_time is None:
 		frappe.throw("freezegun is required to run seeds at fixture instants (plan D19).")
+	outer = frappe.flags.get("kt_frozen_clock")
+	outer_real = frappe.flags.get("kt_real_clock")
+	from kentender_core.seeds import calendar
+
+	if calendar.mode() == "anchored":
+		# SEED-002 v0.8 R1: in an anchored world no command runs at an instant later than the real clock. The outermost block reads
+		# the real clock; a nested one is checked against that reading, since inside the outer block the clock is frozen.
+		problem = calendar.never_ahead_problem(instant, outer_real if outer else None)
+		if problem:
+			frappe.throw(f"A seed command cannot run at {problem}: no simulated instant is later than the real clock (SEED-002 v0.8 R1).")
+	if not outer:
+		from frappe.utils import now_datetime
+
+		frappe.flags.kt_real_clock = str(get_datetime(now_datetime()))
 	frappe.flags.kt_frozen_clock = str(get_datetime(instant))
 	try:
 		with freeze_time(_to_utc(instant), auto_tick_seconds=0.000001):
 			yield
 	finally:
-		frappe.flags.kt_frozen_clock = None
+		frappe.flags.kt_frozen_clock = outer or None
+		if not outer:
+			frappe.flags.kt_real_clock = None
 
 
 def frozen_at() -> str:

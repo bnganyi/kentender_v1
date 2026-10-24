@@ -16,6 +16,7 @@ visible no-op rather than a silent one.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 import frappe
@@ -68,10 +69,36 @@ def _delete_for_plan_items(plan_item_ids: list[str], *, cross_module_rebuild: bo
 	return _delete_roots(roots)
 
 
+def delete_recoveries(*, requisitions: Iterable[str] = (), tenders: Iterable[str] = (), everything: bool = False) -> dict[str, int]:
+	"""The cancellation recoveries of these Requisitions or Tenders (all of them with `everything`), with their source rows, Planning's holds on the
+	sources and Budget's release rows. A recovery whose Requisition or Tender is removed would otherwise stay behind and be picked up by the
+	recovery sweep with nothing to verify (REQ-CHG-001 v1.20). No guard, no commit."""
+	requisitions, tenders = list(requisitions), list(tenders)
+	if everything:
+		names = frappe.get_all("Cancellation Resource Recovery", pluck="name")
+	else:
+		names = set()
+		if requisitions:
+			names |= set(frappe.get_all("Cancellation Resource Recovery", filters={"requisition": ("in", requisitions)}, pluck="name"))
+		if tenders:
+			names |= set(frappe.get_all("Cancellation Resource Recovery", filters={"tender": ("in", tenders)}, pluck="name"))
+		names = sorted(names)
+	deleted: dict[str, int] = {}
+	if not names:
+		return deleted
+	for doctype in ("Plan Cancellation Recovery Hold", "Reservation Cancellation Release"):
+		deleted[doctype] = frappe.db.count(doctype, {"recovery_id": ("in", names)})
+		frappe.db.delete(doctype, {"recovery_id": ("in", names)})
+	delete_rows("Cancellation Resource Recovery", {"name": ("in", names)}, deleted=deleted)
+	return deleted
+
+
 def _delete_roots(roots: list[str]) -> dict[str, int]:
 	"""These Requisitions and every row of this module that hangs off them.
 	No guard: callers decide which roots may go."""
 	deleted: dict[str, int] = {}
+	for doctype, count in delete_recoveries(requisitions=roots).items():
+		deleted[doctype] = deleted.get(doctype, 0) + count
 	packages = frappe.get_all("IT Equipment Requirement Package", filters={"requisition": ("in", roots or ("",))}, pluck="name")
 	package_versions = frappe.get_all("IT Equipment Requirement Package Version", filters={"package": ("in", packages or ("",))}, pluck="name")
 	versions = frappe.get_all("Requisition Version", filters={"requisition": ("in", roots or ("",))}, pluck="name")
@@ -152,6 +179,7 @@ def wipe_all_requisitions() -> dict[str, int]:
 	clear above can never see it — the orphan otherwise survives every wipe
 	forever)."""
 	deleted: dict[str, int] = {}
+	deleted.update(delete_recoveries(everything=True))
 	for doctype in _DOCTYPES:
 		deleted[doctype] = delete_rows(doctype)
 	reservations = frappe.get_all("Funding Reservation", filters={"calling_module": "Procurement Requisitions"}, pluck="name")

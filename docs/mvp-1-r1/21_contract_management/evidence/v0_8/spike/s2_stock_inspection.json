@@ -1,0 +1,124 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S2.serial_batch_setting",
+   "before": 0,
+   "during_test": 1
+  },
+  {
+   "step": "S2.settings_unchanged",
+   "action_if_quality_inspection_is_not_submitted": "Stop",
+   "action_if_quality_inspection_is_rejected": "Stop"
+  },
+  {
+   "step": "S2.arrival_creates_no_receipt",
+   "receipts_for_order": 0,
+   "order": {
+    "per_received": 0.0
+   }
+  },
+  {
+   "step": "S2.draft_receipt_for_8_accepted_serials",
+   "ok": true,
+   "result": "MAT-PRE-2026-00063"
+  },
+  {
+   "step": "S2.submit_receipt_without_a_submitted_inspection_is_stopped",
+   "ok": false,
+   "error": "QualityInspectionRequiredError: Row #1: Quality Inspection is required for Item <strong>CM-SPIKE-LAPTOP-STK</strong>",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "erpnext.controllers.stock_controller.QualityInspectionRequiredError: Row #1: Quality Inspection is required for Item <strong>CM-SPIKE-LAPTOP-STK</strong>"
+   ]
+  },
+  {
+   "step": "S2.inspection_with_a_failed_criterion",
+   "ok": true,
+   "result": "MAT-QA-2026-00013"
+  },
+  {
+   "step": "S2.submit_receipt_pointing_at_a_rejected_inspection_is_stopped",
+   "ok": false,
+   "error": "QualityInspectionRejectedError: Row #1: Quality Inspection <a href=\"http://kentender-test.local/desk/quality-inspection/MAT-QA-2026-00013\">MAT-QA-2026-00013</a> was rejected for item CM-SPIKE-LAPTOP-STK",
+   "trace": [
+    "  File \"/home/midasuser/frappe-bench/apps/frappe/frappe/utils/messages.py\", line 59, in _raise_exception",
+    "    raise exc",
+    "erpnext.controllers.stock_controller.QualityInspectionRejectedError: Row #1: Quality Inspection <a href=\"http://kentender-test.local/desk/quality-inspection/MAT-QA-2026-00013\">MAT-QA-2026-00013</a> was rejected for item CM-SPIKE-LAPTOP-STK"
+   ]
+  },
+  {
+   "step": "S2.inspection_of_the_accepted_subset_all_criteria_met",
+   "ok": true,
+   "result": "MAT-QA-2026-00014"
+  },
+  {
+   "step": "S2.submit_receipt_with_the_accepted_inspection",
+   "ok": true,
+   "result": {
+    "status": "To Bill",
+    "docstatus": 1
+   }
+  },
+  {
+   "step": "S3.stock_receipt_facts",
+   "po": {
+    "status": "To Receive and Bill",
+    "per_received": 80.0
+   },
+   "gl": [
+    {
+     "account": "1410 - Stock In Hand - K",
+     "debit": 800000.0,
+     "credit": 0.0,
+     "party": ""
+    },
+    {
+     "account": "2210 - Stock Received But Not Billed - K",
+     "debit": 0.0,
+     "credit": 800000.0,
+     "party": ""
+    }
+   ],
+   "stock_ledger": [
+    {
+     "qty": 8.0,
+     "warehouse": "Stores - K",
+     "value": 800000.0
+    }
+   ],
+   "serial_nos": [
+    "SPIKE-SN-001",
+    "SPIKE-SN-002",
+    "SPIKE-SN-003",
+    "SPIKE-SN-004",
+    "SPIKE-SN-005",
+    "SPIKE-SN-006",
+    "SPIKE-SN-007",
+    "SPIKE-SN-008"
+   ]
+  },
+  {
+   "step": "S3.rejected_serials_never_exist",
+   "rejected_serials_present": []
+  },
+  {
+   "step": "S2.replacement_2_units_with_their_own_serials",
+   "ok": true,
+   "result": "MAT-PRE-2026-00064"
+  },
+  {
+   "step": "S2.replacement_receipt_posts_and_completes_the_order",
+   "ok": true,
+   "result": {
+    "po_per_received": 100.0
+   }
+  }
+ ]
+}

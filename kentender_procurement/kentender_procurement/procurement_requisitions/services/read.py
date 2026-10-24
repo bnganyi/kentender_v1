@@ -31,6 +31,7 @@ from kentender_procurement.procurement_requisitions.services import (
 	precision,
 	presenters as p,
 	records,
+	recovery_view,
 	validation,
 )
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
@@ -806,6 +807,8 @@ def get_authorised_requisition(*, root, actor: str) -> dict[str, Any]:
 			"start_corrected_draft": correction_draft, "export": True,
 		},
 		"tender_route": f"/app/tenders/new/{handoff.name}" if handoff and not consumed else "",
+		# REQ-CHG-001 v1.20 §13.15 — the recovery of the unused allowance and funding after the Tender was cancelled, in plain words, permitted rows only
+		"cancellation_recovery": recovery_view.for_requisition(root.name, user=actor),
 		"requisition": root.name, "root_record_version": root.record_version,
 	}
 

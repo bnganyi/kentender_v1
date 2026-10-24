@@ -9,6 +9,7 @@ would refuse, and a read creates no record."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -597,7 +598,7 @@ class TestUpdateRowNarrative(RequisitionCase):
 	def test_a_waiting_update_names_the_holder_and_since_and_is_only_viewed(self):
 		read, row = self.update_row({
 			"kind": "waiting", "headline": "Waiting for Josphat Mwangi (Budget Officer) to revise the budget line",
-			"blockers": [], "fixes": [], "since": {"at": "2026-12-15 07:00:00", "display": "15 Dec 2026, 10:00 EAT"},
+			"blockers": [], "fixes": [], "since": {"at": W("2026-12-15 07:00:00"), "display": "15 Dec 2026, 10:00 EAT"},
 		})
 		self.assertEqual(row["narrative"], {"tone": "waiting", "headline": "Waiting for Josphat Mwangi (Budget Officer) to revise the budget line", "since": "15 Dec 2026, 10:00 EAT"})
 		self.assertEqual((row["action"], row["action_kind"]), ("View update", "secondary"))

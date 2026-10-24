@@ -5,6 +5,40 @@
 **Supersedes-in-tracking:** the REQ-CHG-001 v1.6 tracker (closed 7 September 2026, 48/56 acceptance rows Done; recoverable from git at `f5c3f649`).
 **Status:** Phases 0–1 Done; Phase 2 substantively Done (seeds pending); Phase 3 next. Started 24 September 2026.
 
+## Cancellation recovery (REQ-CHG-001 v1.20) — built 17–18 October 2026, code complete on the test site
+
+**Authority:** `KenTender_REQ-CHG-001_Structured_Procurement_Requisitions_v1_20.md` (approved by the Project Owner, 17 October 2026; the approval record is in its control table). Built across Planning, Requisitions, Tenders and Budget as one coordinated change. The shared acceptance map is `98_work_progress/CANCELLATION_RECOVERY_EVIDENCE_MAP.md`; the Project Owner's running list is `98_work_progress/CANCELLATION_RECOVERY_OWNER_ATTENTION.md`.
+
+**What is and is not claimed:** the development site was migrated on 18 October 2026 on the Project Owner's instruction and the two cancelled demo Tenders (TND-MOH-2026-007 and -012) were recovered there; nothing is released to production and nothing was pushed. Approval closed no row. Every status below is from a run on `kentender-test.local`, except the dev migration and recovery recorded in the evidence map.
+
+| Row | Item | Status | Evidence |
+|---|---|---|---|
+| REQCR-01 | Cancellation Resource Recovery and Cancellation Recovery Source records; the `CancellationResourceRecoveryOutcome.v1` event | Done | `test_cancellation_recovery_integration` 20 of 20 |
+| REQCR-02 | Registration inside the Accounting Officer's cancellation, resolving the whole consumed lineage itself; a failure means nothing is cancelled | Done | integration; `test_open_period` 14 of 14 |
+| REQCR-03 | `recover_cancelled_tender_resources`: verified basis, one transaction across Budget and Planning, Pending / Completed / Needs attention, backoff, technical-operator retry, the scheduler sweep | Done | integration, concurrency 8 of 8 |
+| REQCR-04 | A held source refuses a new authorisation with the pending or invalid code before any funding check | Done | `test_a_held_source_refuses_the_second_authorisation_and_names_why` |
+| REQCR-05 | The authorised requisition shows the section, in plain words, permitted rows only | Done | vitest 4, integration, browser spec |
+| REQCR-06 | The Workspace "Ready to start" line does not mention the recovery | Not built | Recorded; the authorised requisition screen carries it |
+| REQCR-07 | Legacy reconciliation (inventory, dry run, apply, run again) and the make targets | Done | legacy module 6 of 6; the run on the canonical data, rolled back. Not run on the development site |
+| REQCR-08 | Contract Management is not asked: the exclusion rests on Award reporting no notice and no package, and Budget reporting no commitment | Done | integration; recorded in the owner list |
+
+### Acceptance rows
+
+| ID | Required result (short) | Status | Evidence |
+|---|---|---|---|
+| REQ-CR-AC-001 | Exact unused set restored and released once; scope lock kept | Done | Integration CR-F01 and CR-F02, last test of each; owner half in the module named below |
+| REQ-CR-AC-002 | No recovery effect without authority; Pending vs Needs attention | Done | Unavailable → Pending; notice, package, converted, other-reason, different lineage → Needs attention; a recommendation registers nothing. No test cancels a failed opening and looks |
+| REQ-CR-AC-003 | Crash before / after commit; cancellation stays committed | Partial | Failures on either owner leg commit neither effect; same key returns the recorded result; the Tender stays Cancelled. A killed process was not simulated |
+| REQ-CR-AC-004 | Retry, new key, changed payload; sequential draws | Done | Replay, new key, changed facts, two sequential draws, two workers on two real connections |
+| REQ-CR-AC-005 | Notice, contract or conversion racing cancellation or recovery | Partial | Recovery against a Budget conversion in both orders on two real connections. Cancellation against Award issuing a notice is ordered by the lock order and Award's re-read under lock, but was not raced |
+| REQ-CR-AC-006 | Legacy and partial effects never blanket-recovered | Done | Legacy module 6 of 6 and the run on the canonical data (rolled back); no screen offers a restore or release |
+| REQ-CR-AC-007 | Block only affected sources; no automatic replacement | Done | Held source refuses a second authorisation; unrelated item usable; completion creates no replacement |
+| REQ-CR-AC-008 | Fresh requisition on restored scope; scope lock never reset | Done | Fresh Requisition with fresh identities; successor Plan tests; old recovery replay leaves new balances alone |
+| REQ-CR-AC-009 | Notices, Bid Opening and sealed evidence unaffected | Done | The compliance task stays open and the notices due while a recovery is Pending or Needs attention (integration module); Bid Opening and Award suites unchanged and green; recovery reads show permitted rows only |
+| REQ-CR-AC-010 | Closed-year recovery is historical only | Partial | Budget records a closed Budget's context and gives no spending authority. No Requisitions-to-Planning run against a closed year |
+| REQ-CR-AC-011 | Owner screens show the three statuses and a real next step | Done | Python reads for each owner, component tests, and the browser spec on Tenders, Requisitions, Planning (progress and Plan Item) and Budget. Budget Needs attention and browser back/forward not walked |
+| REQ-CR-AC-012 | Single-source and shared-Budget-Line on real adapters | Done | Integration CR-F01 (single source) and CR-F02 (two sources, one shared Budget Line) on the real adapters |
+
 ## v1.19 Record details (proposed 9 October 2026, built, not yet approved)
 
 Display change directed by the Project Owner (REQ-CHG-001 v1.19 §13.7A; REQ119-CHG-001; REQ119-AC-001..005). v1.18 remains the approved text.

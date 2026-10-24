@@ -8,6 +8,7 @@ BDS03-AC-010)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -22,11 +23,11 @@ KISIWA = {"legal_name": "Kisiwa Digital Limited", "registration_number": "PVT-KI
 class TestPeople(AccountsCase):
 	def test_a_signatory_adds_a_representative_who_becomes_a_portal_user(self):
 		org = self.active_account()
-		self.at("2027-05-18 09:20:00")
+		self.at(W("2027-05-18 09:20:00"))
 		result = assignments.assign_supplier_representative(organisation=org, email=DAVID, full_name="David Ouma", job_title="Bid Coordinator", idempotency_key=key(), user=MARY)
 		self.assertTrue(result["ok"])
 		row = frappe.get_doc("Supplier User Assignment", result["assignment"])
-		self.assertEqual((row.user, row.responsibility, row.job_title, str(row.effective_from), row.assigned_by), (DAVID, "Supplier Representative", "Bid Coordinator", "2027-05-18 09:20:00", MARY))
+		self.assertEqual((row.user, row.responsibility, row.job_title, str(row.effective_from), row.assigned_by), (DAVID, "Supplier Representative", "Bid Coordinator", W("2027-05-18 09:20:00"), MARY))
 		fresh = f"new.person@{DOMAIN}"
 		made = assignments.assign_supplier_representative(organisation=org, email=fresh, full_name="New Person", idempotency_key=key(), user=MARY)
 		self.assertEqual(frappe.db.get_value("User", made["user"], "user_type"), "Website User")
@@ -54,12 +55,12 @@ class TestPeople(AccountsCase):
 
 	def test_authority_holds_only_inside_its_window_and_with_available_evidence(self):
 		org = self.active_account()
-		assignments.assign_authorised_signatory(organisation=org, email=GRACE, full_name="Grace Njeri", authority_filename="g.pdf", authority_content=PDF, effective_from="2027-05-20 10:00:00", effective_to="2027-06-12 11:00:00", idempotency_key=key(), user=MARY)
-		for instant, expected in (("2027-05-20 09:59:59", False), ("2027-05-20 10:00:00", True), ("2027-06-12 10:59:59", True), ("2027-06-12 11:00:00", False)):
+		assignments.assign_authorised_signatory(organisation=org, email=GRACE, full_name="Grace Njeri", authority_filename="g.pdf", authority_content=PDF, effective_from=W("2027-05-20 10:00:00"), effective_to=W("2027-06-12 11:00:00"), idempotency_key=key(), user=MARY)
+		for instant, expected in ((W("2027-05-20 09:59:59"), False), (W("2027-05-20 10:00:00"), True), (W("2027-06-12 10:59:59"), True), (W("2027-06-12 11:00:00"), False)):
 			self.at(instant)
 			self.assertEqual(authz.responsibility_of(org, GRACE) == authz.SIGNATORY, expected, instant)
 		# a signatory whose evidence was never scanned clean cannot sign
-		self.at("2027-05-21 09:00:00")
+		self.at(W("2027-05-21 09:00:00"))
 		with mock.patch("kentender_core.services.file_integrity.scanner_result", return_value="Not scanned — no scanner configured"):
 			assignments.assign_authorised_signatory(organisation=org, email=PETER, full_name="Peter Mwangi", authority_filename="p.pdf", authority_content=PDF, idempotency_key=key(), user=MARY)
 		self.assertEqual(authz.responsibility_of(org, PETER), authz.REPRESENTATIVE)
@@ -70,7 +71,7 @@ class TestPeople(AccountsCase):
 class TestIsolation(AccountsCase):
 	def test_another_organisation_is_not_found_to_read_or_change(self):
 		afya = self.active_account()
-		self.at("2027-05-18 10:00:00")
+		self.at(W("2027-05-18 10:00:00"))
 		kisiwa = self.active_account(PETER, **KISIWA)
 		version = frappe.db.get_value("Supplier Organisation", afya, "record_version")
 		for call in (
@@ -85,7 +86,7 @@ class TestIsolation(AccountsCase):
 
 	def test_a_person_in_two_organisations_names_one_per_request(self):
 		afya = self.active_account()
-		self.at("2027-05-18 10:00:00")
+		self.at(W("2027-05-18 10:00:00"))
 		kisiwa = self.active_account(PETER, **KISIWA)
 		assignments.assign_supplier_representative(organisation=kisiwa, email=DAVID, full_name="David Ouma", idempotency_key=key(), user=PETER)
 		assignments.assign_supplier_representative(organisation=afya, email=DAVID, full_name="David Ouma", idempotency_key=key(), user=MARY)
@@ -108,7 +109,7 @@ class TestSuspension(AccountsCase):
 			self.assertEqual(ctx.exception.code, "BDS_RESPONSIBILITY_REQUIRED", user)
 		short = access.suspend_supplier_account(organisation=org, reason="misuse", expected_version=self._version(org), idempotency_key=key(), user=AMINA)
 		self.assertEqual(short["errors"], {"reason": "Enter a reason of 10 to 500 characters."})
-		self.at("2027-05-19 08:00:00")
+		self.at(W("2027-05-19 08:00:00"))
 		done = access.suspend_supplier_account(organisation=org, reason="Reported misuse of the account.", expected_version=self._version(org), idempotency_key=key(), user=AMINA)
 		self.assertEqual(done["account_status"], "Suspended")
 		decision = frappe.get_doc("Supplier Account Access Decision", done["decision"])

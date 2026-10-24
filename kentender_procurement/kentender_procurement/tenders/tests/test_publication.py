@@ -8,6 +8,8 @@ integrity/concurrency boundary. TPR08-AC-039, 041..055."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from unittest.mock import patch
 
@@ -21,7 +23,7 @@ from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx, sample
 
 CHANNELS = ("STATE_PORTAL", "MINISTRY_WEBSITE", "NOTICE_BOARD", "NATIONAL_NEWSPAPERS")
-AVAILABLE = "2027-05-15 08:00:00"
+AVAILABLE = W("2027-05-15 08:00:00")
 
 
 class PublicationCase(IntegrationTestCase):
@@ -37,7 +39,7 @@ class PublicationCase(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_all()
 		self.addCleanup(frappe.set_user, "Administrator")
-		frappe.flags.kt_tenders_clock = "2027-05-15 07:55:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-15 07:55:00")
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_clock", None)
 
 	def _approved(self, *, officer=fx.OFFICER) -> tuple[str, dict]:
@@ -78,7 +80,7 @@ class TestAuthorise(PublicationCase):
 		# The canonical profile carries 21 days; a Planning test world in force on
 		# this site may have superseded it (its fixture-verified minimum) — the
 		# snapshot must equal whatever the resolver returned at authorisation.
-		rule = configuration_gateway.resolve_publication_rule(applicability_date="2027-05-15")
+		rule = configuration_gateway.resolve_publication_rule(applicability_date=W("2027-05-15"))
 		self.assertEqual(pub.minimum_preparation_days, rule["minimum_preparation_days"])
 		self.assertGreater(pub.minimum_preparation_days, 0)
 		self.assertEqual(pub.package_digest, frappe.db.get_value("Tender Version", pub.tender_version, "package_digest"))
@@ -108,11 +110,11 @@ class TestAuthorise(PublicationCase):
 	def test_an_infeasible_minimum_period_and_a_missing_rule_refuse_authorisation(self):
 		name, approved = self._approved()
 		root = frappe.get_doc("Tender", name)
-		frappe.flags.kt_tenders_clock = "2027-06-03 09:00:00"  # 5 Jun is now only 2 days away
+		frappe.flags.kt_tenders_clock = W("2027-06-03 09:00:00")  # 5 Jun is now only 2 days away
 		with self.assertRaises(TendersError) as ctx:
 			publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_PERIOD_INVALID")
-		frappe.flags.kt_tenders_clock = "2027-05-15 07:55:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-15 07:55:00")
 		with patch.object(configuration_gateway, "_versions_in_force", return_value=[]):
 			with self.assertRaises(TendersError) as ctx:
 				publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
@@ -132,7 +134,7 @@ class TestAuthorise(PublicationCase):
 
 	def test_a_deadline_below_the_legal_minimum_is_caught_when_the_officer_reviews_it(self):
 		# 5 days after the 15 May issue date; the verified legal minimum is 7
-		root, version = self._draft_with(clarification_deadline="2027-05-17 17:00:00", submission_deadline="2027-05-20 11:00:00")
+		root, version = self._draft_with(clarification_deadline=W("2027-05-17 17:00:00"), submission_deadline=W("2027-05-20 11:00:00"))
 		found = [f for f in self._findings(root, version, "PUBLICATION_PERIOD") if f["severity"] == review.MUST_FIX]
 		self.assertEqual([(f["task"], f["field"]) for f in found], [("details", "submission_deadline")])
 		self.assertIn("at least 7 days after publication (the legal minimum)", found[0]["message"])
@@ -143,7 +145,7 @@ class TestAuthorise(PublicationCase):
 
 	def test_a_period_between_the_minimum_and_the_usual_needs_a_reason_but_never_blocks(self):
 		# 15 days: lawful (7 or more) but shorter than the usual 21
-		root, version = self._draft_with(submission_deadline="2027-05-30 11:00:00")
+		root, version = self._draft_with(submission_deadline=W("2027-05-30 11:00:00"))
 		self.assertFalse(self._findings(root, version, "PUBLICATION_PERIOD"))
 		need = self._findings(root, version, "PERIOD_REASON")
 		self.assertEqual([(f["severity"], f["field"]) for f in need], [(review.MUST_FIX, "shortened_period_reason")])
@@ -177,10 +179,10 @@ class TestAuthorise(PublicationCase):
 
 	def test_a_period_that_ran_short_after_approval_is_stated_up_front_with_the_way_out(self):
 		name, approved = self._approved()
-		frappe.flags.kt_tenders_clock = "2027-06-03 09:00:00"  # 5 Jun is now only 2 days away
+		frappe.flags.kt_tenders_clock = W("2027-06-03 09:00:00")  # 5 Jun is now only 2 days away
 		ao = read.get_tender_publication(tender=name, user=fx.AO) if hasattr(read, "get_tender_publication") else publication.get_tender_publication(tender=name, user=fx.AO)
 		self.assertNotIn("authorise_publication", ao["allowed_actions"])
-		self.assertEqual({k: ao["period_problem"][k] for k in ("minimum_days", "earliest_deadline")}, {"minimum_days": 7, "earliest_deadline": "2027-06-10"})
+		self.assertEqual({k: ao["period_problem"][k] for k in ("minimum_days", "earliest_deadline")}, {"minimum_days": 7, "earliest_deadline": W("2027-06-10")})
 		step = ao["guidance"]["next_step"]
 		self.assertEqual((step["kind"], step["blockers"][0]["reason_code"]), ("your_turn_blocked", "TND_PUBLICATION_PERIOD_INVALID"))
 		fixes = {f["label"]: f for f in step["blockers"][0]["fixes"]}
@@ -193,7 +195,7 @@ class TestAuthorise(PublicationCase):
 		self.assertEqual(officer["guidance"]["next_step"]["kind"], "waiting")
 		self.assertEqual(officer["guidance"]["next_step"]["holder"]["role"], "Head of Procurement Function")
 		# the same Tender with time to spare shows no problem and the AO's decision
-		frappe.flags.kt_tenders_clock = "2027-05-15 07:55:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-15 07:55:00")
 		ok = publication.get_tender_publication(tender=name, user=fx.AO)
 		self.assertIsNone(ok["period_problem"])
 		self.assertIn("authorise_publication", ok["allowed_actions"])
@@ -206,7 +208,7 @@ class TestAuthorise(PublicationCase):
 		for user in (fx.HOPF, fx.AO, fx.OFFICER):
 			rows = my_work_provider.my_work_rows(user=user)
 			self.assertFalse([r for r in rows["assigned"] + rows["waiting"] if "Reopen Tender" in r["title"] or "to reopen Tender" in r["title"]])
-		frappe.flags.kt_tenders_clock = "2027-06-03 09:00:00"  # 5 Jun is now only 2 days away
+		frappe.flags.kt_tenders_clock = W("2027-06-03 09:00:00")  # 5 Jun is now only 2 days away
 		hopf = my_work_provider.my_work_rows(user=fx.HOPF)["assigned"]
 		row = next(r for r in hopf if r["title"] == title)
 		self.assertEqual((row["action_label"], row["route"], row["status"]), ("Reopen Tender", ["tenders", ref], "Assigned"))
@@ -368,7 +370,7 @@ class TestConfirmChannels(PublicationCase):
 		same_again = self._confirm(name, "STATE_PORTAL", evidence=row.evidence_file)  # identical content, new key
 		self.assertEqual(same_again["action"], "already_confirmed")
 		with self.assertRaises(TendersError) as ctx:  # §15.3(3) different availability time
-			self._confirm(name, "STATE_PORTAL", available_at="2027-05-15 09:30:00", evidence=row.evidence_file)
+			self._confirm(name, "STATE_PORTAL", available_at=W("2027-05-15 09:30:00"), evidence=row.evidence_file)
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_ALREADY_CONFIRMED")
 		step = ctx.exception.detail["next_step"]
 		self.assertEqual((step["kind"], step["headline"], [f["label"] for f in step["fixes"]]), ("your_turn", "Continue with the channels still awaiting confirmation.", ["View confirmation for State Portal"]))
@@ -390,7 +392,7 @@ class TestConfirmChannels(PublicationCase):
 		frappe.set_user(fx.HOPF)
 		with self.assertRaises(TendersError) as ctx:
 			api.confirm_publication_channel(
-				tender=name, channel="STATE_PORTAL", available_at="2027-05-15 09:30:00", evidence_reference="REF-STATE_PORTAL", evidence_file=row.evidence_file, package_digest=frappe.db.get_value("Tender Publication", root.publication, "package_digest"),
+				tender=name, channel="STATE_PORTAL", available_at=W("2027-05-15 09:30:00"), evidence_reference="REF-STATE_PORTAL", evidence_file=row.evidence_file, package_digest=frappe.db.get_value("Tender Publication", root.publication, "package_digest"),
 				expected_record_version=root.record_version, idempotency_key=fx.key(), public_url="https://portal.example.test/STATE_PORTAL", attestation_confirmed=True,
 			)
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_ALREADY_CONFIRMED")
@@ -404,7 +406,7 @@ class TestConfirmChannels(PublicationCase):
 		name, _ = self._authorised()
 		root = frappe.get_doc("Tender", name)
 		self._confirm(name, "STATE_PORTAL")
-		self._confirm(name, "MINISTRY_WEBSITE", available_at="2027-05-15 08:20:00")
+		self._confirm(name, "MINISTRY_WEBSITE", available_at=W("2027-05-15 08:20:00"))
 		self._confirm(name, "NOTICE_BOARD")
 		self.assertEqual(frappe.db.get_value("Tender", name, "overall_status"), "Publication authorised")
 		with self.assertRaises(TendersError) as ctx:  # AC-055: withdrawal blocked once a channel is confirmed
@@ -415,11 +417,11 @@ class TestConfirmChannels(PublicationCase):
 		root.reload()
 		pub = frappe.get_doc("Tender Publication", root.publication)
 		self.assertEqual((root.overall_status, pub.publication_status), ("Published — open", "Published"))
-		self.assertEqual(str(root.published_at), "2027-05-15 08:20:00")  # latest available_at, not the entry time
-		self.assertEqual(str(pub.published_at), "2027-05-15 08:20:00")
+		self.assertEqual(str(root.published_at), W("2027-05-15 08:20:00"))  # latest available_at, not the entry time
+		self.assertEqual(str(pub.published_at), W("2027-05-15 08:20:00"))
 		self.assertTrue(pub.publication_digest)
 		actual = planning_gateway.current_invitation_actual(root)
-		self.assertEqual(str(actual), "2027-05-15")
+		self.assertEqual(str(actual), W("2027-05-15"))
 		planning_events = [e for e in events.list_for_tender(name) if e["event_type"] == "TenderPublished"]
 		self.assertEqual([(e["status"], e["consumer"]) for e in planning_events], [("Delivered", "planning")])
 		self.assertEqual(final["completed"]["planning"]["ok"], True)
@@ -431,7 +433,7 @@ class TestConfirmChannels(PublicationCase):
 		self.assertEqual(frappe.db.get_value("Tender Event", {"tender": name, "event_type": "TenderOpenForSubmission"}, "status"), "Pending")
 		ws = read.get_tenders_workspace(user=fx.HOPF)
 		row = next(r for r in ws["rows"] if r.get("tender") == name)
-		self.assertEqual(row["status_label"], "Published — open until 5 Jun 2027, 11:00 EAT")
+		self.assertEqual(row["status_label"], f"Published — open until {ad.dt_eat('2027-06-05 11:00:00')}")
 		# TPR-DES-01-READER: an Auditor sees the neutral status only
 		ws = read.get_tenders_workspace(user=fx.AUDITOR)
 		row = next(r for r in ws["rows"] if r.get("tender") == name)
@@ -490,7 +492,7 @@ class TestIntegrity(PublicationCase):
 		for channel in CHANNELS[:3]:
 			self._confirm(name, channel)
 		with self.assertRaises(TendersError) as ctx:
-			self._confirm(name, "NATIONAL_NEWSPAPERS", available_at="2027-06-04 08:00:00")
+			self._confirm(name, "NATIONAL_NEWSPAPERS", available_at=W("2027-06-04 08:00:00"))
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_PERIOD_INVALID")
 		self.assertEqual(frappe.db.get_value("Tender Channel Confirmation", {"tender": name, "channel": "NATIONAL_NEWSPAPERS"}, "status"), "Awaiting confirmation")
 		self.assertEqual(frappe.db.get_value("Tender", name, "overall_status"), "Publication authorised")
@@ -500,3 +502,7 @@ class TestIntegrity(PublicationCase):
 		self.assertEqual((first["completed"]["published_at"], second["idempotent"]), (str(frappe.db.get_value("Tender", name, "published_at")), True))
 		self.assertEqual(frappe.db.count("Tender Event", {"tender": name, "event_type": "TenderPublishedOpen"}), 1)
 		self.assertEqual(json.loads(frappe.db.get_value("Tender Event", {"tender": name, "event_type": "TenderPublishedOpen"}, "payload"))["resulting_status"], "Published — open")
+		# AWD-CHG-001 v0.9 §5.11: the publication transaction registered the durable Tender-level authority record, once, Not issued, with no case.
+		authority = frappe.db.get_value("Award Tender Authority", name, ["notification_status", "source_kind", "award_case"], as_dict=True)
+		self.assertEqual((authority.notification_status, authority.source_kind, authority.award_case or ""), ("Not issued", "Publication", ""))
+		self.assertEqual(frappe.db.count("Award Tender Authority", {"tender": name}), 1)

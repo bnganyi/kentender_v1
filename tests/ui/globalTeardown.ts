@@ -30,6 +30,10 @@ export default async function globalTeardown(): Promise<void> {
 		// TPR-CHG-001 v0.8 — the Tenders Playwright world extends the
 		// Requisitions one; its restore removes the Tenders rows and actors.
 		"kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site",
+		// Last: the Bid Submission restore above puts the test controls back to normal, which clears the shared test instant. The canonical world
+		// keeps its live pages on the anchor (SEED-002 v0.9 R1), and `validate` checks it; this puts it back (a site that is not a test
+		// environment ignores the call).
+		"kentender_core.seeds.canonical.set_as_at",
 	];
 	for (const dottedPath of restores) {
 		try {

@@ -15,7 +15,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, clock, draft_commands, guidance, publication_read, read, serializer
+from kentender_procurement.tenders.services import addenda, cancellation, cancellation_delivery, channel_confirmation, clock, draft_commands, guidance, post_close, publication_read, read, recovery_gateway, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 
 
@@ -217,6 +217,35 @@ def _compliance_rows(cancellation_summary: dict[str, Any]) -> list[dict[str, Any
 	return out
 
 
+def _opening_context(root, *, actor: str) -> dict[str, Any] | None:
+	"""Bid Opening's own account of the opening and its AO decision item for this Tender (`kt_tender_opening_decision_context`), or None. Tenders reads it,
+	never the opening's records: it carries references and states only — no bid count, name, price or content."""
+	for path in frappe.get_hooks("kt_tender_opening_decision_context") or []:
+		try:
+			return frappe.get_attr(path)(tender=root.name, user=actor)
+		except Exception:
+			frappe.log_error(title="Opening decision context failed")
+	return None
+
+
+def _decision_block(root, verdict, *, actor: str, roles: dict[str, bool]) -> dict[str, Any] | None:
+	"""TPR-CHG-001 v0.24 §10.13 POSTCLOSE / §10.19: what the Accounting Officer may do now — the allowed decision, or "A tender decision is needed" with every
+	blocker, its named holder and its permitted route."""
+	if not verdict or not verdict["stage"]:
+		return None
+	post = verdict["stage"] == post_close.STAGE_POST_CLOSE
+	award = verdict["award"] or {}
+	return {
+		"stage": verdict["stage"], "allowed": bool(verdict["allowed"]), "blockers": verdict["blockers"],
+		"heading": "" if verdict["allowed"] else ("A tender decision is needed" if post else ""),
+		"blocked_title": "Cancellation cannot be decided here" if (post and not verdict["allowed"]) else "",
+		"award": {"notification_status": cstr(award.get("notification_status")), "decision_status": cstr(award.get("decision_status")), "source": cstr(award.get("source")),
+			"source_revision": award.get("source_revision"), "checked_at_label": serializer.fmt_datetime_short(award["checked_at"]) if award.get("checked_at") else "",
+			"label": f"Award notification status: {cstr(award.get('notification_status'))}"} if post else None,
+		"opening": _opening_context(root, actor=actor) if post else None,
+	}
+
+
 def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str, Any]:
 	actor, root, roles = _load(tender, user)
 	version = frappe.get_doc("Tender Version", root.approved_version or root.current_version)
@@ -239,23 +268,30 @@ def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str
 	import json
 
 	channels = json.loads(frappe.db.get_value("Tender Publication", root.publication, "required_channels_json") or "[]") if root.publication else []
-	preview = cancellation.preview_obligations(root) if root.overall_status == "Published — open" else []
+	preview = cancellation.preview_obligations(root) if post_close.stage(root) else []
+	verdict = post_close.verdict(root) if post_close.stage(root) else None
 	review = _open_review(root)
-	actions = [a for a in read.allowed_actions(root, version, actor, roles) if a in ("cancel_tender", "recommend_cancellation", "record_cancellation_evidence")]
+	actions = [a for a in read.allowed_actions(root, version, actor, roles) if a in ("cancel_tender", "review_cancellation_decision", "recommend_cancellation", "record_cancellation_evidence")]
 	if review and roles["ao"] and not roles["technical"]:
 		actions.append("close_cancellation_review")
 	return {
 		"outcome": "OK", "roles": roles,
 		"tender": {"name": root.name, "tender_reference": root.tender_reference, "title": cstr(state.get("tender_title") or root.requirement_title), "overall_status": cstr(root.overall_status), "badge": read.badge_for(root, version, roles), "record_version": int(root.record_version or 0), "published_at_label": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline_label": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else ""},
 		"summary": {"purchase": cstr(state.get("tender_title") or root.requirement_title), "tender": root.tender_reference, "published_at": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else "", "required_channels": ", ".join(c["label"] for c in channels), "channel_count": len(channels)},
-		"grounds": cancellation.grounds_for_client(), "grounds_source": cancellation.GROUNDS_SOURCE,
+		"grounds": verdict["grounds"] if verdict and verdict["stage"] == post_close.STAGE_POST_CLOSE else cancellation.grounds_for_client(), "grounds_source": cancellation.GROUNDS_SOURCE,
+		"decision": _decision_block(root, verdict, actor=actor, roles=roles),
 		"recommendation": recommendation,
-		"consequences": {"closes_immediately": True, "notice_channels": [c["label"] for c in channels], "ppra_report_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "PPRA report"), ""), "candidate_notice_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "Candidate notice"), ""), "replacement_text": "A replacement procurement requires new governance."},
+		"consequences": {"closes_immediately": True, "notice_channels": [c["label"] for c in channels], "ppra_report_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "PPRA report"), ""), "candidate_notice_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "Candidate notice"), ""), "replacement_text": "A replacement purchase requires a new requisition."},
 		"cancellation": existing,
 		"notice_channels": publication_read.confirmation_rows(subject_type="Cancellation notice", subject_id=root.cancellation) if root.cancellation else [],
 		"allowed_actions": actions,
 		"review": review,
 		"compliance": _compliance_rows(existing) if existing else [],
-		"warning_text": "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.",
+		"warning_text": "The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation after checking the linked records. A replacement purchase requires a new requisition.",
+		"postclose_warning_text": "Cancellation is final for this tender. A replacement purchase requires a new requisition.",
+		"postclose_recovery_text": "KenTender will separately restore the unused planning allowance and release the unused budget reservation, after checking the linked records. An unsuccessful opening alone releases nothing.",
+		"delivery": cancellation_delivery.status_for(root.name) if root.overall_status == "Cancelled" else [],
+		# TPR-CHG-001 v0.21 §10.18 — Requisitions' recovery of the unused allowance and funding, as this reader may see it
+		"resource_recovery": recovery_gateway.section(root.name, user=actor) if root.overall_status == "Cancelled" else None,
 		"guidance": _guidance(root, actor, roles, "cancellation"),
 	}

@@ -196,6 +196,7 @@ def get_site_configuration() -> dict[str, Any]:
 			"pe_code": single.pe_code or "",
 			"pe_type": single.pe_type or "",
 			"ppra_registration": single.ppra_registration or "",
+			"pe_address": single.get("pe_address") or "",
 			"timezone": single.timezone or "Africa/Nairobi",
 			"statutory_approval_route": single.get("statutory_approval_route") or "",
 			"entity_is_county": bool(single.get("entity_is_county")),
@@ -513,6 +514,7 @@ def configure_procuring_entity(
 	statutory_approval_route: str = "",
 	entity_is_county: bool | None = None,
 	idempotency_key: str = "",
+	pe_address: str = "",
 ) -> dict[str, Any]:
 	"""§7 `ConfigureProcuringEntity` — first-run configuration.
 
@@ -543,6 +545,7 @@ def configure_procuring_entity(
 		single.pe_code = code
 		single.pe_type = pe_type
 		single.ppra_registration = (ppra_registration or "").strip()
+		single.pe_address = _principal_address(pe_address, required=False)
 		single.timezone = (timezone or "Africa/Nairobi").strip() or "Africa/Nairobi"
 		single.statutory_approval_route = route
 		single.entity_is_county = 1 if county else 0
@@ -578,6 +581,19 @@ def configure_procuring_entity(
 	)
 
 
+def _principal_address(value: Any, *, required: bool) -> str:
+	"""The entity's principal address as the agreement prints it (CM-CHG-001 v0.11 section 19.4: "Missing address is a preparation issue; correct governed entity particulars once, rather than typing inconsistent
+	copies into outputs"). One line of 8 to 300 characters with at least one letter; a blank is refused where an address is already held (`required`), because the agreement of a later award would then have none."""
+	address = " ".join(str(value or "").split())
+	if not address:
+		if required:
+			fail_cfg("CFG_PE_INVALID", "Enter the entity's principal address; it cannot be removed once it is held.")
+		return ""
+	if not (8 <= len(address) <= 300) or not any(ch.isalpha() for ch in address):
+		fail_cfg("CFG_PE_INVALID", "Enter the entity's principal address as it should read in a contract (8 to 300 characters).")
+	return address
+
+
 def update_procuring_entity(*, payload: dict[str, Any], expected_version: str = "") -> dict[str, Any]:
 	"""§7 `UpdateProcuringEntity` — editable descriptive fields only.
 
@@ -600,6 +616,7 @@ def update_procuring_entity(*, payload: dict[str, Any], expected_version: str = 
 			"pe_name",
 			"pe_type",
 			"ppra_registration",
+			"pe_address",
 			"timezone",
 			"statutory_approval_route",
 			"entity_is_county",
@@ -616,6 +633,9 @@ def update_procuring_entity(*, payload: dict[str, Any], expected_version: str = 
 		single.pe_type = payload["pe_type"]
 	if "ppra_registration" in payload:
 		single.ppra_registration = (payload["ppra_registration"] or "").strip()
+	if "pe_address" in payload:
+		# FU-CM-72 (the principal address the agreement's party block reads): once held it can be corrected but not removed.
+		single.pe_address = _principal_address(payload["pe_address"], required=bool(single.get("pe_address")))
 	if "timezone" in payload:
 		single.timezone = (payload["timezone"] or "").strip() or "Africa/Nairobi"
 	if "statutory_approval_route" in payload:

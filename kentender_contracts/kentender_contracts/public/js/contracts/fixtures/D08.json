@@ -1,0 +1,149 @@
+{
+ "actions": {
+  "Request correction": {
+   "dialog": "correction",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D08",
+ "dialogs": {
+  "correction": {
+   "args": {
+    "invoice": "CM-INV-990580"
+   },
+   "b": [
+    {
+     "items": [
+      [
+       "Recipient",
+       "Afya Digital Supplies Limited"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      {
+       "l": "Message",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RequestInvoiceCorrection",
+   "p": "Send request",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Request correction"
+  }
+ },
+ "ev": [
+  "Supplier invoice AFYA-1",
+  "Acceptance report 1",
+  "Receipt 1"
+ ],
+ "id": "D08",
+ "name": "Invoice review",
+ "next": {
+  "h": "Review the invoice: it does not match what the contract supports.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Request correction",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Invoiced",
+      "Eligible",
+      "Rate",
+      "Claimed",
+      "Supported"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "9",
+       "8",
+       "KES 100,000",
+       "KES 900,000",
+       "KES 800,000"
+      ]
+     ]
+    },
+    {
+     "k": "strong",
+     "v": "Some units have not been accepted."
+    }
+   ],
+   "t": "Comparison"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review invoice",
+ "version": 19
+}

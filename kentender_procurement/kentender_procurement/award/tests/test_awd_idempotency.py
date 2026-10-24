@@ -7,6 +7,8 @@ work item or consumer case; a stale write changes nothing."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import corrections, decision, eligibility, intake, opinion, restrictions, state, supplier
@@ -24,10 +26,10 @@ class TestIdempotency(AwardCase):
 		first = self.run_as(HOP, opinion.sign, award=CASE, expected_version=v, idempotency_key=key)
 		self.assertEqual(self.run_as(HOP, opinion.sign, award=CASE, expected_version=v, idempotency_key=key), first)
 		self.assertEqual(len([o for o in state.opinions(self.case()) if o.state == "Signed"]), 1)
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="Award", reason="ok", expected_version=self.version())
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		key = self.key("respond")
 		a = self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1, idempotency_key=key)
 		self.assertEqual(self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1, idempotency_key=key), a)
@@ -35,7 +37,7 @@ class TestIdempotency(AwardCase):
 		with self.assertRaises(AwardError):
 			self.run_as(MARY, supplier.respond, notice=notice.name, response="Decline", reason="x", notice_version=1)
 		key = self.key("restriction")
-		args = dict(award=CASE, basis="Reported challenge", source="Letter", received_at="2027-06-18 10:00:00", reason="x", idempotency_key=key)
+		args = dict(award=CASE, basis="Reported challenge", source="Letter", received_at=W("2027-06-18 10:00:00"), reason="x", idempotency_key=key)
 		self.run_as(HOP, restrictions.record_external, **args)
 		self.run_as(HOP, restrictions.record_external, **args)
 		self.assertEqual(frappe.db.count(state.ISSUE, {"award_case": CASE, "issue_type": "Review/order"}), 1)
@@ -64,9 +66,9 @@ class TestIdempotency(AwardCase):
 		self.deliver()
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1)
-		self.at("2027-07-02 09:00:00")
+		self.at(W("2027-07-02 09:00:00"))
 		eligibility.refresh_case(CASE)
 		eligibility.refresh_case(CASE)
 		self.assertEqual(frappe.db.count("Award Test Contracting Inbox", {"award_case": CASE, "kind": "Package"}), 1)

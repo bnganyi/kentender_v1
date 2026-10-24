@@ -1,0 +1,175 @@
+{
+ "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "Sign close-out": {
+   "args": {
+    "closeout": "CM-CLS-999588"
+   },
+   "command": "SignContractCloseout",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_accounting_offi",
+ "d": "D11",
+ "dialogs": {
+  "return": {
+   "args": {
+    "stage": "close-out"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractCloseout",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Completion certificate 1",
+  "Financial reconciliation 1"
+ ],
+ "id": "D11",
+ "name": "Close-out review",
+ "next": {
+  "h": "Review and sign the close-out.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Sign close-out",
+ "page": "record",
+ "ref": "CM-TEST-test_the_accounting_offi",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted",
+       "10"
+      ],
+      [
+       "Invoiced",
+       "KES 0"
+      ],
+      [
+       "Cash confirmed",
+       "KES 0"
+      ],
+      [
+       "Balance",
+       "KES 0"
+      ]
+     ],
+     "k": "facts"
+    },
+    {
+     "items": [
+      [
+       "Warranty",
+       "Ended with no unresolved claim"
+      ],
+      [
+       "Security",
+       "Not required by the issued terms"
+      ],
+      [
+       "Required reporting",
+       "Complete"
+      ],
+      [
+       "Completion certificate",
+       "Certificate 1"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Completion review"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "I close this procurement contract following the evidenced completion recorded below. The surviving obligations and their accountable owners are listed in the attached schedule."
+    },
+    {
+     "items": [
+      [
+       "Surviving obligations",
+       "Publication \u2014 hopfsp, Not confirmed \u2014 set by current directions"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Close-out decision"
+  }
+ ],
+ "s2": [
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "history"
+   ]
+  }
+ ],
+ "title": "Close contract",
+ "version": 20
+}

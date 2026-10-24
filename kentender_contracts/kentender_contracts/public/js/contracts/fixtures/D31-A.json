@@ -1,0 +1,230 @@
+{
+ "actions": {
+  "Request correction": {
+   "dialog": "correction",
+   "do": "dialog"
+  },
+  "Sign report": {
+   "args": {
+    "acceptance": "CM-ACC-516195"
+   },
+   "command": "SignAcceptanceReport",
+   "do": "command"
+  },
+  "Sign with dissent": {
+   "dialog": "dissent",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-SVC",
+ "d": "D31",
+ "dialogs": {
+  "correction": {
+   "args": {
+    "acceptance": "CM-ACC-516195"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RequestAcceptanceCorrection",
+   "p": "Send request",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Request correction"
+  },
+  "dissent": {
+   "args": {
+    "acceptance": "CM-ACC-516195"
+   },
+   "b": [
+    {
+     "k": "help",
+     "v": "Your signature stays on this exact report. The units you name are not decided: they are read again before they can be accepted or rejected."
+    },
+    {
+     "items": [
+      {
+       "l": "Units you dissent from",
+       "name": "dissent_units",
+       "o": {
+        "rows": 4
+       },
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Reason for your dissent",
+       "name": "dissent_reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "SignAcceptanceReport",
+   "p": "Sign with dissent",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Sign with dissent"
+  }
+ },
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D31-A",
+ "name": "Required services",
+ "next": {
+  "h": "Sign the acceptance report.",
+  "k": "turn",
+  "s": "Responsible: Julia Njeri"
+ },
+ "p": "Sign report",
+ "page": "record",
+ "ref": "CM-TEST-SVC",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Line",
+      "Quantity",
+      "Accepted",
+      "Deferred"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      2,
+      3
+     ],
+     "rows": [
+      [
+       "Training",
+       "1 session",
+       "1",
+       "0"
+      ]
+     ]
+    }
+   ],
+   "t": "Report lines"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "Technical certificate signed by Peter Mugo, 2 Jul 2027, 09:00 EAT"
+    }
+   ],
+   "t": "Technical evidence"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Signer",
+      "Role",
+      "Status"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Julia Njeri",
+       "Chair",
+       "!Awaiting signature"
+      ],
+      [
+       "Peter Mugo",
+       "Technical member",
+       "!Awaiting signature"
+      ],
+      [
+       "Brian Wafula",
+       "Procurement member",
+       "!Awaiting signature"
+      ]
+     ]
+    }
+   ],
+   "t": "Signatures"
+  },
+  {
+   "b": [
+    {
+     "k": "help",
+     "v": "Invoice entitlement for the service is KES 50,000, once. No stock or asset unit is created for a training service."
+    }
+   ],
+   "t": ""
+  }
+ ],
+ "s2": [
+  "Request correction",
+  "Sign with dissent"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Deliveries",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-SVC",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-SVC",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-SVC",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-SVC",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-SVC",
+    "history"
+   ]
+  }
+ ],
+ "title": "Sign acceptance report",
+ "version": 13
+}

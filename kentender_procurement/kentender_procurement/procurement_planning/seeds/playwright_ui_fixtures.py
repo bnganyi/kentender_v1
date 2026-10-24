@@ -27,6 +27,7 @@ the `need`/`needs` arguments below.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from contextlib import contextmanager
 from typing import Any
@@ -178,7 +179,7 @@ def _budget_world() -> None:
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PWPL-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PWPL-APPROVAL-1",
-				"approval_date": "2026-06-30", "authorised_total": 200000000, "currency": "KES",
+				"approval_date": W("2026-06-30"), "authorised_total": 200000000, "currency": "KES",
 				"approval_document": "/files/pwpl-approval.pdf",
 			}
 		)).name
@@ -422,6 +423,7 @@ def _wipe() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": FY}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	frappe.db.delete("Plan Cancellation Recovery Hold", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})

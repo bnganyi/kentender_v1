@@ -32,7 +32,7 @@ const SECICO = {
 	"Award notice": "mail", "Revised notice": "mail", Notices: "mail", "Acceptance and wait": "clock", Contracting: "send", Request: "msg",
 	"Accounting Officer’s comments": "msg", "Supplier response": "reply", "Your response": "reply", Restriction: "lock", "Report correction": "refresh",
 	"Reported correction": "refresh", "Correction instruction": "refresh", "Outstanding issue": "alert", Operation: "server", "Evaluation result": "scale",
-	"Award result": "award", "Corrected award": "award",
+	"Award result": "award", "Corrected award": "award", "Funding sources": "list",
 };
 const NL = { turn: "Your turn", waiting: "Waiting on someone", done: "Done" };
 

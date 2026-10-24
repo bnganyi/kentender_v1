@@ -32,7 +32,7 @@ from frappe.utils import cstr, flt, fmt_money, formatdate, get_datetime
 
 from kentender_core.services import next_step as ns
 from kentender_procurement.procurement_planning.errors import MESSAGES
-from kentender_procurement.procurement_planning.services import missing_setting, money, needs_intake, readiness, references, schedule, scope_lock
+from kentender_procurement.procurement_planning.services import missing_setting, money, needs_intake, readiness, recovery_read, references, schedule, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
@@ -1216,7 +1216,7 @@ def _active_view(version, plan) -> dict[str, Any]:
 	for item in items:
 		allocations = frappe.get_all(
 			"Plan Source Allocation", filters={"plan_item": item.name, "allocation_state": "Active"},
-			fields=["name", "organisation_unit", "source_origin", "quantity", "unit", "indicative_amount"],
+			fields=["name", "plan_item_id", "allocation_id", "organisation_unit", "source_origin", "quantity", "unit", "indicative_amount"],
 		)
 		drawn = _drawn(allocations)
 		departments |= {a.organisation_unit for a in allocations}
@@ -1287,11 +1287,14 @@ def _latest_publication(version_name: str) -> dict[str, Any] | None:
 
 
 def _drawn(allocations: list) -> tuple[float, float]:
-	names = [a.name for a in allocations]
-	if not names:
+	"""What these allocations have drawn, counted by the stable allocation identity (PLN-CHG-001 v1.32 §4.11)
+	so the figure survives an Annual Plan successor; see `plan_requisition._drawn_totals`."""
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	if not allocations:
 		return 0.0, 0.0
-	rows = frappe.get_all("Plan Drawdown Reference", filters={"allocation": ("in", names), "drawdown_state": "Active"}, fields=["quantity", "amount"])
-	return sum(flt(r.quantity) for r in rows), sum(flt(r.amount) for r in rows)
+	totals = plan_requisition._drawn_totals(allocations)
+	return sum(flt(q) for q, _ in totals.values()), sum(flt(a) for _, a in totals.values())
 
 
 # --------------------------------------------------------------------------
@@ -1489,6 +1492,8 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		},
 		"scope_lock": lock,
 		"notices": notices,
+		# PLN-CHG-001 v1.32 §10.19 — the unused allowance after a tender was cancelled, from Planning's own records
+		"recoveries": recovery_read.sections_for_item(cstr(item.plan_item_id), start_route=lambda: recovery_read.start_route_for(cstr(item.plan_item_id))),
 		"classification": {
 			"strategic_objective": cstr(item.strategic_objective),
 			"objective_path": cstr(item.objective_path),

@@ -38,8 +38,8 @@ class TestSeedClock(IntegrationTestCase):
 			organisation_unit=cls.unit,
 			appointment_type="Acting",
 			authority_reference="Test acting window",
-			effective_from="2026-10-01 00:00:00",
-			effective_to="2026-11-30 23:59:59",
+			effective_from="2025-10-01 00:00:00",
+			effective_to="2025-11-30 23:59:59",
 			fixture_namespace=NS,
 			actor="Administrator",
 		)
@@ -48,19 +48,19 @@ class TestSeedClock(IntegrationTestCase):
 
 	def test_the_block_freezes_every_frappe_clock_at_the_site_local_instant(self):
 		self.assertEqual(clock.frozen_at(), "")
-		with clock.at("2026-11-25 10:30:00"):
-			self.assertEqual(str(now_datetime())[:19], "2026-11-25 10:30:00")
-			self.assertEqual(now()[:19], "2026-11-25 10:30:00")
+		with clock.at("2025-11-25 10:30:00"):
+			self.assertEqual(str(now_datetime())[:19], "2025-11-25 10:30:00")
+			self.assertEqual(now()[:19], "2025-11-25 10:30:00")
 			# Time ticks inside the block, so two consecutive stamps differ but
 			# stay within the fixture second (Frappe's optimistic lock relies
 			# on distinct `modified` values).
 			first, second = now(), now()
 			self.assertLessEqual(first, second)
-			self.assertEqual(second[:19], "2026-11-25 10:30:00")
-			self.assertEqual(nowdate(), "2026-11-25")
-			self.assertEqual(clock.frozen_at(), "2026-11-25 10:30:00")
+			self.assertEqual(second[:19], "2025-11-25 10:30:00")
+			self.assertEqual(nowdate(), "2025-11-25")
+			self.assertEqual(clock.frozen_at(), "2025-11-25 10:30:00")
 		self.assertEqual(clock.frozen_at(), "")
-		self.assertNotEqual(nowdate(), "2026-11-25")
+		self.assertNotEqual(nowdate(), "2025-11-25")
 
 	def test_authority_is_evaluated_at_the_frozen_instant(self):
 		def active() -> bool:
@@ -69,11 +69,11 @@ class TestSeedClock(IntegrationTestCase):
 				for a in auth.resolve_assignments(self.user, business_role="Head of User Department")
 			)
 
-		with clock.at("2026-09-15 09:00:00"):
+		with clock.at("2025-09-15 09:00:00"):
 			self.assertFalse(active(), "scheduled, not yet effective")
-		with clock.at("2026-11-25 10:30:00"):
+		with clock.at("2025-11-25 10:30:00"):
 			self.assertTrue(active(), "inside the acting window")
-		with clock.at("2026-12-01 09:00:00"):
+		with clock.at("2025-12-01 09:00:00"):
 			self.assertFalse(active(), "expired")
 
 	def test_a_slow_block_never_leaves_the_fixture_second(self):
@@ -83,9 +83,9 @@ class TestSeedClock(IntegrationTestCase):
 		microsecond instead, so stamps stay distinct and in the fixture second."""
 		import time
 
-		with clock.at("2026-12-07 10:00:00"):
+		with clock.at("2025-12-07 10:00:00"):
 			first = now()
 			time.sleep(1.5)
 			second = now()
 		self.assertLess(first, second)
-		self.assertEqual(second[:19], "2026-12-07 10:00:00")
+		self.assertEqual(second[:19], "2025-12-07 10:00:00")

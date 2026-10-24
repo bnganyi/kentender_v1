@@ -167,12 +167,16 @@ def confirm_tender_published(root, rows, *, actor: str, assignment, idempotency_
 	task = lifecycle.open_task(root, task_type=TASK_HOPF_CONFIRMATION, subject_id=publication.name)
 	if task:
 		envelope.bump(task, status="Completed")
-	events.emit(
+	published_event = events.emit(
 		tender=root.name, event_type="TenderPublishedOpen", command="ConfirmTenderPublished", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 		previous_status="Publication authorised", resulting_status="Published — open", record_version=root.record_version, subject_type="Tender Publication", subject_id=publication.name,
 		payload={"published_at": cstr(published_at), "publication_digest": publication_digest, "package_digest": publication.package_digest, "submission_deadline": cstr(state.get("submission_deadline"))},
 		fixture_namespace=root.fixture_namespace,
 	)
+	# AWD-CHG-001 v0.9 §5.11: Award registers the Tender's durable authority record here, in the publication transaction. A failure rolls the
+	# publication back — a published Tender never lacks it.
+	for registrar in frappe.get_hooks("kt_tender_publication_registrars") or []:
+		frappe.get_attr(registrar)(tender=root.name, tender_reference=root.tender_reference, event_key=cstr(published_event.event_id), published_at=published_at)
 	planning = planning_gateway.publish_invitation_actual(root=root, publication=publication, published_at=published_at, actor=actor, idempotency_key=idempotency_key)
 	if not events.exists(tender=root.name, event_type="TenderOpenForSubmission"):
 		# Bidder-facing open-Tender event (§7.3): an outbox contract; no consumer exists in MVP (FOLLOW_UPS FU-12/13).

@@ -21,8 +21,12 @@
   "ppra_report_evidence_id",
   "candidate_notice_status",
   "notice_publication_status",
+  "previous_status",
+  "ground_evidence_json",
+  "authority_evidence_json",
   "cancellation_digest",
   "notice_document_digest",
+  "resource_recovery",
   "section_obl",
   "obligations",
   "record_version",
@@ -133,6 +137,13 @@
    "read_only": 1
   },
   {
+   "fieldname": "resource_recovery",
+   "fieldtype": "Data",
+   "label": "Allowance and funding recovery",
+   "read_only": 1,
+   "description": "TPR-CHG-001 v0.21 §4.11 — the Requisitions-owned recovery registered with this cancellation. Set once, outside the cancellation digest; its status is read live from Requisitions and never copied here."
+  },
+  {
    "fieldname": "notice_document_digest",
    "fieldtype": "Data",
    "label": "Notice document digest",
@@ -158,6 +169,24 @@
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture namespace",
+   "read_only": 1
+  },
+  {
+   "fieldname": "previous_status",
+   "label": "Status when cancelled",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ground_evidence_json",
+   "label": "Verified ground evidence",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authority_evidence_json",
+   "label": "Award authority evidence",
+   "fieldtype": "Long Text",
    "read_only": 1
   }
  ],

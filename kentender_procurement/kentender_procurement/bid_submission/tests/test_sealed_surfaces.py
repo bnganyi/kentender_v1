@@ -14,6 +14,7 @@ operator is outside them and bound only by TRUST-ADR-001's custody controls."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -115,7 +116,7 @@ class TestSealedSurfaces(ChangeCase):
 
 		facts = next(g["published_facts"] for s in __import__("kentender_procurement.tenders.services.bid_definition", fromlist=["current"]).current(self.name)["definition"]["sections"] for g in s["groups"] if g["rule_id"] == "RR-TENDER-SECURITY")
 		recorded = security_intake.record_physical_tender_security_receipt(tender_reference=self.reference, instrument_type=facts["permitted_forms"][0], issuer="KCB Bank Kenya", instrument_reference="KCB/TG/SURF/1",
-			amount=facts["amount"], currency=facts["currency"], received_at="2027-05-19 09:00:00", confirmed=True, idempotency_key=records.uuid4().hex, user=tender_fx.OFFICER)
+			amount=facts["amount"], currency=facts["currency"], received_at=W("2027-05-19 09:00:00"), confirmed=True, idempotency_key=records.uuid4().hex, user=tender_fx.OFFICER)
 		name = frappe.db.get_value("Tender Security Intake", {"intake_reference": recorded["intake_reference"]}, "name")
 		from frappe.client import get
 

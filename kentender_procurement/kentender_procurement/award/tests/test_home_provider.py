@@ -15,10 +15,13 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W, ad  # noqa: F401
 import json
 from datetime import datetime, timedelta
 
 import frappe
+from frappe.utils import get_datetime
 from kentender_core.services.command_write_guard import purge_doc
 
 from kentender_core.services.command_write_guard import maintenance_write
@@ -38,9 +41,9 @@ OUTSIDER = "brian.wafula@moh.example.test"  # a Procurement Officer: no Award re
 EXTRA, HOD, HOD_OTHER = "awdhome.extra@example.test", "awdhome.hod@example.test", "awdhome.hodother@example.test"
 HOME_NS = "KT_TEST_AWDHOME"
 USERS = (EXTRA, HOD, HOD_OTHER)
-DECIDED = datetime(2027, 6, 17, 10, 0)
-SIGNED = datetime(2027, 6, 17, 9, 10)
-RECEIVED = datetime(2027, 6, 16, 14, 7, 1)
+DECIDED = W(datetime(2027, 6, 17, 10, 0))
+SIGNED = W(datetime(2027, 6, 17, 9, 10))
+RECEIVED = W(datetime(2027, 6, 16, 14, 7, 1))
 AWARD_DOCTYPES = records.DOCTYPES
 
 
@@ -76,6 +79,8 @@ def _assert_clean() -> None:
 		raise AssertionError(f"Award Home test rows left behind: {left}")
 
 
+READ = "2027-06-19 10:00:00"  # the story instant Home reads at in these tests, two days after the decision
+
 class TestAwardHomeProvider(AwardCase):
 	@classmethod
 	def setUpClass(cls):
@@ -90,7 +95,23 @@ class TestAwardHomeProvider(AwardCase):
 
 	# ----- helpers -----
 
+	def reading(self, at):
+		"""Home reads the real site time, and the Award story lies before it now (SEED-002 v0.9 R1): a read that needs "within thirty days
+		of the decision" runs with the clock frozen at an instant after it. An instant later than the real clock cannot be frozen in an anchored
+		world and is read as it is."""
+		from contextlib import nullcontext
+
+		from kentender_core.seeds import clock
+
+		return clock.at(at) if get_datetime(at) <= datetime.now() else nullcontext()
+
 	def region(self, user: str, region: str):
+		home_support.reset()
+		with self.reading(W(READ)):
+			return entries(user=user, region=region)
+
+	def region_now(self, user: str, region: str):
+		"""The region read at the real site time (for a test that sets its instants relative to it)."""
 		home_support.reset()
 		return entries(user=user, region=region)
 
@@ -107,7 +128,8 @@ class TestAwardHomeProvider(AwardCase):
 		"""The presented row of the region, following Show more (the test site also holds the canonical Award)."""
 		rows, cursor = [], None
 		while True:
-			page = hw.get_workspace(user, regions=[region], cursors={region: cursor} if cursor else None, providers=[entries], at=at)["regions"][region]
+			with self.reading(at):
+				page = hw.get_workspace(user, regions=[region], cursors={region: cursor} if cursor else None, providers=[entries], at=at)["regions"][region]
 			rows += page["entries"]
 			cursor = page["next_cursor"]
 			if not cursor:
@@ -117,7 +139,8 @@ class TestAwardHomeProvider(AwardCase):
 		return rows[0]
 
 	def home(self, user: str, at: datetime):
-		return hw.get_workspace(user, providers=[entries], at=at)
+		with self.reading(at):
+			return hw.get_workspace(user, providers=[entries], at=at)
 
 	def who(self, role: str, fallback: str) -> str:
 		"""What the owner names for the holder: the person when exactly one holds the role, otherwise the role (the site decides)."""
@@ -163,17 +186,17 @@ class TestAwardHomeProvider(AwardCase):
 	def test_a_returned_decision_and_a_no_award_next_action_keep_the_owners_wording_and_instants(self):
 		self.deliver()
 		self.signed_opinion()
-		self.at("2027-06-17 11:00:00")
+		self.at(W("2027-06-17 11:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="Return for correction", reason="Explain the unresolved funding concern before recommending an award.",
 			expected_version=self.version())
 		returned = self.one(HOP, he.MY_WORK)
-		self.assertEqual((returned["action"], returned["entered_at"]), ("Resolve returned decision", datetime(2027, 6, 17, 11, 0)))
+		self.assertEqual((returned["action"], returned["entered_at"]), ("Resolve returned decision", W(datetime(2027, 6, 17, 11, 0))))
 		self.signed_opinion(conclusion="No current recommendation", reason="Tender validity expired before an award could be notified.")
-		self.at("2027-06-18 08:00:00")
+		self.at(W("2027-06-18 08:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="No award", reason="Tender validity expired before an award could be notified.",
 			next_action="Review whether the tender should be cancelled", expected_version=self.version())
 		follow = self.one(HOP, he.MY_WORK)
-		self.assertEqual((follow["action"], follow["entered_at"]), ("Review whether the tender should be cancelled", datetime(2027, 6, 18, 8, 0)))
+		self.assertEqual((follow["action"], follow["entered_at"]), ("Review whether the tender should be cancelled", W(datetime(2027, 6, 18, 8, 0))))
 
 	def test_a_failed_notice_is_blocked_and_says_what_the_owner_says(self):
 		self.failed_notice_case()
@@ -181,8 +204,8 @@ class TestAwardHomeProvider(AwardCase):
 		issue = issues.open_issues(self.case(NAME37), subtype=notices.DELIVERY_SUBTYPE)[0]
 		self.assertEqual((row["action"], row["blocked"], row["reason"]), ("Resolve notice delivery", True, "A required notice is not yet confirmed."))
 		self.assertEqual((row["entered_at"], row["action_id"], row["title"]), (issue.received_at, f"{NAME37}:1:issue:{issue.name}", TITLE))
-		shown = self.row(HOP, datetime(2027, 6, 19, 10, 0), "my_work", REF37)
-		self.assertEqual((shown["action"], shown["blocked"], shown["reason"], shown["timing"]), ("Resolve notice delivery", True, "A required notice is not yet confirmed.", "Received 2 days ago (17 June, 10:00)"))
+		shown = self.row(HOP, W(datetime(2027, 6, 19, 10, 0)), "my_work", REF37)
+		self.assertEqual((shown["action"], shown["blocked"], shown["reason"], shown["timing"]), ("Resolve notice delivery", True, "A required notice is not yet confirmed.", f"Received 2 days ago ({ad.home_dt('2027-06-17 10:00:00', READ)})"))
 		self.assertEqual(shown["module"], "Award")
 
 	def test_an_incomplete_report_blocks_the_opinion_and_a_plain_opinion_is_not_blocked(self):
@@ -197,14 +220,14 @@ class TestAwardHomeProvider(AwardCase):
 	def test_the_decision_row_renders_the_signed_instant_through_home(self):
 		self.deliver()
 		self.signed_opinion()
-		decide = self.row(AO, datetime(2027, 6, 19, 10, 0), "my_work")
-		self.assertEqual((decide["action"], decide["timing"], decide["title"], decide["blocked"]), ("Decide award", "Received 2 days ago (17 June, 09:10)", TITLE, False))
+		decide = self.row(AO, W(datetime(2027, 6, 19, 10, 0)), "my_work")
+		self.assertEqual((decide["action"], decide["timing"], decide["title"], decide["blocked"]), ("Decide award", f"Received 2 days ago ({ad.home_dt('2027-06-17 09:10:00', READ)})", TITLE, False))
 		self.assertEqual(decide["module"], "Award")
 
 	def test_the_opinion_row_renders_received_two_days_ago(self):
 		self.deliver()
-		row = self.row(HOP, datetime(2027, 6, 18, 10, 0), "my_work")
-		self.assertEqual((row["action"], row["timing"]), ("Prepare professional opinion", "Received 2 days ago (16 June, 14:07)"))
+		row = self.row(HOP, W(datetime(2027, 6, 18, 10, 0)), "my_work")
+		self.assertEqual((row["action"], row["timing"]), ("Prepare professional opinion", f"Received 2 days ago ({ad.home_dt('2027-06-16 14:07:00', READ)})"))
 
 	# ----- Waiting -----
 
@@ -217,8 +240,8 @@ class TestAwardHomeProvider(AwardCase):
 		names = [people.full_name(user) for user in people.holders(people.ACCOUNTING_OFFICER)]
 		self.assertEqual(waiting["holder"], " or ".join(names) if len(names) <= 2 else people.ACCOUNTING_OFFICER)
 		self.assertEqual(waiting["destination"]["route"], ["award", CASE])
-		shown = self.row(HOP, datetime(2027, 6, 19, 10, 0), "waiting")
-		self.assertEqual(shown["timing"], "Waiting 2 days (since 17 June, 09:10)")
+		shown = self.row(HOP, W(datetime(2027, 6, 19, 10, 0)), "waiting")
+		self.assertEqual(shown["timing"], f"Waiting 2 days (since {ad.home_dt('2027-06-17 09:10:00', READ)})")
 		self.assertEqual(shown["action"], waiting["action"])
 
 	def test_the_accounting_officers_wait_for_the_opinion_is_oversight_not_a_waiting_row(self):
@@ -245,8 +268,8 @@ class TestAwardHomeProvider(AwardCase):
 			self.assertEqual(row["action"], f"Awaiting professional opinion by {who}")
 			self.assertEqual((row["outstanding"], row["since"], row["title"], row["action_id"]), (True, RECEIVED, TITLE, f"{CASE}:oversight"))
 			self.assertEqual((row["destination"]["route"], row["reference"]), (["award", CASE], REF))
-		shown = self.row(AO, datetime(2027, 6, 18, 10, 0), "oversight")
-		self.assertEqual((shown["timing"], shown["action"]), ("Outstanding 2 days (since 16 June, 14:07)", f"Awaiting professional opinion by {who}"))
+		shown = self.row(AO, W(datetime(2027, 6, 18, 10, 0)), "oversight")
+		self.assertEqual((shown["timing"], shown["action"]), (f"Outstanding 2 days (since {ad.home_dt('2027-06-16 14:07:00', READ)})", f"Awaiting professional opinion by {who}"))
 
 	def evaluation_says(self, links, *, state="ok"):
 		"""Evaluation's own stage summary for the Tender: what it discloses to this reader, with its own links."""
@@ -267,8 +290,8 @@ class TestAwardHomeProvider(AwardCase):
 		self.assertEqual(row["link"], {"label": "View report", "destination": {"route": ["tenders", REF, "evaluation", "report"], "route_options": {}}})
 		self.assertEqual(row["fact"], "Evaluation report delivered")
 		self.assertEqual(row["fact_at"], RECEIVED)
-		shown = self.row(AO, datetime(2027, 6, 18, 10, 0), "oversight")
-		self.assertEqual((shown["fact"], shown["link"]["label"], shown["destination"]["route"]), ("Evaluation report delivered 16 June, 14:07", "View report", ["award", CASE]))
+		shown = self.row(AO, W(datetime(2027, 6, 18, 10, 0)), "oversight")
+		self.assertEqual((shown["fact"], shown["link"]["label"], shown["destination"]["route"]), (f"Evaluation report delivered {ad.home_dt('2027-06-16 14:07:00', READ)}", "View report", ["award", CASE]))
 
 	def test_no_view_report_link_when_evaluation_offers_none_or_cannot_be_read(self):
 		self.deliver()
@@ -299,8 +322,8 @@ class TestAwardHomeProvider(AwardCase):
 			row = self.one(user, he.OVERSIGHT, REF37)
 			self.assertEqual(row["action"], "A required notice is not yet confirmed; resolution by " + people.full_name(issue.owner_user))
 			self.assertEqual((row["since"], row["outstanding"], row["action_id"], row["holder"]), (issue.received_at, True, f"{NAME37}:oversight", people.full_name(issue.owner_user)))
-		shown = self.row(NAOMI, datetime(2027, 6, 19, 10, 0), "oversight", REF37)
-		self.assertEqual(shown["timing"], "Outstanding 2 days (since 17 June, 10:00)")
+		shown = self.row(NAOMI, W(datetime(2027, 6, 19, 10, 0)), "oversight", REF37)
+		self.assertEqual(shown["timing"], f"Outstanding 2 days (since {ad.home_dt('2027-06-17 10:00:00', READ)})")
 		# the Head of Procurement Function holds the matter (My work), so it is not also overseen
 		self.assertEqual(self.mine(self.region(HOP, he.OVERSIGHT), REF37), [])
 
@@ -342,7 +365,7 @@ class TestAwardHomeProvider(AwardCase):
 		# a department head holds no Award work, wait or completed action
 		for region in (he.MY_WORK, he.WAITING, he.COMPLETED):
 			self.assertIsNone(self.region(HOD, region), region)
-		self.assertEqual(self.home(HOD, datetime(2027, 6, 19, 10, 0))["state"], "ready")
+		self.assertEqual(self.home(HOD, W(datetime(2027, 6, 19, 10, 0)))["state"], "ready")
 
 	def test_a_failed_summary_read_is_raised_not_hidden(self):
 		self.deliver()
@@ -369,31 +392,31 @@ class TestAwardHomeProvider(AwardCase):
 		self.awarded()
 		row = self.one(AO, he.COMPLETED)
 		self.assertEqual((row["title"], row["action"], row["completed_at"], row["reference"]), (TITLE, "Recorded award decision", DECIDED, REF))
-		self.assertEqual(row["sentence"], "You recorded the award decision on 17 June 2027, 10:00 EAT.")  # every notice was given at once
+		self.assertEqual(row["sentence"], f"You recorded the award decision on {ad.dt_eat_long('2027-06-17 10:00:00')}.")  # every notice was given at once
 		decided = frappe.get_all(state.DECISION, filters={"award_case": CASE}, pluck="name")
 		self.assertEqual((row["action_id"], row["destination"]["route"]), (decided[0], ["award", CASE]))
 		self.failed_notice_case()
 		failed = self.one(AO, he.COMPLETED, REF37)
-		self.assertEqual(failed["sentence"], "You recorded the award decision on 17 June 2027, 10:00 EAT. Required bidder notices are not yet confirmed.")
+		self.assertEqual(failed["sentence"], f"You recorded the award decision on {ad.dt_eat_long('2027-06-17 10:00:00')}. Required bidder notices are not yet confirmed.")
 
 	def test_the_head_of_procurement_functions_signed_opinion_is_a_completed_action(self):
 		self.deliver()
 		self.signed_opinion()
 		row = self.one(HOP, he.COMPLETED)
-		self.assertEqual((row["action"], row["completed_at"], row["sentence"]), ("Signed professional opinion", SIGNED, "You signed the professional opinion on 17 June 2027, 09:10 EAT."))
-		shown = self.row(HOP, datetime(2027, 6, 19, 10, 0), "completed")
+		self.assertEqual((row["action"], row["completed_at"], row["sentence"]), ("Signed professional opinion", SIGNED, f"You signed the professional opinion on {ad.dt_eat_long('2027-06-17 09:10:00')}."))
+		shown = self.row(HOP, W(datetime(2027, 6, 19, 10, 0)), "completed")
 		self.assertEqual(shown["sentence"], row["sentence"])
 		self.assertEqual(self.mine(self.region(AO, he.COMPLETED)), [])  # Amina has decided nothing yet
 
 	def test_a_no_award_decision_names_the_next_action_and_its_owner(self):
 		self.deliver()
 		self.signed_opinion(conclusion="No current recommendation", reason="Tender validity expired before an award could be notified.")
-		self.at("2027-06-18 08:00:00")
+		self.at(W("2027-06-18 08:00:00"))
 		self.run_as(AO, decision.record, award=CASE, outcome="No award", reason="Tender validity expired before an award could be notified.",
 			next_action="Review whether the tender should be cancelled", expected_version=self.version())
 		row = self.one(AO, he.COMPLETED)
 		owner = people.full_name(frappe.db.get_value(state.DECISION, {"award_case": CASE, "outcome": "No award"}, "next_action_owner"))
-		self.assertEqual((row["action"], row["sentence"]), ("Recorded no award", f"You recorded that no award is made on 18 June 2027, 08:00 EAT. Next: {owner} to review whether the tender should be cancelled."))
+		self.assertEqual((row["action"], row["sentence"]), ("Recorded no award", f"You recorded that no award is made on {ad.dt_eat_long('2027-06-18 08:00:00')}. Next: {owner} to review whether the tender should be cancelled."))
 
 	def test_only_the_actors_own_recent_actions_of_a_case_they_can_still_read(self):
 		self.deliver()
@@ -401,9 +424,9 @@ class TestAwardHomeProvider(AwardCase):
 		name = frappe.get_all(state.DECISION, filters={"award_case": CASE}, pluck="name")[0]
 		# inside and outside the provider's own 30-day cutoff
 		frappe.db.set_value(state.DECISION, name, "decided_at", home_time.now() - timedelta(days=5))
-		self.assertIn(name, [row["action_id"] for row in self.region(AO, he.COMPLETED)])
+		self.assertIn(name, [row["action_id"] for row in self.region_now(AO, he.COMPLETED)])
 		frappe.db.set_value(state.DECISION, name, "decided_at", home_time.now() - timedelta(days=45))
-		self.assertNotIn(name, [row["action_id"] for row in self.region(AO, he.COMPLETED)])
+		self.assertNotIn(name, [row["action_id"] for row in self.region_now(AO, he.COMPLETED)])
 		frappe.db.set_value(state.DECISION, name, "decided_at", DECIDED)
 		# Charles did not take Amina's decision, and a draft-stage return is no completed action
 		self.assertNotIn(name, [row["action_id"] for row in self.region(HOP, he.COMPLETED)])
@@ -411,7 +434,7 @@ class TestAwardHomeProvider(AwardCase):
 		journal = frappe.get_all(records.JOURNAL, filters={"award_case": CASE, "command": "SignProfessionalOpinion"}, pluck="name")
 		self.assertEqual(len(journal), 1)
 		frappe.db.set_value(records.JOURNAL, journal[0], "recorded_at", home_time.now() - timedelta(days=45))
-		self.assertEqual([row for row in self.mine(self.region(HOP, he.COMPLETED))], [])
+		self.assertEqual([row for row in self.mine(self.region_now(HOP, he.COMPLETED))], [])
 
 	def test_a_correction_decision_is_one_row_and_a_separate_one_is_worded_neutrally(self):
 		self.deliver()
@@ -425,14 +448,14 @@ class TestAwardHomeProvider(AwardCase):
 		frappe.db.set_value(records.JOURNAL, journal.name, "recorded_at", DECIDED + timedelta(hours=3))
 		rows = sorted(self.mine(self.region(AO, he.COMPLETED)), key=lambda row: row["completed_at"])
 		self.assertEqual([row["action"] for row in rows], ["Recorded corrected award", "Recorded correction decision"])
-		self.assertEqual(rows[1]["sentence"], "You recorded a decision on the reported correction on 17 June 2027, 13:00 EAT.")
+		self.assertEqual(rows[1]["sentence"], f"You recorded a decision on the reported correction on {ad.dt_eat_long('2027-06-17 13:00:00')}.")
 		self.assertNotIn("never read", json.dumps(rows, default=str))
 
 	def test_the_core_window_drops_a_completed_action_older_than_thirty_days(self):
 		self.deliver()
 		self.awarded()
-		self.assertEqual(self.row(AO, datetime(2027, 7, 1, 10, 0), "completed")["action"], "Recorded award decision")
-		self.assertEqual([row for row in self.home(AO, datetime(2027, 7, 30, 10, 0))["regions"]["completed"]["entries"] if row["reference"] == REF], [])
+		self.assertEqual(self.row(AO, W(datetime(2027, 7, 1, 10, 0)), "completed")["action"], "Recorded award decision")
+		self.assertEqual([row for row in self.home(AO, W(datetime(2027, 7, 30, 10, 0)))["regions"]["completed"]["entries"] if row["reference"] == REF], [])
 
 	# ----- applicability, personas, technical readers -----
 
@@ -452,11 +475,11 @@ class TestAwardHomeProvider(AwardCase):
 		for user in ("Administrator", DANIEL, OUTSIDER, MARY, "Guest"):
 			for region in he.REGIONS:
 				self.assertIsNone(self.region(user, region), (user, region))
-		view = self.home(OUTSIDER, datetime(2027, 6, 19, 10, 0))
+		view = self.home(OUTSIDER, W(datetime(2027, 6, 19, 10, 0)))
 		self.assertEqual(view["state"], "ready")
 		self.assertFalse([row for region in view["regions"].values() for row in region["entries"] if row["reference"] == REF])
 		self.assertEqual({region["coverage"] for region in view["regions"].values()}, {hw.NOT_APPLICABLE})
-		technical = self.home("Administrator", datetime(2027, 6, 19, 10, 0))
+		technical = self.home("Administrator", W(datetime(2027, 6, 19, 10, 0)))
 		self.assertEqual((technical["empty"], technical["regions"]["my_work"]["entries"]), (True, []))
 
 	def test_a_user_without_the_responsibility_sees_none_of_it_and_a_revoked_responsibility_removes_it(self):
@@ -464,7 +487,7 @@ class TestAwardHomeProvider(AwardCase):
 		frappe.get_doc({"doctype": "User", "email": EXTRA, "first_name": "Awd Home Extra", "send_welcome_email": 0, "enabled": 1}).insert(ignore_permissions=True).add_roles("Desk User")
 		self.assertIsNone(self.region(EXTRA, he.MY_WORK))
 		administration.grant(user=EXTRA, business_role="Head of Procurement Function", fixture_namespace=HOME_NS, actor="Administrator")
-		at = datetime(2027, 6, 18, 10, 0)
+		at = W(datetime(2027, 6, 18, 10, 0))
 		self.assertEqual(self.row(EXTRA, at, "my_work")["action"], "Prepare professional opinion")
 		self.assertTrue(self.home(EXTRA, at)["regions"]["my_work"]["applicable"])
 		assignment = frappe.get_all("User Responsibility Assignment", filters={"user": EXTRA}, pluck="name")[0]
@@ -484,13 +507,13 @@ class TestAwardHomeProvider(AwardCase):
 		simulation.set_controls(email_failure_organisations="Afya Digital Supplies Limited")
 		self.deliver("033", reference="TND-AWT-2100-040")
 		self.awarded("AWD-AWT-2100-040")
-		self.at("2027-06-20 08:00:00")
+		self.at(W("2027-06-20 08:00:00"))
 		frappe.db.commit()
 		before = frappe.db.transaction_writes
 		for user in users:
 			for region in he.REGIONS:
 				self.region(user, region)
-		self.home(AO, datetime(2027, 6, 19, 10, 0))
+		self.home(AO, W(datetime(2027, 6, 19, 10, 0)))
 		self.assertEqual(frappe.db.transaction_writes, before)
 
 	def test_the_scan_runs_once_per_home_read(self):
@@ -505,7 +528,7 @@ class TestAwardHomeProvider(AwardCase):
 
 		tasks.all_for_user = counting
 		self.addCleanup(setattr, tasks, "all_for_user", original)
-		self.home(AO, datetime(2027, 6, 19, 10, 0))
+		self.home(AO, W(datetime(2027, 6, 19, 10, 0)))
 		self.assertEqual(calls, [AO])
 
 	# ----- destinations, tables -----

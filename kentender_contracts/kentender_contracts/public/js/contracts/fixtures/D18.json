@@ -1,0 +1,138 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Invoices"
+  },
+  "Submit invoice": {
+   "args": {},
+   "command": "SubmitContractInvoice",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D18",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D18",
+ "lineId": "L1",
+ "name": "Supplier invoice",
+ "next": {
+  "h": "Enter the invoice details.",
+  "k": "turn",
+  "s": "Responsible: David Otieno"
+ },
+ "p": "Submit invoice",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Invoice number",
+       "name": "claim_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Invoice date",
+       "name": "invoice_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Invoice"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Quantity",
+      "Rate",
+      "Tax",
+      "Total"
+     ],
+     "inputs": {
+      "0,1": "quantity.L1"
+     },
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2,
+      4
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "#8",
+       "KES 100,000",
+       "Included",
+       "KES 800,000"
+      ]
+     ]
+    }
+   ],
+   "t": "Items"
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Submit invoice",
+ "version": 18
+}

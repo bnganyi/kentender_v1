@@ -30,6 +30,7 @@ concurrently on one site (mirrors PLN-CHG-001's own D13 rule).
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from contextlib import contextmanager
 from typing import Any
@@ -195,7 +196,7 @@ def _budget_world() -> None:
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PWREQ-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PWREQ-APPROVAL-1",
-				"approval_date": "2026-06-30", "authorised_total": 100000000, "currency": "KES",
+				"approval_date": W("2026-06-30"), "authorised_total": 100000000, "currency": "KES",
 				"approval_document": "/files/pwreq-approval.pdf",
 			}
 		)).name
@@ -375,6 +376,7 @@ def _wipe_planning_side() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": FY}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	frappe.db.delete("Plan Cancellation Recovery Hold", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
@@ -406,10 +408,14 @@ def _wipe_planning_side() -> None:
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 	frappe.db.delete("Planning Command Journal", {"actor": ("in", ACTORS)})
+	frappe.db.delete("Reservation Cancellation Release", {"budget_line": BUDGET_LINE or "__missing__"})  # BUD-CHG-001 v1.17: a recovery's release rows point at these reservations
 	frappe.db.delete("Funding Reservation", {"budget_line": BUDGET_LINE or "__missing__"})
 
 
 def _wipe_requisitions_side() -> None:
+	# REQ-CHG-001 v1.20: a cancellation recovery (with its source rows) belongs to the Requisition it recovers
+	owned = frappe.get_all("Procurement Requisition", filters={"owner": ("in", ACTORS)}, pluck="name")
+	delete_rows("Cancellation Resource Recovery", {"requisition": ("in", owned or ("",))})
 	for doctype in (
 		"Requisition Event", "Requisition Decision", "Requisition Task", "Authorised Requisition Handoff",
 		"Requisition Version", "IT Equipment Requirement Package Version", "IT Equipment Requirement Package",

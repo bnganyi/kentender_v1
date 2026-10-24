@@ -6,16 +6,18 @@ v0.4 §5.4, §7; AWD-AC-010, AC-018; tracker AWD4-504)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
-from kentender_procurement.award.services import authority, simulation, state
+from kentender_procurement.award.services import authority, simulation, state, tender_authority
 from kentender_procurement.award.tests.support import NS, AwardCase
 from kentender_procurement.tests.two_connections import WAIT, Conn
 
 
 def _in_world():
 	frappe.flags.kt_awd_fixture_namespace = NS
-	frappe.flags.kt_awd_clock = "2027-06-17 09:00:00"
+	frappe.flags.kt_awd_clock = W("2027-06-17 09:00:00")
 
 
 class TestAuthority(AwardCase):
@@ -32,17 +34,16 @@ class TestAuthority(AwardCase):
 		self.assertEqual(authority.cancellation_guard(tender=tender), "Award notices have been issued. The pre-notification cancellation route is unavailable.")
 
 	def test_no_case_is_not_a_negative_answer_from_award(self):
-		self.assertIsNone(authority.tender_status(tender="SYN-NO-SUCH-TENDER"))
+		# AWD v0.9 §5.11: absence of a case proves nothing; without a durable Tender-level record the answer is Unknown.
+		self.assertEqual(authority.tender_status(tender="SYN-NO-SUCH-TENDER")["status"], "Unknown")
 
 	def test_issue_in_progress_or_unknown_refuses_cancellation(self):
 		self.deliver()
 		doc = self.case()
-		from kentender_procurement.award.services import records
-
-		records.bump(doc, notification_status="Unknown")
-		self.assertIn("could not be confirmed", authority.cancellation_guard(tender=doc.tender))
-		records.bump(state.reload(doc), notification_status="Issue in progress")
+		tender_authority.set_notification(doc.tender, "Issue in progress", token="t1")
 		self.assertIn("pre-notification cancellation route is unavailable", authority.cancellation_guard(tender=doc.tender))
+		tender_authority.set_notification(doc.tender, "Unknown", token="t1")
+		self.assertIn("could not be confirmed", authority.cancellation_guard(tender=doc.tender))
 
 	def test_status_unavailable(self):
 		from kentender_procurement.award.services import checks, issues
@@ -56,16 +57,14 @@ class TestAuthority(AwardCase):
 		when the guard takes the case lock. The guard must read the status as last
 		committed (a locking read), not from that older snapshot."""
 		self.deliver()
-		self.at("2027-06-17 09:00:00")
+		self.at(W("2027-06-17 09:00:00"))
 		doc = self.case()
 		tender = doc.tender
 		frappe.db.commit()
 		conn_b = Conn("Administrator", lambda: authority.cancellation_guard(tender=tender), snapshot_first=True, setup=_in_world)
 		self.assertTrue(conn_b.snapshot_open.wait(WAIT))
 
-		from kentender_procurement.award.services import records
-
-		conn_a = Conn("Administrator", lambda: records.bump(self.case(), notification_status="Issued"), setup=_in_world)
+		conn_a = Conn("Administrator", lambda: tender_authority.set_notification(tender, "Issued", token="t1"), setup=_in_world)
 		self.assertTrue(conn_a.finished.wait(WAIT))
 		self.assertIsNone(conn_a.error, conn_a.error)
 		conn_b.start_gate.set()

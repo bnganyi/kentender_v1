@@ -16,6 +16,7 @@ production way.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import frappe
@@ -107,7 +108,7 @@ class TestGovernanceEnforcement(FrappeTestCase):
 					"doctype": "Strategic Plan",
 					"title": f"Governance Test Plan {self.suffix}",
 					"plan_role": "Primary",
-					"period_start": "2027-07-01",
+					"period_start": W("2027-07-01"),
 					"period_end": "2032-06-30",
 				}
 			).insert(ignore_permissions=True)
@@ -118,7 +119,7 @@ class TestGovernanceEnforcement(FrappeTestCase):
 					"doctype": "Strategic Plan Version",
 					"plan_id": plan.name,
 					"version_number": 1,
-					"effective_from": "2027-07-01",
+					"effective_from": W("2027-07-01"),
 					"effective_to": "2032-06-30",
 				}
 			).insert(ignore_permissions=True)

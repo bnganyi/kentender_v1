@@ -1,0 +1,121 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-LNK-{#####}",
+ "creation": "2026-10-15 09:00:00.000000",
+ "description": "Plan D5 / CM \u00a74: the unique link from one operation to the native document it produced. Native records stay authoritative; this is provenance, never a second ledger.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "operation_identity",
+  "native_doctype",
+  "native_name",
+  "native_row",
+  "native_key",
+  "native_modified",
+  "native_status",
+  "linked_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "operation_identity",
+   "label": "Operation identity",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "native_doctype",
+   "label": "Native document type",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "native_name",
+   "label": "Native document",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "native_row",
+   "label": "Native row",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "native_key",
+   "label": "Native key",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "unique": 1,
+   "reqd": 1,
+   "description": "Document type, name and row: one native record belongs to one operation."
+  },
+  {
+   "fieldname": "native_modified",
+   "label": "Native modified at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "native_status",
+   "label": "Native status",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "linked_at",
+   "label": "Linked at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Transaction Link",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

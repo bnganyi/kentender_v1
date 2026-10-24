@@ -1,0 +1,175 @@
+{
+ "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "Submit settlement for completion": {
+   "dialog": "prepare",
+   "do": "dialog"
+  },
+  "View reconciliation": {
+   "do": "tab",
+   "tab": "Invoices"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_termination_from_",
+ "d": "D39",
+ "dialogs": {
+  "prepare": {
+   "args": {
+    "termination": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Finance reconciliation reference",
+       "name": "finance_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "PrepareTerminationSettlement",
+   "p": "Submit",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Submit settlement for completion"
+  },
+  "return": {
+   "args": {
+    "stage": "settlement",
+    "termination": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractTermination",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Finance reconciliation"
+ ],
+ "id": "D39-P",
+ "name": "Termination settlement",
+ "next": {
+  "h": "Review the reconciled settlement.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Submit settlement for completion",
+ "page": "record",
+ "ref": "CM-TEST-test_a_termination_from_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Finance reconciliation",
+       "Entered when you submit"
+      ],
+      [
+       "Accepted",
+       "KES 800,000"
+      ],
+      [
+       "Cash",
+       "KES 800,000"
+      ],
+      [
+       "Advance, credits, costs, disputes",
+       "KES 0"
+      ],
+      [
+       "Final supported obligation",
+       "KES 800,000"
+      ],
+      [
+       "Budget decrease",
+       "Acknowledged"
+      ],
+      [
+       "Unclassified remaining items",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Reconciliation"
+  }
+ ],
+ "s2": [
+  "Return for correction",
+  "View reconciliation"
+ ],
+ "st": "Terminated",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Finance reconciliation",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review termination settlement",
+ "version": 38
+}

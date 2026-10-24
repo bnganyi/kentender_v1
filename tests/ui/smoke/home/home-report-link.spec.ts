@@ -3,6 +3,7 @@ import * as path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { home, world } from "../../helpers/anchor";
 import { AMINA, flat, openHomeFromMenu, putWorldClock, rows } from "./helpers";
 
 /**
@@ -35,7 +36,7 @@ test.describe("Amina, Accounting Officer, with the opinion awaited (slice A: Awa
 		await expect(row).toHaveCount(1);
 		const text = await flat(row);
 		expect(text).toContain("Awaiting professional opinion by Charles Mutiso");
-		expect(text).toContain("Evaluation report delivered 16 June, 14:07");
+		expect(text).toContain(`Evaluation report delivered ${home.exact(world("2027-06-16 14:07:00"))}`);
 		const link = row.locator('[data-testid="kt-home-view"]');
 		await expect(link).toHaveText("View report");
 		await expect(link).toHaveAttribute("href", `/app/tenders/${REF}/evaluation/report`);

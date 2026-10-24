@@ -17,3 +17,4 @@ globalThis.frappe.provide =
 globalThis.window.kentender_core = globalThis.kentender_core = globalThis.kentender_core || {};
 await import("../../../../../kentender_core/kentender_core/public/js/kt_industry/kt_industry_guidance.bundle.js");
 await import("../../../../../kentender_core/kentender_core/public/js/kt_industry/kt_industry_pager.bundle.js");
+await import("../../../../../kentender_core/kentender_core/public/js/kt_industry/kt_industry_record_picker.bundle.js");

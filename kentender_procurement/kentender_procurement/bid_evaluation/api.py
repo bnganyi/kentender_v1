@@ -120,14 +120,6 @@ def get_committee_record(tender_reference: str) -> dict[str, Any]:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_candidates(tender_reference: str, purpose: str = "committee") -> dict[str, Any]:
-	from kentender_procurement.bid_evaluation.services import reads
-
-	result = _call("ReadAppointmentCandidates", tender_reference, reads.candidates, by_reference=True, purpose=cstr(purpose))
-	return result if isinstance(result, dict) else {"candidates": result}
-
-
-@frappe.whitelist(methods=["GET"])
 def list_work(query: str = "", state: str = "") -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import reads
 

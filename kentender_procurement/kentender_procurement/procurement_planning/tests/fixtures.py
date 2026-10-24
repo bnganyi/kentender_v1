@@ -21,6 +21,7 @@ therefore never execute concurrently against one site (tracker rule 8).
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.utils import cstr
 
@@ -316,6 +317,7 @@ def wipe_planning_rows() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": ("in", fys)}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	frappe.db.delete("Plan Cancellation Recovery Hold", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	# PLN v1.27 §4.7 / BUD v1.11 §4.10 — both sides of a budget revision
 	# request and Budget's outcome outbox for these plan Versions. Version
@@ -381,7 +383,7 @@ def _link_targets() -> None:
 			{
 				"doctype": "Procurement Budget Version", "generated_reference": "BUDV-PLNT-0001", "budget": budget,
 				"version_number": 1, "status": "Active", "approval_reference": "PLNT-APPROVAL-1",
-				"approval_date": "2026-06-30", "authorised_total": 200000000, "currency": "KES",
+				"approval_date": W("2026-06-30"), "authorised_total": 200000000, "currency": "KES",
 				"approval_document": "/files/plnt-approval.pdf",
 			}
 		)).name

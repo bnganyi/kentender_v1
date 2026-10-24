@@ -1,0 +1,170 @@
+{
+ "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "Submit change for decision": {
+   "args": {
+    "change": 1
+   },
+   "command": "SubmitContractChangeForDecision",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_quantity_change_f",
+ "d": "D34",
+ "dialogs": {
+  "return": {
+   "args": {
+    "change": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractChange",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Supplier request 1"
+ ],
+ "id": "D34-R",
+ "name": "Quantity variation",
+ "next": {
+  "h": "Submit the change for decision.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Submit change for decision",
+ "page": "record",
+ "ref": "CM-TEST-test_a_quantity_change_f",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "",
+      "Current",
+      "Proposed"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Quantity",
+       "10",
+       "11"
+      ],
+      [
+       "Total",
+       "KES 1,000,000",
+       "KES 1,100,000"
+      ],
+      [
+       "Cumulative change",
+       "\u2014",
+       "10%"
+      ]
+     ]
+    }
+   ],
+   "t": "Comparison"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Technical review",
+       "Peter Mugo: Supported at the unchanged rate"
+      ],
+      [
+       "Source and legal basis",
+       "Faith Atieno: Supported at the unchanged rate"
+      ],
+      [
+       "Funding confirmation",
+       "Brian Wafula: Supported at the unchanged rate (QTY-01)"
+      ],
+      [
+       "Funding",
+       "KES 100,000 additional on RSV-DEMO-1"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Review"
+  }
+ ],
+ "s2": [
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review quantity change",
+ "version": 17
+}

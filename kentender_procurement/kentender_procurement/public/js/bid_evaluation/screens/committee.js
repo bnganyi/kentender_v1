@@ -7,9 +7,15 @@ import { cmd, guidance, nav, rosterTable } from "./common.js";
 
 const MAX_MEMBERS = 5;
 
-function personOptions(candidates, blank = "Choose a person") {
-	return [{ value: "", label: blank }].concat((candidates || []).map((c) => ({ value: c.user, label: c.name })));
-}
+// People are chosen in the shared record picker (kentender_core), which searches on the server: the sources are
+// registered by bid_evaluation.services.picker_sources. A chosen person leaves three things in the form, so no list of
+// everyone is ever held here: `<field>` (their id), `<field>__label` (their name) and `<field>__extra` (their facts, such as
+// the department the server read from their home unit).
+export const SOURCE_COMMITTEE = "bid_evaluation.committee_member";
+export const SOURCE_SECRETARY = "bid_evaluation.secretary";
+
+const chosen = (form, name) => ({ value: (form || {})[name] || null, chosenLabel: (form || {})[`${name}__label`] || "" });
+const extraOf = (form, name) => (form || {})[`${name}__extra`] || undefined;
 
 export function memberRows(form) {
 	const count = Math.min(MAX_MEMBERS, Math.max(3, Number(form.member_count || 3)));
@@ -21,10 +27,9 @@ export function memberRows(form) {
 // (EVL-CHG-001 v0.7 §3, D02-A and D02-NOT-RECORDED). Never an input.
 export const NOT_RECORDED_NOTICE = "Department not recorded. Ask your KenTender administrator to record it.";
 
-export function departmentCell(candidates, user) {
+export function departmentCell(extra, user) {
 	if (!user) return "";
-	const person = (candidates || []).find((c) => c.user === user) || {};
-	return person.department ? person.department : { text: "Not recorded", note: NOT_RECORDED_NOTICE };
+	return extra && extra.department ? extra.department : { text: "Not recorded", note: NOT_RECORDED_NOTICE };
 }
 
 // What the appointment also does (EVL-CHG-001 v0.8 §3): the Head of Procurement Function is recorded as the secretary.
@@ -33,11 +38,12 @@ export const SECRETARY_NOTE = "The Head of Procurement Function is recorded as t
 // D02-A / D02-INTAKE-FIRST: the Accounting Officer's appointment form.
 export function appoint(ctx) {
 	const { data, form, errors } = ctx;
-	const opts = personOptions(ctx.candidates);
 	const capacities = [{ value: "Chair", label: "Chair" }, { value: "Member", label: "Member" }];
 	const rows = memberRows(form).map((i) => [
-		{ select: `m${i}_user`, options: opts, testid: `evl-member-${i}-user`, error: (errors.members || {})[i] },
-		departmentCell(ctx.candidates, form[`m${i}_user`]),
+		// the other rows are taken: the server lists them unavailable, and re-checks when the committee is appointed
+		{ picker: `m${i}_user`, source: SOURCE_COMMITTEE, testid: `evl-member-${i}-user`, error: (errors.members || {})[i], ...chosen(form, `m${i}_user`),
+			context: { tender_reference: data.tender, mode: "appoint", taken: memberRows(form).filter((j) => j !== i).map((j) => form[`m${j}_user`]).filter(Boolean) } },
+		departmentCell(extraOf(form, `m${i}_user`), form[`m${i}_user`]),
 		{ select: `m${i}_capacity`, options: capacities, testid: `evl-member-${i}-capacity` },
 	]);
 	const history = (ctx.record && ctx.record.appointments) || [];
@@ -91,17 +97,17 @@ export function secretaryFact(sec) {
 export function delegate(ctx) {
 	const { data, form } = ctx;
 	const sec = (data.committee || {}).secretary || null;
-	const chosen = (ctx.candidates || []).find((c) => c.user === (form || {}).secretary);
+	const picked = chosen(form, "secretary");
 	const blocks = [
 		f(["Tender", data.tender], ["Title", data.title], ["Current secretary", secretaryFact(sec)]),
-		fi("Person", "", { select: true, req: true, name: "secretary", options: personOptions(ctx.candidates) }),
+		fi("Person", "", { picker: true, req: true, name: "secretary", source: SOURCE_SECRETARY, context: { tender_reference: data.tender }, ...picked }),
 	];
 	return {
 		title: "Delegate secretary duties", desc: "Appoint a procurement officer to act as secretary of this evaluation.",
 		guidance: { answer: null, journey: null }, notInvolved: " ", blocks,
 		pri: cmd("Delegate secretary duties", "delegate_secretary", { fields: ["secretary"], versioned: true, after: [] }),
 		sec: [nav("Back to evaluation", [])],
-		cons: `${chosen ? chosen.name : "The person you choose"} will organise the evaluation record. This is your written appointment and a new reference is created. They will have no vote, finding or signature.`,
+		cons: `${picked.chosenLabel || "The person you choose"} will organise the evaluation record. This is your written appointment and a new reference is created. They will have no vote, finding or signature.`,
 	};
 }
 
@@ -142,13 +148,14 @@ export function replace(ctx) {
 	const members = (data.committee || {}).members || [];
 	const blocked = members.find((m) => m.declaration === "Conflict declared" || m.unavailable) || members.find((m) => m.user === form.outgoing) || {};
 	const statement = (ctx.record && (ctx.record.declarations || []).filter((d) => d.member === blocked.name && d.choice === "Declare a conflict").slice(-1)[0]) || null;
-	const incoming = (ctx.candidates || []).find((c) => c.user === form.incoming) || {};
+	const incoming = extraOf(form, "incoming") || {};
 	const blocks = [
 		tb(["Person", "Department", "Capacity", "Declaration"], members.map((m) => [m.name, m.department, m.capacity, m.unavailable ? "Unable to serve" : m.declaration]), { title: "Current committee", sec: true }),
 	];
 	if (blocked.name) blocks.push(at(blocked.declaration === "Conflict declared" ? `${blocked.name} declared a conflict` : `${blocked.name} recorded inability to serve`, statement ? statement.description || "" : ""));
 	blocks.push(
-		fi("Incoming person", "", { select: true, req: true, name: "incoming", options: personOptions(ctx.candidates), err: errors.incoming || "", errd: errors.incoming_detail || "" }),
+		fi("Incoming person", "", { picker: true, req: true, name: "incoming", source: SOURCE_COMMITTEE, context: { tender_reference: data.tender, mode: "replace" }, ...chosen(form, "incoming"),
+			err: errors.incoming || "", errd: errors.incoming_detail || "" }),
 		f(["Department", form.incoming ? (incoming.department || "Not recorded") : ""], ["Capacity", blocked.capacity || "Member"]),
 		fi("Reason", "", { area: true, req: true, rows: 2, name: "reason" }),
 	);

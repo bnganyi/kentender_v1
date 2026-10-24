@@ -52,6 +52,42 @@ def tender_facts(tender: str) -> dict[str, Any] | None:
 	}
 
 
+def authoritative_cancellation(tender: str, *, share_lock: bool = False) -> dict[str, Any] | None:
+	"""The Tender's cancellation as last committed, or None (TPR-CHG-001 v0.24 §7.6). Authoritative the moment `CancelTender` commits, before any consumer has
+	caught up: Bid Opening denies every ceremony command on it (BOP-CHG-001 v0.16 §10.8). With `share_lock` the Tender row is read with a shared lock, so a
+	ceremony command and a cancelling decision serialise — the command waits for an uncommitted cancellation, and a cancellation waits for a command in
+	flight — and neither can pass the other."""
+	rows = frappe.db.sql(f"select overall_status, cancellation from `tabTender` where name=%s{' lock in share mode' if share_lock else ''}", cstr(tender), as_dict=True)
+	if not rows or cstr(rows[0].overall_status) != CANCELLED or not rows[0].cancellation:
+		return None
+	row = frappe.db.get_value("Tender Cancellation", rows[0].cancellation, ["name", "decided_at", "decided_by"], as_dict=True)
+	return {"reference": row.name, "cancelled_at": row.decided_at, "decided_by": row.decided_by} if row else None
+
+
+def cancellation_decision(tender: str) -> dict[str, Any]:
+	"""May the Accounting Officer cancel this Tender now (TPR-CHG-001 v0.24 §7.6)? `{"allowed": bool, "blockers": [{code, message, holder, reason, route}]}` — the
+	same verdict the Tender's decision screen and command use. Bid Opening reads it to say "Your turn" or "Your turn, blocked" and never decides; a Tender it
+	cannot read has no verdict, never an allowed one."""
+	from kentender_procurement.tenders.services import post_close
+
+	try:
+		root = frappe.get_doc("Tender", tender)
+		verdict = post_close.verdict(root)
+		return {"allowed": bool(verdict["allowed"]), "blockers": verdict["blockers"], "stage": verdict["stage"]}
+	except Exception:
+		frappe.log_error(title="Cancellation verdict could not be read for Bid Opening")
+		return {"allowed": False, "blockers": [], "stage": ""}
+
+
+def deliver_pending_cancellation(tender: str) -> dict[str, int]:
+	"""Give a cancelled Tender's consumers its TenderCancelled event again, from the same event (Tenders' delivery ledger): rows for a Tender cancelled
+	before the ledger existed are written from that event first. Never raises."""
+	from kentender_procurement.tenders.services import cancellation_delivery
+
+	cancellation_delivery.ensure_registered(tender)
+	return cancellation_delivery.run(tender=tender)
+
+
 def definition_labels(tender: str, definition_version=None) -> dict[str, Any]:
 	"""The published bid definition's own words, for rendering a revealed bid
 	package (Bid Opening FU-BOP-15): each task's label by section id, and each

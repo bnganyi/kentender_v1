@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { world } from "../../helpers/anchor";
 import { login } from "../../helpers/auth";
 import { collectPortalConsoleErrors, loginToPortal, waitForPortal } from "../../helpers/portal";
 import { collectConsoleErrors, expectNextStep, expectScreen, gotoOpening } from "./bopWorld";
@@ -15,11 +16,11 @@ import { collectConsoleErrors, expectNextStep, expectScreen, gotoOpening } from 
  * members, David Ouma's attendance and the final signed record.
  */
 
-const REFERENCE = process.env.UI_BOP_CANONICAL_TENDER || "TND-MOH-2027-002";
+const REFERENCE = process.env.UI_BOP_CANONICAL_TENDER || "TND-MOH-2026-002";
 // The canonical world is dated 2027; the pages read it just after the opening
 // completed (12 Jun 2027 11:15), as the Bid Submission persona pass does, so
 // every person's roles are in force. Cleared afterwards.
-const AT = "2027-06-12 11:15:00";
+const AT = world("2027-06-12 11:15:00");
 const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 function setInstant(instant: string | null): void {
 	const kwargs = instant ? `{"instant": "${instant}"}` : `{"instant": None}`;

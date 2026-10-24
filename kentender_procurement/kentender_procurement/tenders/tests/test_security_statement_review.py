@@ -6,6 +6,7 @@ listed for an explicit review; nothing invents a physical requirement for it or 
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -106,7 +107,7 @@ class TestCorrectionAndAddendum(StatementCase):
 		self.assertEqual((rows["tender_security_method"]["value"], rows["tender_security_original"]["value"]), (UPLOAD, "Required"))
 
 	def test_a_change_is_a_formal_addendum_with_a_deadline_and_a_successor_definition(self):
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"  # inside the late-amendment window: a revised deadline is required
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")  # inside the late-amendment window: a revised deadline is required
 		values = {"change_class": "Non-material correction", "affected_area": "Submission or opening detail", "affected_reference_key": "tender_security_method", "revised_value": ISSUER,
 			"reason": "The issuer will supply the instrument directly to the Procuring Entity.", "materiality_statement": "No change to the amount, form, expiry or evaluation basis."}
 		name = self._addendum(values=values)
@@ -119,11 +120,11 @@ class TestCorrectionAndAddendum(StatementCase):
 		bad = addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_value": "Courier"}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertIn("revised_value", bad["errors"])
 		root.reload()
-		addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": "2027-06-12 11:00:00"}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": W("2027-06-12 11:00:00")}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 09:00:00")
 		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		successor = frappe.get_doc("Tender Bid Definition", frappe.db.get_value("Tender Addendum", name, "successor_bid_definition"))
 		facts = next(g["published_facts"] for s in json.loads(successor.definition_json)["sections"] for g in s["groups"] if g["rule_id"].startswith("RR-TENDER-SECURITY"))
@@ -131,21 +132,21 @@ class TestCorrectionAndAddendum(StatementCase):
 		self.assertEqual(bid_definition.current(self.name)["definition_version"], 1)
 
 	def test_a_paper_instrument_cannot_be_amended_to_no_original(self):
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")
 		self._strip()
 		self.assertTrue(self.correct()["ok"])  # the published requirement: paper, original required
 		name = self._addendum(values={"change_class": "Non-material correction", "affected_area": "Submission or opening detail", "affected_reference_key": "tender_security_original", "revised_value": "Not required",
-			"reason": "The original is no longer needed at the office.", "materiality_statement": "No change to the amount, form, expiry or evaluation basis.", "revised_submission_deadline": "2027-06-12 11:00:00"})
+			"reason": "The original is no longer needed at the office.", "materiality_statement": "No change to the amount, form, expiry or evaluation basis.", "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		root = self._root()
 		with self.assertRaises(TendersError) as caught:
 			addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(caught.exception.code, "TND_CONTROL_INVALID")
 
 	def test_a_closed_tender_keeps_its_issued_requirement(self):
-		frappe.flags.kt_tenders_clock = "2027-05-20 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-20 09:00:00")
 		name = self._addendum(values={"change_class": "Non-material correction", "affected_area": "Submission or opening detail", "affected_reference_key": "tender_security_original", "revised_value": "Not required",
 			"reason": "The original is no longer needed at the office.", "materiality_statement": "No change to the amount, form, expiry or evaluation basis."})
-		frappe.flags.kt_tenders_clock = "2027-06-06 09:00:00"  # after the 5 June deadline
+		frappe.flags.kt_tenders_clock = W("2027-06-06 09:00:00")  # after the 5 June deadline
 		root = self._root()
 		with self.assertRaises(TendersError):
 			addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)

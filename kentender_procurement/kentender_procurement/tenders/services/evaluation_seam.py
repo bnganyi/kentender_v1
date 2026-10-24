@@ -182,8 +182,8 @@ def status_events(tender: str) -> list[dict[str, Any]]:
 def award_decision_status(tender: str) -> dict[str, Any]:
 	"""The authoritative later-decision status Evaluation checks before a
 	return (EVL v0.4 §5.6). Award's authority status answers when installed
-	(`kt_award_authority_status`, AWD-CHG-001 v0.4 §7 GetAwardAuthorityStatus,
-	AWD-IF-01/02); a failed read is Unknown, never a fabricated negative."""
+	(`kt_award_authority_status`, AWD-CHG-001 v0.9 §7 GetAwardAuthorityStatus,
+	AWD-IF-01/02); a failed read, a missing durable Tender-level record or no answer at all is Unknown, never a fabricated negative."""
 	from frappe.utils import now_datetime
 
 	try:
@@ -194,7 +194,8 @@ def award_decision_status(tender: str) -> dict[str, Any]:
 			answer = frappe.get_attr(path)(tender=root.name)
 			if answer:
 				return answer
-		return {"status": "No award decision recorded", "checked_at": now_datetime(), "source": "Tender status"}
+		# AWD-CHG-001 v0.9 §5.11: no authority answered, so there is no authoritative negative either — absence of an answer proves nothing.
+		return {"status": "Unknown", "checked_at": now_datetime(), "source": "No Award authority answered"}
 	except Exception:
 		return {"status": "Unknown", "checked_at": now_datetime()}
 

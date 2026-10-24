@@ -12,6 +12,7 @@ export const MODULE_ICONS = {
 	award: "badge-check",
 	support: "circle-alert",
 	suppliers: "users",
+	contracts: "list-checks",
 };
 
 export function moduleIcon(owner) {

@@ -13,6 +13,8 @@
   "status_service_down",
   "contracting_down",
   "event_delivery_down",
+  "issue_deferred",
+  "email_outcome_unknown",
   "rule_unverified",
   "revised_treatment_unverified",
   "synthetic_json"
@@ -72,6 +74,18 @@
    "fieldtype": "Long Text",
    "label": "Synthetic sources state",
    "read_only": 0
+  },
+  {
+   "fieldname": "email_outcome_unknown",
+   "label": "Email outcome unknown",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "issue_deferred",
+   "label": "Hold the queued notice issue",
+   "read_only": 0,
+   "fieldtype": "Check"
   }
  ],
  "grid_page_length": 50,

@@ -99,6 +99,32 @@ def summary(doc, **extra) -> dict[str, Any]:
 	return {"ok": True, "opening": doc.name, "tender": doc.tender, "state": doc.state, "record_version": cint(doc.record_version), **extra}
 
 
+#: The commands that still run once the Tender is authoritatively cancelled (BOP-CHG-001 v0.16 §10.8, §7.2): taking up the cancellation itself, the support side
+#: of an incident (a finding, the notice to support, the audited detail read, opening incidents for the service fault), and a register copy or a
+#: correction of a record already complete. Every other command is a ceremony action and is refused at once.
+CANCELLED_EXEMPT = frozenset({
+	"ConsumeTenderCancellation", "CloseCancelledOpening", "AttachTenderCancellation", "OpenAccessIncidents", "NotifySupport", "GetIncidentDetails",
+	"RecordIncidentResolution", "RecordIncidentUnresolved", "RecordIncidentFinding", "RequestOpeningRegister", "ProvideOpeningRegister", "CorrectOpeningRecord",
+})
+TERMINAL_STATES = ("Not held", "Cancelled after start")
+
+
+def refuse_if_cancelled(name: str, tender: str, case: str | None) -> None:
+	"""Authoritative cancellation denies every ceremony command the moment `CancelTender` commits — before Bid Opening has recorded the terminal outcome
+	and without waiting for any projection (BOP-CHG-001 v0.16 §5.2 "Deny ... as soon as authoritative cancellation is known"). The Tender is read with a
+	shared lock, so a command in flight and a cancelling decision serialise."""
+	if name in CANCELLED_EXEMPT:
+		return
+	from kentender_procurement.bid_opening.services import errors
+	from kentender_procurement.tenders.services import opening_seam
+
+	if opening_seam.authoritative_cancellation(tender, share_lock=True) is None:
+		return
+	state = cstr(frappe.db.get_value(CASE, case, "state")) if case else ""
+	terminal = state in TERMINAL_STATES
+	errors.fail("BOP_TENDER_CANCELLED", {"state": state, "terminal": terminal}, terminal=terminal)
+
+
 def command(name: str, *, tender: str, idempotency_key: str, actor: str, payload: dict[str, Any], body: Callable[[], dict[str, Any]]) -> dict[str, Any]:
 	"""Run `body` once per key. A reused key with another command, actor or
 	payload is a conflict. A Proceedings error is re-raised in Bid Opening's words
@@ -119,6 +145,7 @@ def command(name: str, *, tender: str, idempotency_key: str, actor: str, payload
 		fail("BOP_VERSION_CONFLICT", {"reason": "idempotency_key_required"})
 	payload_hash = digest({"command": name, "tender": tender, "actor": actor, **payload})
 	case = case_for(tender)
+	refuse_if_cancelled(name, tender, case)
 	try:
 		with atomic():
 			if not _claim(key, name, payload_hash, actor, case):

@@ -15,6 +15,7 @@ Run:
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from datetime import date, datetime, timedelta
 
@@ -35,8 +36,8 @@ from kentender_procurement.tenders.tests import sample
 NS = fx.NS
 EXTRA = "tndt.home.extra@example.test"  # a second Head of Procurement Function, granted and revoked inside one test
 EXTRA_NS = "KT_TEST_TNDHOME"
-EARLY = "2027-05-15 07:55:00"  # the Tender clock when no submission deadline is too close
-LATE = "2027-06-03 09:00:00"  # 5 June is then two days away: the minimum preparation period no longer fits
+EARLY = W("2027-05-15 07:55:00")  # the Tender clock when no submission deadline is too close
+LATE = W("2027-06-03 09:00:00")  # 5 June is then two days away: the minimum preparation period no longer fits
 H1 = datetime(2027, 6, 17, 10, 0)
 H12 = datetime(2027, 6, 18, 10, 0)
 SPEC_PAGES = ("tenders", "procurement-requisitions")

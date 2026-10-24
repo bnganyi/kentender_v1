@@ -16,7 +16,7 @@ test.describe("TPR-DES-12 Cancel Tender", () => {
 		await login(page, HOPF, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}/cancel`);
 		await expectReady(page, "cancel");
-		await expect(page.locator('[data-testid="tnd-cancel-warning"]')).toContainText("Cancellation is final for this Tender.");
+		await expect(page.locator('[data-testid="tnd-cancel-warning"]')).toContainText("The tender will end. KenTender will restore its unused planning allowance");
 		await expect(page.locator('[data-testid="tnd-cancel-open-dialog"]')).toHaveCount(0);
 		await page.locator('[data-testid="tnd-cancel-reason"]').fill("Delivery timeline no longer meets user-department need following supplier market changes.");
 		await page.locator('[data-testid="tnd-recommend"]').click();

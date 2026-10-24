@@ -68,10 +68,12 @@ def start_guards(doc) -> list[dict[str, Any]]:
 	verdict = availability.get_opening_availability()
 	if not verdict["available"]:
 		out.append(ns.guard(False, reason_code=verdict["code"], message=verdict["message"], fixes=[_problem_fix()]))
-	for row in incidents.open_incidents(doc.name):
+	for row in incidents.blocking_incidents(doc.name):  # a Recovered finding no longer blocks Begin; every other open incident does
 		code = INCIDENT_CODES.get(row.incident_type)
 		if code and not any(g["reason_code"] == code for g in out):
 			message = errors.message(code) if code.startswith("BOP_") and code in errors.ERROR_CODES else "The public attendance service is unavailable."
+			if row.current_finding == incidents.CANNOT_RECOVER:
+				message = incidents.NOT_RECOVERED
 			out.append(ns.guard(False, reason_code=code, message=message, figures={"incident": row.incident_id}, fixes=[_problem_fix(row.incident_id)]))
 	if not availability.attendance_channel_available() and not any(g["reason_code"] == "BOP_ATTENDANCE_SERVICE_UNAVAILABLE" for g in out):
 		out.append(ns.guard(False, reason_code="BOP_ATTENDANCE_SERVICE_UNAVAILABLE", message="The public attendance service is unavailable.", fixes=[_problem_fix()]))

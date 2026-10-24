@@ -37,13 +37,13 @@ const click = (testid) => async (wrapper) => {
 	await wrapper.find(`[data-testid="${testid}"]`).trigger("click");
 	await settle();
 };
-async function addMember(wrapper, user, role) {
-	await wrapper.find('[data-testid="bop-add-member"]').trigger("click");
-	await settle();
-	await wrapper.find('[data-testid="bop-add-member-person"]').setValue(user);
-	await wrapper.find('[data-testid="bop-add-member-role"]').setValue(role);
-	await wrapper.find('[data-testid="bop-add-member-confirm"]').trigger("click");
-	await settle();
+// A committee being drafted on Prepare opening (boards a1 and a2) is what a refused appointment leaves in the table, or what a refresh
+// brings back: the tab keeps it in session storage until the committee is appointed. The Add members dialog appoints in one action, so
+// these states are reached the way a reader reaches them, not by adding people one by one.
+const draftRow = (user, committee_role, full_name, designation) => ({ user, committee_role, full_name, designation });
+function seedDraft(rows) {
+	const opening = world("prepared", "ao").opening.opening_id;
+	window.sessionStorage.setItem(`kt.bop.draft.${globalThis.frappe.session.user}.${opening}`, JSON.stringify(rows));
 }
 
 const REFUSAL = {
@@ -54,17 +54,18 @@ const REFUSAL = {
 
 // board, component, captured stage, viewer, extra props, what the viewer does first
 const SCREENS = [
-	["a1", PrepareScreen, "prepared", "ao", {}, async (w) => {
-		await addMember(w, USERS.chair, "Chair and recorder");
-		await addMember(w, USERS.member, "Member");
-		await addMember(w, USERS.independent, "Independent member");
-	}],
+	["a1", PrepareScreen, "prepared", "ao", {}, undefined, () => seedDraft([
+		draftRow(USERS.chair, "Chair and recorder", "Charles Mutiso", "Head of Procurement Function"),
+		draftRow(USERS.member, "Member", "Playwright Tenders Officer", "Procurement Officer"),
+		draftRow(USERS.independent, "Independent member", "Beatrice Kamau", "Budget Approver"),
+	])],
 	["a2", PrepareScreen, "prepared", "ao", {}, async (w) => {
-		await addMember(w, USERS.chair, "Chair and recorder");
-		await addMember(w, USERS.member, "Member");
 		await w.setProps({ refusal: REFUSAL }); // what Appoint committee returned
 		await settle();
-	}],
+	}, () => seedDraft([
+		draftRow(USERS.chair, "Chair and recorder", "Charles Mutiso", "Head of Procurement Function"),
+		draftRow(USERS.member, "Member", "Playwright Tenders Officer", "Procurement Officer"),
+	])],
 	["a3", PrepareScreen, "appointed", "ao"],
 	["a4", PrepareScreen, "appointed", "ao", {}, click("bop-open-arrangements")],
 	["a5", PrepareScreen, "published", "ao"],
@@ -104,7 +105,7 @@ const SCREENS = [
 	["h3", CompletedScreen, "complete", "admin"],
 	["h4", CompletedScreen, "complete", "chair", { sub: "correct" }],
 	["h5", CompletedScreen, "corrected", "chair"],
-].map(([board, component, stage, viewer, props, before]) => ({ board, name: component.__name || "Screen", component, stage, viewer, props: props || {}, before }));
+].map(([board, component, stage, viewer, props, before, seed]) => ({ board, name: component.__name || "Screen", component, stage, viewer, props: props || {}, before, seed }));
 
 beforeAll(() => {
 	globalThis.frappe.session = { user: "" };
@@ -114,9 +115,11 @@ afterEach(() => {
 	document.body.innerHTML = "";
 });
 
-describe.each(SCREENS)("$board — $name as $viewer on the $stage world", ({ board, component, stage, viewer, props, before }) => {
+describe.each(SCREENS)("$board — $name as $viewer on the $stage world", ({ board, component, stage, viewer, props, before, seed }) => {
 	it("is built out of the board's own elements", async () => {
 		globalThis.frappe.session.user = USERS[viewer];
+		window.sessionStorage.clear();
+		if (seed) seed();
 		const wrapper = mount(component, { props: { data: world(stage, viewer), ...props }, attachTo: document.body });
 		await settle();
 		if (before) await before(wrapper);

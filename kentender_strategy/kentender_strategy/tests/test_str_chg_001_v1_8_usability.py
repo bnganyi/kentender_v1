@@ -14,11 +14,13 @@ reorder, STR18-208 fixture profiles. Traceability: STR18-AC-001/002/
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import frappe
 
 from kentender_strategy.api import strategy_consumer_api as api
+from kentender_strategy.services import strategy_consumer as consumer
 from kentender_strategy.services import strategy_ui_contracts as ui
 from kentender_strategy.services.strategy_transitions import transition_plan_version
 from kentender_strategy.services.strategy_writes import (
@@ -78,7 +80,7 @@ class TestVocabulary(UsabilityTestBase):
 		self.assertEqual(ui.version_status_label("Draft", version_number=2), "Draft update")
 		self.assertEqual(ui.version_status_label("Draft", version_number=2, return_reason="fix it please"), "Changes requested")
 		self.assertEqual(ui.fiscal_year_label("2027-2028"), "FY 2027/28")
-		self.assertEqual(ui.target_period_label(None, "2028-06-30"), "By 30 Jun 2028")
+		self.assertEqual(ui.target_period_label(None, F("2028-06-30")), "By 30 Jun 2028")
 
 	def test_register_row_actions_follow_server_authority(self):
 		plan_id, version_id = self._plan_and_version()
@@ -328,9 +330,9 @@ class TestReviewOverviewAndComparison(UsabilityTestBase):
 
 
 class TestImmediateEffectApproval(UsabilityTestBase):
-	"""STR18-205 / STR18-AC-021, 022 / STR18-XD-002 — the FUTURE profile is
-	refused while Submitted; the IMMEDIATE profile activates and closes the
-	predecessor's applicability to the day before it starts."""
+	"""STR18-205 / STR18-AC-021, 022 / STR18-XD-002 — both the FUTURE and the
+	IMMEDIATE profile are approved (STR-CHG-001 v1.11: a later start no longer blocks);
+	the predecessor's applicability closes to the day before the successor starts."""
 
 	def _submitted_successor_with_start(self, tag: str, start: str):
 		plan_id, v1 = self._plan_and_version()
@@ -345,22 +347,77 @@ class TestImmediateEffectApproval(UsabilityTestBase):
 		frappe.set_user("Administrator")
 		return plan_id, v1, v2, author, approver
 
-	def test_future_effective_version_cannot_be_approved_and_stays_submitted(self):
+	def test_future_effective_version_can_be_approved_and_the_current_one_keeps_applying(self):
+		"""STR-CHG-001 v1.11: a version that starts later is approved like any other. The current version
+		stays in use until the day before it starts; the labels follow the date, the stored status does not."""
 		plan_id, v1, v2, author, approver = self._submitted_successor_with_start("future", "2041-07-01")
 		pin_review_date(self, "2040-11-25")
 		frappe.set_user(approver)
 		out = ui.get_version_review_overview(v2)
-		self.assertTrue(out["blockers"]["blocked"])
-		self.assertEqual(out["blockers"]["future_effective"]["effective_from_label"], "1 Jul 2041")
-		self.assertIn("It starts on 1 Jul 2041.", out["blockers"]["future_effective"]["headline"])
-		self.assertFalse(out["decision"]["can_approve"])
+		self.assertFalse(out["blockers"]["blocked"])
+		self.assertEqual(out["blockers"]["starts_later"]["effective_from_label"], "1 Jul 2041")
+		self.assertEqual(out["blockers"]["starts_later"]["headline"], "This version starts on 1 Jul 2041.")
+		self.assertTrue(out["decision"]["can_approve"])
 		self.assertTrue(out["decision"]["can_return"])
-		with self.assertRaises(frappe.ValidationError) as ctx:
-			transition_plan_version(v2, "Approve")
+		approved = transition_plan_version(v2, "Approve")
 		frappe.set_user("Administrator")
-		self.assertIn("cannot be approved yet", str(ctx.exception))
-		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "status"), "Submitted for approval")
+		self.assertEqual(approved["status"], "Active")
 		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Active")
+		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), "2041-06-30")
+		# By date: the earlier version answers until 30 Jun 2041, the later one from 1 Jul 2041.
+		self.assertEqual(consumer.resolve_strategy_context(as_of_date="2041-06-30")["primary_plan"]["version_id"], v1)
+		self.assertEqual(consumer.resolve_strategy_context(as_of_date="2041-07-01")["primary_plan"]["version_id"], v2)
+		self.assertEqual(ui.get_plan_workspace(plan_id, version_number=1)["current_version"]["status_label"], "Current")
+		self.assertEqual(ui.get_plan_workspace(plan_id, version_number=2)["current_version"]["status_label"], "Starts 1 Jul 2041")
+		# When the date arrives the labels flip on their own; nothing was stored.
+		pin_review_date(self, "2041-07-01")
+		self.assertEqual(ui.get_plan_workspace(plan_id, version_number=1)["current_version"]["status_label"], "Previous version")
+		self.assertEqual(ui.get_plan_workspace(plan_id, version_number=2)["current_version"]["status_label"], "Current")
+		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Active")
+
+	def test_a_fiscal_year_split_by_a_version_change_is_ambiguous_and_a_date_is_not(self):
+		plan_id, v1, v2, author, approver = self._submitted_successor_with_start("split", "2041-01-01")
+		pin_review_date(self, "2040-11-25")
+		frappe.set_user(approver)
+		transition_plan_version(v2, "Approve")
+		frappe.set_user("Administrator")
+		# FY 2040-2041 runs 1 Jul 2040 to 30 Jun 2041, so both versions overlap it: no preference rule.
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			consumer.resolve_strategy_context(fiscal_year=FY)
+		self.assertIn("More than one Active Primary strategic plan applies", str(ctx.exception))
+		self.assertEqual(consumer.resolve_strategy_context(as_of_date="2040-12-31")["primary_plan"]["version_id"], v1)
+		self.assertEqual(consumer.resolve_strategy_context(as_of_date="2041-01-01")["primary_plan"]["version_id"], v2)
+
+	def test_approval_never_lengthens_a_predecessor_that_already_ended_sooner(self):
+		plan_id, v1, v2, author, approver = self._submitted_successor_with_start("shorter", "2041-07-01")
+		frappe.db.set_value("Strategic Plan Version", v1, "effective_to", "2041-01-31")
+		pin_review_date(self, "2040-11-25")
+		frappe.set_user(approver)
+		transition_plan_version(v2, "Approve")
+		frappe.set_user("Administrator")
+		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), "2041-01-31")
+
+	def test_a_version_that_starts_earlier_supersedes_an_approved_later_one_it_covers(self):
+		plan_id, v1, v2, author, approver = self._submitted_successor_with_start("cover", "2041-07-01")
+		pin_review_date(self, "2040-11-25")
+		frappe.set_user(approver)
+		transition_plan_version(v2, "Approve")
+		frappe.set_user("Administrator")
+		# "Update plan" copies the approved version with the highest number, here the one that starts later.
+		v3 = self._successor(plan_id, author)
+		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v3, "based_on_plan_version_id"), v2)
+		frappe.db.set_value("Strategic Plan Version", v3, "effective_from", "2041-01-01")
+		frappe.set_user(author)
+		transition_plan_version(v3, "Submit for approval")
+		frappe.set_user(approver)
+		transition_plan_version(v3, "Approve")
+		frappe.set_user("Administrator")
+		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v3, "status"), "Active")
+		# v2 would start inside v3's own period, so it never applies: it is replaced.
+		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "status"), "Superseded")
+		# v1 is still in force until v3 starts, so it stays Active with a shorter end.
+		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Active")
+		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), "2040-12-31")
 
 	def test_immediate_version_activates_and_closes_the_predecessor(self):
 		plan_id, v1, v2, author, approver = self._submitted_successor_with_start("now", "2040-11-25")
@@ -443,7 +500,7 @@ class TestPlaywrightPurgeRestoresPredecessorDates(UsabilityTestBase):
 		with patch.object(pw, "_canonical_plan", return_value=plan_id):
 			pw.purge(commit=False)
 		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Active")
-		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), "2028-06-30")
+		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), F("2028-06-30"))
 
 
 class TestFixtureProfiles(UsabilityTestBase):
@@ -472,13 +529,13 @@ class TestFixtureProfiles(UsabilityTestBase):
 		fixture = seed.seed_str_des_v2_fixture(profile=seed.PROFILE_FUTURE)
 		v2 = fixture["plan_version"]
 		try:
-			self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v2, "effective_from")), "2027-07-01")
+			self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v2, "effective_from")), F("2027-07-01"))
 			self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "status"), "Submitted for approval")
 			history = ui.get_version_history(v2)
 			by_event = {h["event"]: h for h in history}
-			self.assertEqual(by_event["Successor Version Created"]["at"], "2026-11-24 13:10:00")
-			self.assertEqual(by_event["Draft structure saved"]["at"], "2026-11-24 15:55:00")
-			self.assertEqual(by_event["Submit for approval"]["at"], "2026-11-24 16:20:00")
+			self.assertEqual(by_event["Successor Version Created"]["at"], W("2026-11-24 13:10:00"))
+			self.assertEqual(by_event["Draft structure saved"]["at"], W("2026-11-24 15:55:00"))
+			self.assertEqual(by_event["Submit for approval"]["at"], W("2026-11-24 16:20:00"))
 			self.assertEqual(len(history), 3)
 			self.assertEqual(frappe.db.get_value("Performance Target", fixture["target"], "target_value"), 85)
 			# The comparison names both the target and the applicability start.
@@ -495,7 +552,7 @@ class TestFixtureProfiles(UsabilityTestBase):
 			self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "status"), "Draft")
 			self.assertEqual(frappe.db.get_value("Strategic Plan Version", v2, "return_reason"), seed.RETURN_REASON)
 			returned = next(h for h in ui.get_version_history(v2) if h["event"] == "Return")
-			self.assertEqual(returned["at"], "2026-11-25 11:20:00")
+			self.assertEqual(returned["at"], W("2026-11-25 11:20:00"))
 		finally:
 			seed.teardown_str_des_v2_fixture(v2)
 

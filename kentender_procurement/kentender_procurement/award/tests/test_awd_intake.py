@@ -6,6 +6,8 @@ tracker AWD4-301) on the synthetic sources."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import checks, issues, records, state
@@ -45,8 +47,8 @@ class TestIntake(AwardCase):
 		self.assertEqual(issues.open_issues(self.case(), subtype=checks.SOURCE_INCOMPLETE)[0].reason, "A required committee signature is missing.")
 
 	def test_expired_validity_is_recorded_at_receipt(self):
-		self.at("2027-10-11 09:00:00")
-		self.deliver(overrides={"validity_end": "2027-10-10 11:00:00"})
+		self.at(W("2027-10-11 09:00:00"))
+		self.deliver(overrides={"validity_end": W("2027-10-10 11:00:00")})
 		self.assertEqual(issues.open_issues(self.case(), subtype=checks.VALIDITY_EXPIRED)[0].title, "Tender validity has expired. No award can proceed.")
 
 	def test_unreadable_status_is_unknown_not_negative(self):

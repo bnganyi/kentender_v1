@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { AMINA, CHARLES, EVIDENCE, as, awardWorld, closeSession, collectConsoleErrors, expectJourney, expectNextStep, expectScreen, openAwardsFromMenu,
+import { shortDateTime } from "../../helpers/anchor";
+import { AMINA, CHARLES, EVIDENCE, as, awardWorld, awardWorldInstant, closeSession, collectConsoleErrors, expectJourney, expectNextStep, expectScreen, openAwardsFromMenu,
 	restoreAwardWorld } from "./awdWorld";
 
 /**
@@ -31,7 +32,7 @@ test.describe("Award — the Accounting Officer's decision", () => {
 		await expectScreen(page, "decision");
 		await expectNextStep(page, "your_turn", "Decide the award.");
 		await expectJourney(page, ["Done", "Current", "Not started", "Not started", "Not started"]);
-		await expect(root).toContainText("Signed by Charles Mutiso, 17 Jun 2027, 09:10 EAT");
+		await expect(root).toContainText(`Signed by Charles Mutiso, ${shortDateTime(awardWorldInstant("2027-06-17 09:10:00"))}`);
 		await expect(root.locator('[data-testid="awd-def-notice-preview"]')).toHaveText("Successful bidder notice — Afya Digital Supplies Limited");
 		await root.locator('[data-testid="awd-field-decision_reason"]').fill("I accept the recommendation in the signed evaluation report and professional opinion.");
 		await page.screenshot({ path: `${EVIDENCE}/D03.png`, fullPage: true });

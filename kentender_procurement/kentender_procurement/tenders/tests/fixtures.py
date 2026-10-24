@@ -41,7 +41,7 @@ LOCATION = "Test Delivery Location — Tenders"
 CONTACT_OFFICE = "Test Contact Office — Tenders"
 
 TENDER_DOCTYPES = (
-	"Tender Event", "Tender Command Journal", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation",
+	"Tender Event Delivery", "Tender Event", "Tender Command Journal", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation",
 	"Tender Candidate Notice", "Tender Clarification", "Tender Bid Definition", "Tender Addendum",
 	"Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task", "Tender Version", "Tender",
 )

@@ -1,0 +1,445 @@
+# PRC-CHG-001 — Minimal Procurement Proceedings
+
+**Controlling approval — 18 October 2026.** The Project Owner instructed, verbatim: **“Mark the documents as approved”**, following delivery of BOP v0.16, TPR v0.24, PRC v0.14, AWD v0.9 and TRUST-OPS v0.2 and the implementation handoff. This approves all five complete successors together, including their incorporated predecessor content and current requirements, screen variants, owner bindings, fixtures and acceptance criteria. It creates no separate retrospective approval of intermediate proposals. Earlier Proposed/pending wording and approval effects retained below are history for their named versions. Approval does not certify implementation, deployment, migrations, integrated tests, accepted operational drills, legal clearance or production readiness; their evidence conditions remain in force.
+
+**Current successor v0.14 — Approved, 18 October 2026.** Prepared on the Project Owner's instruction “Proceed”, following review of failed-opening recovery and cancellation. This complete successor retains unrelated predecessor content. Current amendments and this control table govern this approved successor; earlier version introductions, approval effects and baseline claims below are history for their named versions. Approved v0.14 now supersedes v0.13. Requirements approval is distinct from implementation, accepted drills, legal clearance and production release.
+
+**Current implementation entry point.** Rule §5.1; service/event binding §7.2; screen variants §10.1; fixtures §13.1; acceptance §14.1; verification §15.1; impact §17.1. Changed IDs: `PRC-OF-AC-001`–`PRC-OF-AC-012`.
+
+**Approval record — 18 October 2026 (v0.13).** Project Owner, 18 October 2026. Decision 2 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md, “Seven newer document versions are waiting for your approval” (which lists Strategy v1.11, Seed runbook v1.25, Procurement Proceedings v0.13, Bid Evaluation v0.9, Award v0.8, Contract Management v0.12 and the Gate 1 handoff v1.2, in the words of that file), was answered by the Project Owner, verbatim: “2. Approved. Mark them as such”. This approves PRC-CHG-001 v0.13 in full. v0.13 supersedes approved v0.12 as the baseline. Approval establishes the requirement only: it does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion. The proposed-status wording below is drafting history superseded by this record.
+
+**Proposed successor v0.13 — 10 October 2026.** v0.13 withdraws the test labels that v0.12 required in a synthetic test profile. The Project Owner instructed on 10 October 2026, verbatim: “I am continuously discovering the highlighted throughout the app. I did not ask for them and if they exist in the documentation then that is wrong. The problem is the decision to put them in various places is opaque and they might eventually leak into production code. Remove these, including on forms, and summarize”; and then: “"Simulation" checkbox: remove” and “Documentation: update all affected and the document control too”. No screen, Desk form, receipt, print view, PDF, export, message or portal shell shows a test-environment notice, a simulation or test-attestation label, or a record flag marking a record as simulated. A test stand-in is recognised only through the site's simulation setting and its own test-control records, and answers only where that setting is on. v0.13 changes two places: the interim test binding in §1 (“clearly marked”) and the seed paragraph in §13, each with its v0.12 wording beside it. The product wording for Bid Opening stays in BOP-CHG-001 §10. Every production gate, proxy limitation and guard that stops a stand-in acting outside a test site stays exactly as in the approved baseline. v0.12 is approved and remains the baseline until the Project Owner approves v0.13. All v0.12 content is retained. Approval of v0.13 would withdraw the test labels only; it would not establish implementation, testing, legal clearance or production readiness.
+
+**Approval record — 8 October 2026 (v0.12).** Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. This approves PRC-CHG-001 v0.12 in full. v0.12 supersedes v0.11. Approval does not establish implementation, testing or release. The proposed-status wording below is drafting history superseded by this record.
+
+**Proposed successor v0.12 — 8 October 2026.** v0.12 corrects one clause in the Evaluation profile (§20): the Head of Procurement Function holds no preparation task, because Evaluation records the Head as secretary when the Accounting Officer appoints the committee (EVL-CHG-001 v0.8 §3), on the Project Owner's instruction of 8 October 2026 (quoted in EVL-CHG-001 v0.8). Nothing else changes; the proposed OVS v0.6 §4.2 technical-reader policy in this document is untouched. v0.11 is approved and remains the baseline until v0.12 is approved. All v0.11 content is retained.
+
+**Controlling approval — 3 October 2026.** The Project Owner instructed: “Mark the documents as approved”. This approves this version in the coordinated OVS v0.6 package, including its incorporated amendments. OVS-P01–P05 are approved. The incorporated REQ v1.13, CFG v0.17 and TPR v0.16 changes are accepted within their approved successors; this does not create separate retrospective approvals of those intermediate versions. Earlier proposed/pending wording is drafting history superseded by this record. Static design work and conformance matrices remain open; CM and the separate template walkthrough remain deferred. Approval does not establish implementation, seed execution, testing, legal clearance or production readiness.
+
+**OVS reference and owner-specific amendment (§§2, 6–7, 9–10, 20).** Add ListProcurementMeetings, a read-only register at /app/procurement-meetings under Tender Management, using OVS v0.6 §11 and owner row/record verdicts. It supports AO/HOPF, scoped HoD and authorised auditor; technical-read treatment follows the explicit policy resolution in the impact schedule. No create, edit, meeting administration or new owner lifecycle is added. Owner-specific ceremonies, discussions, minutes and proofs remain in existing screens.
+
+The proposed technical-reader rule is OVS v0.6 §4.2. It qualifies broad non-content-only restrictions for Administrator/System Manager after governed release; limited incident operators remain restricted. It never bypasses sealed custody or grants business commands.
+
+Shared usability rules are owned once by **OVS-CHG-001 v0.6**, especially §§3–8 and 12–15. This module retains its domain lifecycle, facts, commands and existing authority except the explicit proposed read additions above. Implement the named changes in the cited owner surfaces; do not copy shared usability chapters into this document. This amendment takes effect under the controlling approval above.
+
+**Predecessor approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves PRC-CHG-001 v0.10 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
+| Control | Value |
+|---|---|
+| Document ID | PRC-CHG-001 |
+| Version | 0.14 |
+| Status | Approved — 18 October 2026 |
+| Status (v0.13 proposed read, retained) | Proposed — v0.12 was Approved — 8 October 2026; re-approval required |
+| Date | 18 October 2026 |
+| Approved on | 18 October 2026 |
+| Approved on (v0.13 proposed read, retained) | Not yet approved (v0.12: 8 October 2026; v0.11: 3 October 2026) |
+| v0.12 approval record | Project Owner, 8 October 2026, verbatim: “All decisions approved. Proceed”, answering the report of the proposed set EVL-CHG-001 v0.8, KT-STD-001 v1.27, SEED-002 v0.3 and PRC-CHG-001 v0.12 with its Owner decisions D7–D11. (Proposed read: None for v0.12.) The v0.11 approval record below is retained. |
+| v0.12 proposed status (retained) | Proposed — v0.11 is the approved baseline; re-approval required |
+| v0.12 supersedes | v0.11 on approval only |
+| v0.13 proposed status (retained) | Proposed — v0.12 is the approved baseline; re-approval required (drafting history, superseded by the approval of 18 October 2026) |
+| v0.13 supersedes | v0.12, on the approval of 18 October 2026: v0.13 supersedes approved v0.12 as the baseline. (v0.13 proposed read: v0.12 on approval only.) |
+| v0.13 change type | Test labels withdrawn from §1 and §13; nothing else changes. |
+| v0.13 owner instruction | Project Owner, 10 October 2026, verbatim: “I am continuously discovering the highlighted throughout the app. I did not ask for them and if they exist in the documentation then that is wrong. The problem is the decision to put them in various places is opaque and they might eventually leak into production code. Remove these, including on forms, and summarize”; and: “"Simulation" checkbox: remove” and “Documentation: update all affected and the document control too”. |
+| v0.13 approval record | Project Owner, 18 October 2026, answering decision 2 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md, “Seven newer document versions are waiting for your approval” (which lists Strategy v1.11, Seed runbook v1.25, Procurement Proceedings v0.13, Bid Evaluation v0.9, Award v0.8, Contract Management v0.12 and the Gate 1 handoff v1.2, in the words of that file), verbatim: “2. Approved. Mark them as such”. Approves PRC-CHG-001 v0.13 in full. v0.13 supersedes approved v0.12 as the baseline. Approval establishes the requirement only: it does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion. (v0.13 proposed read: None for v0.13.) The v0.12 approval record above is retained. |
+| v0.12 change type | One clause of §20: the Head of Procurement Function holds no preparation task. |
+| Supersedes | Approved v0.14 supersedes approved v0.13. |
+| Revision record | v0.9 aligns the active-arrival snapshot, single-action zero-bid end, attributed readout time and page-target flow with BOP v0.9. The OVS successor adds one read-only register; no generic meeting administration artboard is added. |
+| Governing standard | KT-STD-001 v1.10 |
+| First owning module | BOP-CHG-001 v0.9 approved owner; approved BDS-CHG-001 v0.8 is the sealed upstream source, with a receipt-visibility correction proposed in v0.9 |
+| Product | Open Tender, single lot, KES, fixed price, off-the-shelf IT Goods, per G1-REG-001 v1.1 |
+
+**Controlling decision.** KenTender will implement a small shared proceedings record, first used *inside* Bid Opening. The record captures actual attendance, session events, minutes, attestations and supplements. Bid Opening owns the statutory ceremony and every business decision. No standalone Proceedings workspace, general meeting workflow or generic approval authority is created.
+
+**v0.10 scope and precedence.** PRC now specifies two explicit owner profiles: **Bid Opening**, whose existing one-session/minutes contract below is unchanged, and **Bid Evaluation**, defined in §20. References below to the first release, one owner session, opening-only commands, minutes, opening messages, BOP completion and sealed custody apply to the Bid Opening profile. Shared identity, immutable evidence, audit, personal proof and replay rules apply to both. Evaluation business decisions remain in EVL; PRC records their attributed evidence. Neither profile can call the other profile’s lifecycle commands. BOP v0.10 remains the approved Opening owner; EVL v0.4 supplies Evaluation rules and screens. KT-STD v1.13 is the coordinated fixture amendment; approved v1.12 remains the governing standard pending its approval.
+
+## 1. Governing decision and disposition
+
+The Project Owner accepted v0.1 as the first version and directed that it receive the same requirements rigor as other KenTender change units. The previous v0.2 was a proposed revision, not approval of all Bid Opening details. The Project Owner accepted the live opening interaction on 27 September 2026. The shared service can be specified independently; statutory signed targets and lawful completion still require the Bid Opening owner and deferred TRUST-ADR-001 v0.1 support-module integration before production.
+
+**Accepted human interaction binding.** In the Bid Opening screen, the owner supplies verified one-by-one package reveals and readout facts. PRC records actual committee and supplier/representative arrivals/departures, the speaking member and actual readout event, and material interventions: the attendee/member who spoke, the bid/step concerned, factual request or observation, the chair's procedural response, repetition, dissent, pause and resumption. The recorder need not transcribe every utterance. These append-only notes never amend a submitted price, make an Evaluation finding or authorize bid access. The chair ends the live session; the recorder prepares minutes from ordered owner facts plus reviewed human notes; the appointed members individually attest their exact targets.
+
+**Interim test binding.** TRUST-ADR-001 v0.1 permits an individually attributable target-digest **test attestation** (v0.12 read: “a clearly marked, individually attributable target-digest **test attestation**”; the marking is withdrawn by v0.13) and synthetic owner/tender-box events to exercise PRC services. They are neither advanced electronic signatures nor legally effective page initials; `FinalizeProceeding` in a test profile is a simulated result only. There is no production PRC activation through a proxy. The approved BDS production gate and BOP legal/custody guards remain in force until a separate Trust, Signing and Custody support module and operating profile are approved and integrated.
+
+| v0.1 / source-concept item | Retained disposition from v0.2 |
+|---|---|
+| One formal session, attendance, chronology, minutes, attestations and immutable evidence | Retained; defined as records and commands with clear ownership. |
+| Bid Opening ceremony, opening register, bid disclosure and Evaluation handoff | Retained as **Bid Opening-owned**, not Proceedings commands. |
+| Generic scheduled/reviewed/approved/locked meeting workflow, agenda, resolutions and actions from supplied Functional Design v1 | Excluded from first release. No generic “Approve” action. |
+| Contract implementation, inspection, variation, claims, disputes and termination | Future consumers; no current fields or UI justified by them. |
+| Standalone Proceedings screen anticipated by v0.1 | Corrected: embed the relevant record and actions in Bid Opening. Its design contract must be supplied there. |
+| v0.1 fixed particulars for signing and ceremony | Qualified as owner bindings subject to LAW-V-001 and the electronic operating profile. |
+
+## 2. Purpose, outcome and exclusions
+
+**Outcome:** a committee and a later reviewer can reconstruct what happened at the actual opening, who attended, which owner events occurred, what minutes were attested, and any subsequent correction, without copying bid data into an editable meeting record.
+
+**First release:** exactly one proceedings record for an actual Bid Opening session of a Tender; appointed members and actual attendees; chronological factual events; versioned minutes; member attestations against exact content; append-only supplements; contextual read access and export. The owner may record a planned session that was never held, with a reason, without manufacturing start/end times.
+
+**Excluded:** generalized scheduling, quorum configuration, agenda/resolution/action tables, supplier portal meeting management, arbitrary evidence uploads, generic signature issuance, automatic business transitions, payment/contract decisions, and reporting dashboards. Supplier attendance is not supplier access to internal minutes.
+
+## 3. Ownership and dependency boundary
+
+| Concern | Authoritative owner | PRC seam |
+|---|---|---|
+| Published Tender definition and effective opening time | Tenders | Reference only; PRC cannot change published Tender data. |
+| Public Opening attendance projection on the Tender page | Bid Opening | Reference BOP versioned method, place/link, time and publication evidence; no PRC owner mutation or box facts. |
+| Effective deadline, current envelopes, withdrawals/replacements and custody | BDS | No general PE opening-user access to pre-opening **sealed-box-derived** bidder identity, count, price or content. The separately scoped BDS physical-security receipt owner and voluntary attendee may disclose supplier/representation facts independent of submission; neither fact proves a bid exists or grants box access; BDS v0.9 must reconcile this exception before production. |
+| Appointment, committee eligibility, clock and opening credentials | Bid Opening and accounting officer | Read authorized member snapshot and owner verdict; never appoint or unlock. |
+| Opening of packages, readout, bid number/page count, register, exception classification and lawful disclosure | Bid Opening | Refer to owner events and artifacts; do not duplicate or recalculate facts. |
+| Attendance, actual session chronology, minutes versions, attestations and supplements | PRC | Own immutable records and context-limited reads. |
+| Evaluation access and decisions | Evaluation after governed opening | EVL owns access and decisions; PRC records its events, sessions and proof targets through §20, without evaluation authority. |
+
+**Dependency rule:** PRC has no independent production activation. Its first production use is enabled only through a Bid Opening owner adapter after the BDS sealed handoff, BO requirements, legal operating profile, authorization and integrated tests are complete. PRC's service may be built and contract-tested against a simulated owner; that is not a compliant live opening. The owner cannot bypass PRC's evidence requirements by implementing a private duplicate.
+
+**Binding register required in Bid Opening:** actual owner record and identity, creation/start/end commands, eligible committee snapshot, event schema and ordering, statutory minutes content, opening register reference, member attestation targets and method, participant disclosure route, completion/handoff guard, recovery from every named interruption, actor-specific next steps, and exact embedded screens. Each binding has a producer, consumer, validation, failure and test. A blank binding disables the affected production command.
+
+## 4. Canonical domain model
+
+No field below is included solely for future types. The owner reference resolves Tender and site context; these are displayed, not independently editable copies.
+
+| Record | Minimum fields / producer | Consumer, validation and effect |
+|---|---|---|
+| Proceeding | Server ID; owner type and owner ID; type `Bid Opening`; owner-supplied title; state; created at/by; actual start/end | Owner ID unique for first-release Bid Opening; owner read resolves Tender. Start/end are trusted recorded instants, never entered retrospectively. UI shows current truth. |
+| Member snapshot | Owner-appointed member identity, designation, committee capacity and appointment reference | Owner validates actual eligibility; PRC displays designated members and checks attestations against the snapshot, not a self-added participant list. |
+| Attendance | Session ID; identity and capacity; represented tenderer where attendance requires it; arrival/departure event; recorder | Owner attendance route supplies actual attendee. At Start, an active pre-session arrival appears in the in-session view by reference, without a duplicate arrival event or click. Absent appointees are shown as such; attendee record grants no role. Personal details disclosed only under owner policy. |
+| Event | Server sequence and time; type; actor/source; factual note or owner event reference; unique owner event ID | Timeline/minutes consume; owner facts are linked, not rewritten. Replay of an event ID yields original result; another payload with same ID fails. |
+| Minutes version | Server version; frozen rendered content; exact digest; owner register reference; authored/frozen at/by; finalization state | Committee reads and attests exact version; finalized version immutable. Regeneration makes a new version, not a silent edit. |
+| Attestation | Member ID; action; target type, ID/version and digest; recorded time; approved signing method; proof/verification result | Owner defines required targets and validates lawful method. PRC binds evidence; failed verification cannot satisfy a required target. |
+| Supplement | Original version; reason; content or owner evidence reference; actor/time; required supplementary attestations if owner demands | Read/export shows original and supplement together; original remains unchanged. |
+
+Raw bid prices, supplier bid contents, custody material, evaluated amounts, quorum percentages, approval authority, action priorities and generic confidentiality flags are **not PRC fields**. The owner can expose a legally permitted readout as an owner event without placing sensitive content in a generally readable PRC note.
+
+## 5. Lifecycle, invariants and next steps
+
+| Transition | Caller and precondition | Result |
+|---|---|---|
+| Create pending session | Bid Opening owner only, once its record exists | `Pending`; no bid disclosure or start time. |
+| Start | Bid Opening owner command after its exact-time, appointment and custody checks | `In session`; trusted actual start time and first event; active pre-session arrivals become the initial attendance view without manufacturing arrivals at Start. |
+| Record pre-session presence/custody event | Owner-authorized member/recorder while `Pending`, after appointment and before Start | Ordered and attributed `pre-session` arrival/departure or approved custody participation; no bid facts, no actual ceremony start, no member authority from attendance. |
+| Append in-session attendance/event | Owner or its authorized recorder after actual Start | Ordered append; no removal or re-sequencing. Interrupt/resume are events, not status resets. |
+| End actual session | Bid Opening owner after its ceremony outcome is recorded | `Session ended`; actual end time; unresolved owner exceptions remain visible. |
+| Freeze minutes | Authorized owner-designated recorder, after session ended and required owner event references are reconciled | Fixed version; `Awaiting attestations` if targets remain, otherwise owner policy decides completion. |
+| Supersede frozen minutes | Authorized recorder before finalization, with reason, corrected factual note and owner revalidation | New frozen version/digest and fresh member targets; prior proofs remain auditable but do not satisfy the current version. |
+| Record attestation | Actual appointed member, on exact frozen target and approved method | Verification recorded; no proxy signing or stale-target acceptance. |
+| Finalize | Owner decision after all its required evidence and attestations pass | `Finalized`; read-only original; owner, not PRC, decides Evaluation handoff. |
+| Mark not held | Owner where session never started; AO fact after scheduled instant or authoritative pre-start TPR cancellation | Terminal `Not held`, factual AO reason or TPR cancellation reference and existing BDS/Trust custody reference (closed manifest only if one exists); no opening/minutes/handoff. Start, release, resume and finalization on this identity are denied. BOP creates an AO Tender-decision item only when no prior cancellation exists. If ceremony started, interruption remains In session and cannot be relabelled. A convened zero-bid session instead starts and follows ordinary minutes/proof/finalization. |
+| Close aborted proceeding | BOP owner after actual Start and authoritative TPR cancellation | Terminal `Aborted after start`, actual cessation time, partial events and custody reference preserved; no normal End/Freeze/Finalize, fabricated minutes, proof or Evaluation handoff. TPR owns statutory cancellation notices; legal profile defines any supplementary partial record obligations before production. |
+| Supplement | Owner-authorized recorder after finalization | Additional immutable linked record; no reversal of original finalization. |
+
+**Invariants:** one owner session identity; trustworthy chronology; no mutation of submitted packages; no Proceedings action unlocks a sealed bid; no disqualification; no automatic authority from attendance; no missing or forged member attestation; finalized content is immutable; replay is idempotent; conflicting or stale writes have no partial effect. Not held and Aborted after start are terminal; no Start, resumed reveal, normal proof or finalization follows them. A failed session cannot be converted into a successful ceremony by editing its minutes.
+
+**Next-step ownership:** Bid Opening returns the KT-STD-001 §3B `next_step`, guards, hand-off register and My Work items for the full ceremony. PRC supplies state/evidence facts and reason codes to that owner. There is no independent PRC journey tracker, Home task, hand-off or parallel status narrative. The Bid Opening contract must state the exact actor, holder, fix and clearing event for waiting, blocked, interrupted, unsigned and completed states.
+
+### 5.1 Opening failure reconciliation — outcomes and ownership
+
+This current successor coordinates BOP v0.16, TPR v0.24, PRC v0.14, AWD v0.9 and TRUST-OPS v0.2. All five were approved together on 18 October 2026. Its requirements are complete locally; the counterpart references identify ownership, not a separate source of unstated decisions.
+
+**Three outcomes.** (1) A verified recovery lets the appointed chair retry/resume only a nonterminal opening, with the full roster and every existing custody/access guard. Before Start it remains Pending/Ready; after Start it remains the same interrupted ceremony and resumes at its last committed step. (2) A lawful TPR cancellation ends the proceeding and automatically records the correct BOP/PRC terminal outcome; it never becomes successful opening. (3) Where neither recovery nor lawful cancellation is currently supported, retain an owned unresolved case with the exact blocker, responsible holder and existing corrective route. Viewing a task, recording an incident, timing out or writing a referral never clears it. Technical failure alone neither selects a cancellation ground nor disqualifies a bidder.
+
+**Completion and evidence.** In MVP 1, an unreadable/unverified/unaccounted current timely submission cannot be omitted or passed to Evaluation as opened. There is no generic exceptional-disposition control that converts that failure to successful opening. A future alternative needs its own legal basis and approved owner contract. A Not held identity cannot start/resume; a technical fix does not undo it. A Cancelled after start/Aborted after start identity cannot resume, attest, finalize or hand off. Preserve actual participation, already-opened records, submitted values, original receipts and still-sealed packages; cancellation authorises no further reveal or deletion. Existing evidence-retention duties continue.
+
+**Cancellation and funds.** AO uses the existing TPR CancelTender action, with a verified applicable ground, current source revisions and authoritative pre-notification evidence. AWD Not issued must come from its durable tender-level authority record, including before an Award case exists; absence of a case is not proof. Issue in progress, Issued or Unknown blocks this route. TPR cancellation and Award issue serialize on the same Tender guard, with authority rechecked inside the transaction and before any outward notice effect. Preserve the approved PLN v1.32 / REQ v1.20 / BUD v1.17 resource recovery contract carried into TPR: exact unused source set only, both owner effects together, no commitment release, scope unlock or automatic replacement. A failed opening or unresolved incident alone releases nothing. Recovery of funding does not require opening a sealed bid or fabricating completed minutes; it still requires authoritative source and surviving-obligation checks. Cancellation-compliance, incident closure and financial-recovery completion remain separate facts.
+
+**Authority versus readiness.** Current requirements approval is distinct from installed adapters, integration tests, accepted PR-001 drills and production legal/custody clearance. A historical reference to TPR v0.13/v0.14 is not the current implementation baseline. Report actual unavailable services through their owner guards. Preserve Trust L1/L2 and LAW-V-001: this amendment records no electronic-page/signature equivalence, operative password threshold, court-order status or permission to open real bids through a stand-in. BOP's existing independent-member and security-intake exclusion policies remain unchanged.
+
+**Narrow existing-owner binding.** BOP v0.16's current §7.1 and the additional reconciliation service binding replace v0.9-only references as the current BOP consumer contract. Preserve the existing PRC states and Evaluation profile. An interruption appends evidence while the same PRC session stays In session; recovery appends a resume event and cannot rewrite chronology. Not held is terminal before Start. After actual Start, the existing CloseAbortedProceeding consumes authoritative TPR cancellation through BOP and records Aborted after start, actual cessation/source and receipt times, last committed event and preserved partial records. Do not backdate an observation or fabricate normal End/Freeze/Finalize/proofs.
+
+The TPR cancellation ID/event and exact BOP/PRC session lineage deduplicate closure. A conflicting cancellation or wrong session fails with no change; an identical replay returns the first closure. If PRC is unavailable, BOP retains the durable pending closure and retries; authoritative cancellation already denies new ceremony actions. The AO item's closure acknowledgement follows the committed BOP/PRC terminal result, not merely the notification or page read. No further AO/recorder approval or generic PRC task is created. The unresolved case remains owner-controlled until an actual recovery/cancellation outcome; PRC cannot close it by calling it a supplement or a successful meeting. All existing EVL discussion/signing behaviour remains intact.
+
+## 6. Responsibilities and permissions
+
+| Responsibility | Permitted PRC action | Constraint |
+|---|---|---|
+| Bid Opening owner service | Create/start/end, append authoritative events and request finalization | Owns statutory guards; cannot bypass member proof. |
+| Owner-designated recorder/secretary | Record actual attendance and factual notes, prepare minutes, propose supplement | Bound to this Tender/session; cannot alter owner bid events or attest for others. |
+| Appointed committee member | Read authorized session, attest exact assigned target | Identity must match owner's appointment; attendance alone does not confer member authority. |
+| Tenderer/representative | Attend under owner procedure; receive the legally permitted readout/register route | No automatic general PRC read, bid-content or internal minutes permission. |
+| Auditor | Read lawful historical record and proofs | Oversight scope; no mutation or pre-opening content by default. |
+| Administrator/System Manager | Technical status/health and assigned infrastructure incident outside PRC | No PRC business action, member proxy, opening/attestation, or PRC actionable My Work. The synthetic TRUST proxy makes no confidentiality guarantee against infrastructure administrators; production separation belongs to the approved Trust operating profile. |
+
+Resolve user, site and record access before returning any record. Outside lawful scope, protected existence is not disclosed. The owner applies the stricter disclosure rule at each read; a generic `Internal` or `Public` toggle cannot override it.
+
+## 7. Service and command contract
+
+These are **logical commands**; Frappe method names and persistence layout may differ. All mutating commands take `owner_id`, `expected_version` and `idempotency_key`, authenticate the actor, and return committed record version, event ID and a current owner-readable state. Retry returns the original committed result. A stale or conflicting payload returns a named error without partial write.
+
+| Command/read | Input and result | Critical enforcement |
+|---|---|---|
+| `CreateProceeding` | Owner type/ID and authenticated owner call → one pending ID | Unique owner; owner exists; no public create. |
+| `StartProceeding`, `EndProceeding`, `MarkNotHeld` | Owner verdict/evidence and custody reference → recorded actual time/state | Start is allowed only from Pending with active Tender and snapshots active arrivals. End follows an actual session; the empty-outcome owner action records fact and End atomically. MarkNotHeld only from Pending/no Start and becomes terminal. AO action after scheduled time creates a BOP AO decision item; prior TPR cancellation does not. Never invent a manifest or release the box. |
+| `CloseAbortedProceeding` | BOP cites authoritative TPR cancellation after actual Start, last event and custody → terminal partial session | Actual cessation time, append-only prior events; no normal minutes, attestations, finalization or Evaluation handoff. Replay safe. |
+| `RecordAttendance` | Person/capacity/represented party, event and pre-session flag → attendance fact | Pending accepts restricted join/leave/arrival only; in-session accepts new arrival/departure. At Start the still-active Pending arrival is referenced in the in-session attendance view, not re-recorded. Does not grant authority. |
+| `AppendProceedingEvent` | Owner event ID/type/reference or factual recorder note → one ordered event | Pending accepts attributed pre-session presence/custody and an opaque once-only closed-manifest reference after deadline, never sealed-box-derived bidder identity/count/price/content; separately recorded attendee representation does not prove submission. Owner-generated opening facts need actual Start. A readout confirmation has trusted commit time; any earlier reported speech instant is attributed as a human observation, not forged as server event time. |
+| `FreezeMinutes` | Owner-provided canonical event/register references, selected tender page/price/change targets and rendered content → version/digest | Reconcile with owner event set; prohibit fabricated owner facts and edits to a frozen target. |
+| `SupersedeFrozenMinutes` | Recorder reason, corrected factual note, owner revalidation and latest target set → new version/digest | Before finalization only; supersedes satisfaction of prior proofs without deleting their evidence, then requires every applicable fresh proof. |
+| `AttestTarget` | Member, frozen target, proof and verified method → proof outcome | Member appointment and target digest match; approved method; no proxy. |
+| `FinalizeProceeding` | Owner completion verdict referencing specific required targets → finalized record | All required verified attestations and owner evidence; no generic approval. |
+| `AppendSupplement` | Reason, content/evidence and actor → linked supplement | Original remains readable; owner policy governs supplemental proof. |
+| `ReadProceeding`, `ExportProceeding` | Owner-scoped reader → permitted facts/proof bundle | Contextual field-level disclosure; public readout/register is a Bid Opening read, not these endpoints. |
+
+### 7.1 First-owner binding and profile presentation
+
+The current BOP binding register, including approved v0.16 §7.1 and its opening-failure reconciliation contract, governs this successor; v0.9 is predecessor evidence. PRC rejects an owner transition whose producer event ID, consumer operation, validation, failure result or integrated test is absent; the owner supplies actor-specific next steps and maps generic PRC errors to profile-specific BOP copy. Owner interruption is an append-only event while PRC remains `In session`; BOP's completion transition first finalizes PRC and then emits its once-only handoff in a guarded transaction/recoverable outbox. Failed PRC finalization cannot yield a BOP handoff. `MarkNotHeld` is terminal for a never-started session. `CloseAbortedProceeding` is terminal after Start and TPR cancellation; neither can finalize or hand off. A convened zero-bid session has the same approved count-neutral pre-Begin custody guard as a nonempty one, then real start/end, factual empty register and actual minutes/targets without any decrypt, subject to the approved legal profile. A never-started Not held case preserves BDS custody and AO work until a lawful Tender decision; if TPR already cancelled, its committed decision needs no duplicate AO item. TPR does not imply an automatic restart.
+
+Before freeze, BOP supplies the committee's recorded designated page(s) selected in the bid work area, renderer-identified price and applicable change locations, every minutes page and final-page targets with immutable render/version/digests. The generated draft is reviewed before the recorder invokes Finish; PRC does not create a separate approval. An empty opening has only opening-record targets in its design scenario. A roster successor attests only their own required scope and never signs for a former member's participation. The owner leaves unresolved proof blocked pending a lawful operating-profile disposition; PRC invents no substitute signer. `SupersedeFrozenMinutes` records a new version before finalization and invalidates satisfaction of earlier digests; after finalization the only correction route is an immutable supplement.
+
+### 7.2 Opening failure reconciliation — service and event bindings
+
+| BOP source event | PRC existing consumer | Guard and result |
+|---|---|---|
+| Committed ResumeOpening after verified recovery | AppendProceedingEvent | Same In session identity, current BOP/Tender verdict; actual actor/time and last-step lineage; no new Start or status reset |
+| TenderCancelled before Start, through BOP | MarkNotHeld | Pending/no Start, exact cancellation/Tender/session; terminal factual record, no invented manifest/minutes; replay once |
+| TenderCancelled after Start, through BOP | CloseAbortedProceeding | Actual Start and exact cancellation/Tender/session; terminal partial record with original and received times, no normal finalization/handoff; replay once |
+
+Existing PRC owner-validation and errors apply; missing source evidence never becomes a generic successful closure. BOP owns task/projection acknowledgement and retries a failed consumer using the same immutable event. PRC's Evaluation owner profile is unchanged.
+
+## 8. Error contract
+
+| Code | User-visible message | Result and recovery owner |
+|---|---|---|
+| `PRC_OWNER_UNAVAILABLE` | **This opening record is not available.** | No disclosure; Bid Opening repairs/authorizes reference. |
+| `PRC_START_BLOCKED` | **The opening session cannot start yet. Review the opening requirement shown here.** | Owner supplies specific blocker and in-product fix in its next-step contract. |
+| `PRC_MEMBER_REQUIRED` | **You are not an appointed member for this opening.** | No attestation; accounting officer/Bid Opening manages appointment. |
+| `PRC_TARGET_CHANGED` | **The opening record changed. Review the latest version before signing.** | No stale proof; member reviews new frozen version. |
+| `PRC_PROOF_UNVERIFIED` | **We could not verify your signature. Follow the steps shown here.** | No completion; the shared support method supplies the precise recovery interaction. This integration requirement is not user-facing copy. |
+| `PRC_EVIDENCE_INCOMPLETE` | **Some opening details are still missing. Review the items shown here.** | No finalization; owner supplies all missing facts and holders. |
+| `PRC_VERSION_CONFLICT` | **This record changed while you were working. Refresh it and try again.** | No partial effect. |
+| `PRC_ALREADY_FINALIZED` | **This record is final. Add a correction if a fact needs to change.** | Original immutable; owner-authorized supplement route. In BOP use **This opening record is final. Add a correction if a fact needs to change.** and BOP §10.6 **Correct opening record**. |
+
+Cross-scope reads use the KT-STD-001 `Not found` treatment. Every blocked owner action must return its concrete guard reason and fixes under KT-STD-001 §3B, rather than exposing only the generic PRC error sentence.
+
+## 9. UI architecture and routes
+
+PRC adds only the read-only Procurement meetings menu and register under OVS v0.6 §11. It defines no Home tile, generic form or supplier portal route. The Bid Opening change unit owns the canonical internal opening route and the authorized attendance/readout and bidder-register-copy routes. It composes PRC's attendance, event timeline, minutes and member-action regions into its screens. A read-only auditor view may reuse the same owner route under its own verdict.
+
+No route may infer authority from possession of a PRC record ID. A verified pre-session arrival still active at Start is retained as in-session attendance automatically; departure is separately recorded. A pending proceeding viewed before opening cannot expose BDS box-derived bidder identities, bid counts or contents; independently observed attendee/receipt identities are separately restricted.
+
+## 10. Static design contract — owner binding required
+
+The Procurement meetings register follows OVS v0.6 §§11 and 14. Its populated canonical design brief must be completed before design hand-off. Existing owner-bound ceremony/discussion screens remain as follows. Bid Opening v0.9 §10 supplies labelled design scenarios and complete owner artboard briefs under KT-STD-001 v1.10 §2.6.8 for: before opening; live session; interruption/blocked recovery; session ended/minutes preparation; member review/signing; finalized history; supplier attendance/readout; and requested register copy if a supplier-facing screen is used. The owner brief identifies actor, pictured instant, Tender/version, illustrative attendance and event facts, Level 1/2/3 hierarchy, action and next holder for each variant; §20 traces the owner/PRC result and disclosure.
+
+**Region contract for owner artboards:** top task/next-step and lawful opening action; committee and attendance facts; chronological opened-bid/readout facts from Bid Opening; minutes/attestation action in the relevant later state; register and custody evidence as subordinate links. No second PRC status narrative or generic approval bar. The supplier view contains only its lawful attendance/readout data, never internal member actions or full competing bids. Use KT-STD-001 §2, §2.9 and the approved desktop shell; the BOP v0.9 owner artboards are drawable from the labelled scenarios; the support module owns provider-specific signing and secure-access screens.
+
+### 10.1 Opening failure reconciliation — existing-screen variants
+
+No new PRC page, menu, journey or business task is added. Existing BOP owner surfaces display Not held or Cancelled after start, as applicable, with preserved partial chronology and distinct source/receipt times. A pending PRC closure is visible as the BOP owner delivery issue, never successful opening. The existing Procurement meetings register uses that owner result and its usual scope checks; it cannot present the case as Finalized. All existing Evaluation surfaces remain unchanged.
+
+## 11. Functional interaction requirements — excluded from design prompts
+
+The owning Bid Opening interaction map must bind every visible control to its command/read, navigation/mutation result, permission, successful outcome and error. At minimum: publish arrangements, join/leave, guarded custody participation, Start opening, record attendee, open next bid/read out, factual observation/exception, interruption/resume, end session, prepare/freeze/supersede minutes, personally review and sign the required record, view register, request/copy, AO record-not-held only where no session began, export permitted record and append correction. `FinalizeProceeding` is a guarded internal owner transition after the last verified proof, not a visible chair/recorder control. PRC does not define the bid-opening controls' behavior; it supplies the corresponding evidence operations in §7. No artboard may display a control whose owner command is absent.
+
+## 12. Audit and historical integrity
+
+Every material command records actor, owner, trusted time, prior/current version, outcome, idempotency key and evidence references; denied, stale and failed attestation attempts are auditable without disclosing bid contents. Owner events retain their owner IDs and order. Final minutes, digest, each member's proof and each supplement are independently reproducible on export. Audit/technical reads cannot become a path around the sealed box. Retention follows the authorized procurement record schedule in the governing owner; PRC invents no separate retention period.
+
+## 13. Deterministic seed and negative fixtures
+
+In a synthetic test profile no PRC owner view carries a test banner or label, and no proof carries a test-attestation label. The action uses the product wording that BOP-CHG-001 §10 owns. A test profile is recognised by the site's simulation setting and the test controls, as TRUST-ADR-001 v0.3 §2 states. (v0.12 read: “In a synthetic test profile, every relevant PRC owner view has **Test opening — synthetic bids only** and each proof has **Test attestation — not an electronic signature**. The action is **Record test attestation**. These labels apply solely to verification scripts; BOP v0.9 §10 owns product wording; verification labels are not product copy.” Withdrawn by v0.13.)
+
+Use KT-STD-001 v1.10 §8's `PE-MOH`, `Africa/Nairobi`, Amina Hassan (Accounting Officer), Charles Mutiso (Head of Procurement), Brian Wafula (Procurement Officer), Naomi Chebet (Auditor) and Administrator. BOP v0.9 §10 uses the BDS Tender/receipt facts and separately labelled illustrative BOP/PRC events for the design scenario. BOP §13 keeps invented proxy records in an isolated verification deployment/database using the same site-wide `PE-MOH`, with separate data, routes and credentials. No second PE is modelled. Amina's accounting-officer responsibility **does not itself make her an opening committee member**. The Bid Opening owner must commit at least three eligible appointments and designate the recorder before any product screen asserts an actual committee; proposed design names alone are not an appointment.
+
+| Fixture ID | Setup / expected PRC result | Use |
+|---|---|---|
+| PRC-S01 | Owner simulator creates a pending record and replays same key; one ID and one create event | Independent shared-service contract only. |
+| PRC-S02 | Simulator starts, appends two ordered events, records attendance, ends, freezes minutes, records verified target proofs and finalizes | Independent state/immutability test with **test-only** actors and targets; not legal compliance evidence. |
+| PRC-N01 | Different payload reuses same event ID; rejected, original unchanged | Replay/conflict. |
+| PRC-N02 | Member proof binds obsolete minutes digest; rejected, prior proof retained | Attestation integrity. |
+| PRC-N03 | Administrator attempts start, sign and content read; denied | Separation of authority. |
+| PRC-N04 | Unfinished session, missing owner event or unverified proof; finalization blocked with all missing items | Owner binding and dead-end. |
+| PRC-N05 | Finalized minutes correction adds supplement; original export unchanged | History. |
+| PRC-N06 | One member attests Version 1; authorized recorder supersedes with reason; old proof retained, each current target on Version 2 requires fresh proof and finalization blocks until complete | Pre-finalization correction. |
+| PRC-N07 | Convened session with zero bids reaches factual empty-register minutes/proofs, after the same count-neutral custody guard but without decrypt; never-started session is Not held with no successful handoff | State distinction. |
+| PRC-N08 | Member and visitor join/leave while Pending: attributed pre-session events, no bidder facts or false start; Start snapshots active members and carries still-active visitors into session attendance without a second arrival event | Pre-session chronology. |
+| PRC-N09 | Authoritative TPR cancellation after actual Start calls CloseAbortedProceeding once; actual start/cessation and partial events remain, while Start/End/Freeze/Attest/Finalize and BOP handoff are denied. | Terminal partial ceremony. |
+| PRC-N10 | MarkNotHeld from Pending is terminal; late Start/release/finalization on same identity fails. | Terminal never-started case. |
+| PRC-N11 | Recorder confirms readout after reveal; trusted confirmation time is retained while a reported earlier speech time stays attributed, never replaces the event time. A pre-reveal confirmation fails. | Time and human evidence. |
+| PRC-N12 | Owner's one empty-outcome command commits factual zero and End exactly once; replay adds no second event, and pre-Start use is denied. | One-action empty ceremony. |
+| PRC-INT-01 | BDS closes the canonical Tender; Bid Opening opens with appointed members, supplier attendance, custody exception and final minutes | Design scenario supplied in BOP v0.9. Integrated implementation test remains pending; a synthetic owner test does not establish a real ceremony. |
+
+Seeds use the same commands as UI, are idempotent, fail on conflicting authoritative data, and never grant Administrator a business role. Owner simulation cannot turn a failed integrated case into a pass.
+
+### 13.1 Opening failure reconciliation — isolated verification fixtures
+
+**Isolated OF-F01 — recovered paused opening.** Use the existing BOP Tender TND-MOH-2027-033, appointed roster and original immutable submissions; do not change canonical quantities, prices or the primary happy path. Inject a credential outage after one committed readout, before the next reveal. Record interruption and recovery as attributed events; resume once under the full roster. Replaying the recovery/resume cannot repeat that readout. This is an isolated reset branch, not an added event in the base fixture.
+
+**OF-F02 — cannot recover after Start.** On a separate reset of that same fixture, make the next timely package irrecoverably unreadable. Keep the first readout/actual participation. Test (a) verified applicable cancellation ground supplied by the isolated profile plus durable AWD Not issued; (b) missing ground; (c) Unknown/Issue in progress/Issued; and (d) a concurrently queued notice. No actual source is asserted to establish a cancellation ground; the test supplies its ground evidence explicitly, rather than deriving it from the fault. In (a), cancellation consumes the exact source lineage and closes the partial proceeding, then runs the existing guarded resource recovery. In all blocked branches keep the case owned/unresolved, with no release or successful handoff. Reverse the race ordering and test both winners.
+
+**OF-F03 — never held.** Use existing isolated TND-MOH-2027-035 and its attendance-service failure, with no Start. After the scheduled time, record Not held. Recovery cannot begin the same identity. Lawful cancellation attaches its event to that terminal record without a duplicate AO task or fabricated closed manifest. Retain the no-ground and unavailable-owner blocked variants.
+
+The recovery/crash and replay tests use real BOP–TPR–PRC–AWD owner adapters; financial checks also use real REQ/Planning/Budget adapters. Simulated signing/custody may exercise their approved isolated boundary only and never certify live readiness. No fixture creates a second PE, unapproved staff role or production data reset.
+
+## 14. Acceptance and readiness
+
+| ID | Required result | Evidence owner |
+|---|---|---|
+| PRC-A01 | One owner produces exactly one proceeding; replay and stale write are safe. | PRC contract test. |
+| PRC-A02 | Owner events and attendance are ordered, attributed and immutable; a supplier attendee gains no general read. | PRC/owner access test. |
+| PRC-A03 | Minutes freeze to a digest; only appointed members can attest assigned fixed targets by the approved method. | PRC and Bid Opening integrated test. |
+| PRC-A04 | Missing owner events, unverified proof or changed target blocks completion with named reasons and fixes; no false minutes. | Bid Opening next-step/dead-end matrix. |
+| PRC-A05 | Correction preserves and exposes original finalized record and all proofs. | PRC contract/export test. |
+| PRC-A06 | PE and technical users cannot see sealed identities/count/content via PRC before opening; post-opening access obeys owner disclosure. | BDS–Bid Opening–PRC integration test. |
+| PRC-A07 | For a nonempty completed opening, Bid Opening handoff to Evaluation cites exact opened packages, register and PRC record without PRC evaluating a bid. A zero-bid completion has no Evaluation handoff. | Bid Opening integration test. |
+| PRC-A08 | Every owner artboard/control has a source-grounded scenario, permission and interaction mapping; all BOP variants use labelled design scenarios; runtime fields map to actual owner/support events, and verification proxy data stays outside product UI. | Bid Opening design/release evidence. |
+| PRC-A09 | Superseding a frozen pre-final version requires reason and latest targets; prior proofs remain visible but cannot complete; finalized correction uses supplement. | PRC-N06 and BOP-N11. |
+| PRC-A10 | A convened zero-current-bid session has real attendance/empty register/minutes/targets, while never-started is Not held; the same approved count-neutral pre-Begin custody guard are required, but no package is decrypted. | PRC-N07 and BOP-N12. |
+| PRC-A11 | Pending accepts only attributed pre-session presence/custody/opaque close-reference events, has no actual start time or sealed-box-derived bidder facts; attendee representation never proves submission. At Start, active arrivals appear in the session view without duplicated arrivals. | PRC-N08 and BOP-N14. |
+| PRC-A12 | Terminal Not held and Aborted after start cannot Start, resume, freeze, attest, finalize or hand off; the latter retains actual partial chronology and cessation time. | PRC-N09, PRC-N10 and BOP-N17–N18. |
+| PRC-A13 | Readout time does not backdate trusted events; empty outcome/end is atomic and idempotent. | PRC-N11–N12 and BOP-A19–A20. |
+
+**Readiness:** PRC-A01, A02's shared portions and A05 can be implemented against the test owner. PRC-A03, A04, A06–A08 and the owner-specific part of A02 **cannot pass in isolation**. This does not block PRC design or development. Complete the owner integration suite before marking integrated behavior complete. The owner's state/actor dead-end matrix and hand-off tests satisfy KT-STD-001 §3B/§6 for the combined journey; there is no duplicate independent PRC workflow matrix.
+
+### 14.1 Opening failure reconciliation — acceptance
+
+Existing acceptance remains except the specifically superseded failed-opening completion/route wording. Map these additions to integrated evidence; repeated owner criteria may share one real scenario.
+
+| ID | Required result |
+|---|---|
+| PRC-OF-AC-001 | Recoverable pre-start failure stays nonterminal and creates no Start/attendance facts until the chair begins under current guards; Not held cannot retry Begin. |
+| PRC-OF-AC-002 | Recovery of an interrupted ceremony resumes from its last committed step with full roster/custody checks, no duplicate readout, and clears only that escalation instance on actual Resume. |
+| PRC-OF-AC-003 | An irrecoverable timely package cannot be skipped, disqualified or handed to Evaluation as opened. AO sees the existing cancellation route or every named current blocker. |
+| PRC-OF-AC-004 | No Award case exists: a verified durable Tender-level Not issued record may support cancellation; a null/missing/stale/unavailable lookup returns Unknown and blocks it without fabricating an Award case. |
+| PRC-OF-AC-005 | Cancellation/first-notice issue race, including queued retries and unknown send outcome, yields one valid fence winner. No notice dispatch follows committed cancellation; no cancellation passes Issue in progress, Issued or Unknown. |
+| PRC-OF-AC-006 | Verified cancellation before Start creates terminal Not held once; after actual Start it creates terminal partial BOP/PRC closure once. Preserve actual events, unopened custody, source/receipt times; no normal finalization/handoff. |
+| PRC-OF-AC-007 | Crash/duplicate/out-of-order cancellation delivery creates no repeated decision, PRC closure, task receipt, obligation or financial recovery. Failed consumer delivery is retained/retried and cannot permit further ceremony actions. |
+| PRC-OF-AC-008 | Missing ground/legal profile/integration or source status gives exact current reasons, responsible holders and permitted corrective routes. An open task cannot clear on page view, free-text referral or technical acknowledgement. |
+| PRC-OF-AC-009 | Scoped support, AO and Auditor reads follow the access matrix; Administrator/System Manager status adds no access. Detail read/export is purposeful/audited; protected packages, counts and identities do not leak. |
+| PRC-OF-AC-010 | A cancellation-based incident closure does not require falsely restored service; business case, failed service follow-up, cancellation compliance and financial recovery each retain their own actual outcome. |
+| PRC-OF-AC-011 | Integrated cancellation invokes approved exact-source Planning/Budget recovery without opening sealed bids, releasing commitments or changing scope. New procurement follows fresh ordinary REQ eligibility and approvals; unresolved opening alone releases nothing. |
+| PRC-OF-AC-012 | Production legal/custody and PR-001 drill gates remain enforced; original ordinary/empty opening, minutes/proofs, evaluation profile, Award funding and pre-consumption REQ revocation regressions still pass. |
+
+## 15. Implementation and test constraints
+
+Implement in the existing KenTender procurement architecture as shared services and records; exact Frappe app/DocType placement follows repository ownership. Reuse canonical identity, authorization, audit, time, cryptographic signature and evidence custody services. Tests call public commands rather than writing governed records directly. KT-STD-001 v1.10 §4–6 governs build, contract, browser, visual and first-view checks. The binding seam shall be exercised by a deterministic simulated owner before integration, then by a real Bid Opening owner fixture. A simulated passing contract is labeled only as shared-service evidence.
+
+### 15.1 Opening failure reconciliation — implementation and release evidence
+
+Build the complete allowed/blocked/recovered/cancelled journey against the current owner contracts. Real BOP–TPR–PRC–AWD tests must cover missing pre-case authority, both cancellation/notice race orders, failed delivery, stale sources, crash/replay and terminal-state denial. Resource-recovery integration uses real REQ/Planning/Budget owners. PR-001 must exercise cannot-recover, no-ground, Unknown/Issue in progress, Not held and cancellation-with-service-still-failed branches, not only successful repair. Preserve safe audit and custody evidence. Record environment, exact adapter versions, test command/result and each acceptance-to-evidence mapping. Accepted drills and legal/profile evidence remain separate prerequisites for live use; do not infer them from requirement approval. An unsupported runtime route stays visibly blocked, never silently enabled by removal of an old version reference.
+
+## 16. Prohibited shortcuts
+
+No generic “Approve minutes” action; no attendee-is-member assumption; no admin override; no arbitrary quorum field; no client clock; no editing event history or signed minutes; no copied bid data as free-text minutes; no bulk disclosure to supplier attendees; no silent completion on credential or signature failure; no PDF attachment standing in for structured owner events; no mock opening in production; no three-password rule hard-coded from an unverified operative regulation. KT-STD-001 §2.3 and §10 also apply.
+
+## 17. Traceability and precedence
+
+| Source | Effect here | Follow-up owner |
+|---|---|---|
+| Approved BDS-CHG-001 v0.8; G1-REG-001 v1.1 | Sealed handoff only, no BDS opening command; approved first product boundary | Bid Opening consumes, cannot revise BDS by implication. |
+| KT-STD-001 v1.10 | Document skeleton, closed design input, next-step/guard/hand-off, seed, verification | PRC core and BOP v0.9 owner journey are specified; implementation follows their bindings. |
+| PPADA 2015, §78 and §67 | Committee/opening/minutes and confidentiality constraints inform first consumer | LAW-V-001 and Bid Opening map statutory obligations to electronic controls. |
+| LAW-REG-001 v1.2 LAW-V-001 | Current legal instrument and signing interpretation unresolved | Legal/operating profile before production. |
+| Supplied Procurement Proceedings Functional Design v1 | Conceptual input, not a current KenTender authority | Future contract phases only where separately approved. |
+
+Source check: [PPRA review record reproducing Act §78](https://ppra.go.ke/?mdocs-file=10256); [2025 High Court judgment on the 2020 Regulations](https://new.kenyalaw.org/akn/ke/judgment/kehc/2025/19224/eng%402025-12-04/source.pdf). The operative effect of that judgment, any stay/appeal and any replacement instrument require legal verification; this document does not assert that an electronic click meets §78 signing.
+
+### 17.1 Opening failure reconciliation — change scope, precedence and closure
+
+Current source set: BOP v0.15, TPR v0.23 (editorial proposal over approved v0.22), PRC v0.13, AWD v0.8, TRUST-OPS v0.1, TRUST-ADR v0.6, BDS v0.16, supplied LAW v1.2 and AUTH v1.15. Preserve the separately approved AUTH v1.16 funding controls; the older upload is not a replacement. This proposal changes only failed-opening decisions/recovery, incident access/closure and their owner bindings/tests. BDS, AUTH, TRUST-ADR, LAW, PLN v1.32, REQ v1.20 and BUD v1.17 are untouched. No legal verification item, production gate or implemented follow-up is closed by this document. Current external control registers, operating-profile evidence, code and test reports were not supplied for editing and are not claimed updated. Record successor statuses accurately in the actual current registers when implementing; do not overwrite them with stale copies.
+
+## 18. Approval effect
+
+**v0.13 approved — 18 October 2026.** PRC-CHG-001 v0.13 is approved by the Project Owner and supersedes v0.12 as the baseline. Approval establishes the withdrawal of the test labels from §1 (the interim test binding) and §13 (the first paragraph), as the control table, the opening paragraph and the change record state: no screen, Desk form, receipt, print view, PDF, export, message or portal shell shows a test-environment notice, a simulation or test-attestation label, or a record flag marking a record as simulated. It changes no production gate, proxy limitation or guard that stops a stand-in acting outside a test site. Approval does not establish implementation, migration, seed execution, testing, legal clearance or production readiness, and it closes no acceptance criterion. (The proposed text that follows is retained as drafting history.)
+
+**v0.13 proposed approval effect (10 October 2026) (retained; superseded by the approval of 18 October 2026).** v0.13 is Proposed. If the Project Owner approves it, approval will withdraw the test notices as the control table and the top paragraph state; it will not change any production gate and will not establish implementation, seed execution, testing, legal clearance or production readiness. Until then v0.12 remains the approved baseline.
+
+**v0.12 approved — 8 October 2026.** PRC-CHG-001 v0.12 is approved by the Project Owner and supersedes v0.11. It corrects one clause of §20 only: the Head of Procurement Function holds no preparation task. Every other v0.11 provision, including the proposed OVS v0.6 §4.2 technical-reader policy, is unchanged. Approval does not establish implementation, testing or release. (The proposed text that follows is retained as drafting history.)
+
+**v0.12 (proposed).** PRC-CHG-001 v0.12 is proposed and not approved. If approved it corrects one clause of §20 only, as the control table states; every other v0.11 provision, including the proposed OVS v0.6 §4.2 technical-reader policy, is unchanged. Until then v0.11 is the approved baseline. Approval would not establish implementation, testing or release.
+
+**v0.10:** proposed coordinated amendment; v0.9 approval below is historical and does not imply v0.10 approval. The new Evaluation profile follows the already approved EVL v0.4 contract. Shared Trust production gates and integration verification remain unchanged.
+
+Project Owner approval on 29 September 2026 replaces v0.8's shared-service detail with v0.9 while retaining its accepted minimal scope. It authorizes implementation and contract testing of PRC's owner-independent core. Bid Opening v0.9 specifies the contextual UI for design and development. This approval does not choose a provider-specific electronic signature method or authorize a real opening ceremony. Dependent integration tests remain pending until implemented.
+
+
+## 19. Controlled change account
+
+**v0.9 over v0.8.** Active pre-session arrivals are referenced at Start without fabricated second arrival events; empty-outcome recording and End are one owner action; human readout confirmation has trusted commit time separately from any reported speech instant; page selection is recorded during readout and consumed by Freeze. The owner is BOP v0.9. PRC has no standalone design boards.
+
+**Historical v0.8 over v0.7.** The owner design was supplied in BOP v0.8 §10. PRC had no standalone page; its service could be implemented against the owner interface and labelled scenarios. Source evidence was required at runtime, not before an artboard could be drawn. The v0.7 file contains the earlier change account.
+
+**Historical v0.7 account.** The retained v0.6 contains the prior change account. v0.7 aligned the PRC binding and design references with BOP v0.6, while incorrectly blocking artboards on real method/renderer/proof inputs. PRC still had no standalone page. `Not held` and `Aborted after start` remained terminal, and zero-bid completion emitted no Evaluation handoff.
+
+| v0.6 exact excerpt | v0.7 exact replacement excerpt | Reason |
+|---|---|---|
+| “BOP-CHG-001 v0.5 proposed owner” | “BOP-CHG-001 v0.6 proposed owner” | Current owner. |
+| “The Bid Opening v0.5 change unit” | “The Bid Opening v0.6 change unit” | Historical v0.7 design reference. |
+| “test custody confirmation, Start opening” | “guarded custody participation, Start opening” | Product control no longer names the proxy. |
+
+**29 September 2026 focused clarification (v0.9 retained).** In BOP, map PRC_VERSION_CONFLICT to BOP_VERSION_CONFLICT copy. RecordMemberAccount retains the member as author; a recorder’s response is a separate linked event. The BOP §10.6 attendance-note supplement uses authenticated recorder authorship under that narrow owner policy; it cannot replace signatures, original records or handoff evidence.
+
+## 20. Bid Evaluation owner profile — coordinated EVL v0.4 binding
+
+### 20.1 Ownership, records and access
+
+One Evaluation proceeding is unique by owner type **Bid Evaluation** and Evaluation case ID. It references the completed BOP proceeding; it never reuses or alters that record. It can exist during preparation with no session or bid content. Zero or more real discussion sessions are children; at most one is active. Ending a session does not end the evaluation. Individual evidence review and report signing do not require an active session.
+
+| Record | Required owner binding and purpose |
+|---|---|
+| Evaluation proceeding | Evaluation ID, tender reference, creation event, owner lifecycle/version and optional completed BOP reference. Projection of EVL state, not a second competing workflow. |
+| Roster history | EVL appointment/replacement/declaration references, member identity/designation/capacity and eligibility version. No PRC appointment, automatic eligibility or removal for absence. |
+| Discussion session | Child identity, start/end event and trusted time, chair, personal joins/leaves, secretary presence, subjects, attributed notes and owner conclusion references. No retrospective attendance entry. |
+| Ordered material event | Owner event ID/version, actor, trusted time, affected bid/requirement references, session where applicable, immutable evidence/reason references and participating roster for collective decisions. Replays return the original; conflicting payloads fail. |
+| Report target set | Kind Evaluation report or Due-diligence report; owner report ID/version, immutable rendered content/annex references and digests, required personal signer set and page/final targets. Evaluation report targets cover the same report version and annex set for all required members. Due-diligence targets cover every rendered page for initials and final report signature by each actual participant. |
+| Personal proof | Exact target identity/version/digest, appointed signer, approved method, result and trusted time; uncertain, failed, stale or wrong-person proof satisfies no target. |
+| Completion/correction | Owner durable delivery event/report version or later correction/supplement reference. No PRC-generated recommendation or downstream review decision. |
+
+Every read/export rechecks EVL’s current actor/record verdict. Committee appointment plus personal eligibility governs internal bid access; the secretary has only their EVL-appointed scope. Supplier correspondence is an EVL allowlisted projection through BDS, never general PRC access. The AO’s preparation task discloses no sealed-bid facts, and the Head of Procurement Function holds none (v0.12; v0.11 read: “The AO/Head’s preparation tasks disclose no sealed-bid facts.”). Technical support sees only safe incident details. EVL owns My Work, next steps, all screens and all task clearing; PRC adds no workspace, approval or parallel task.
+
+### 20.2 Logical operations and committed effects
+
+All operations use authenticated EVL owner identity, expected owner/record version, an idempotency key and exact source references. Human actions preserve the actual acting person. An owner conclusion and its PRC evidence must commit atomically or via a durable recoverable outbox; an incomplete required write cannot appear as a completed business action.
+
+| Operation | Guard and effect |
+|---|---|
+| `CreateEvaluationProceeding` | One case per Evaluation ID; duplicate publication/intake paths reuse it. Preparation contains no opening success or bid data. |
+| `StartEvaluationDiscussion` | Current eligible chair; no active session; EVL’s suspension/cancellation guards pass. Creates child and chair’s personal join atomically. No second Join for the chair. |
+| `JoinEvaluationDiscussion`, `LeaveEvaluationDiscussion` | Actual current member personally joins/leaves an active child; secretary presence is distinct and cannot satisfy member participation. No bulk attendance action or invented timer. |
+| `RecordEvaluationConclusion` | EVL supplies its committed decision reference and evidence, complete current eligible roster and current personal participation. Applies to resolved/qualified findings, clarification authorisation, verification plans/outcomes and final reply disposition. These specialised EVL commands record this evidence directly; no preceding generic conclusion click. Notes and own-authored dissent remain distinct from the collective decision. |
+| `EndEvaluationDiscussion` | Chair ends actual child; preserve attendance and events. Absence may end a paused session without inventing a conclusion. No active child may remain when EVL freezes its report. |
+| `FreezeEvaluationReport` | EVL validates source impact, roster, correspondence dispositions, due diligence and outcome; supplies complete immutable target set and required signers. Also used with kind Due-diligence report after all named participants record observations, under the named lead’s EVL action. Creates no extra PRC approval. |
+| `RecordEvaluationProof` | Personally authenticated required signer and verified exact current target. EVL may sign an explicitly qualified expired-validity report; PRC adds no unconditional expiry rejection. Test attestation remains test-only under TRUST. |
+| `SupersedeEvaluationReport` | EVL reason and new owner version/target set; preserve earlier content/proofs but none satisfies the successor. Roster or material target changes require fresh proof. A delivered report is retained and corrected through the owner’s versioned return/correction route. |
+| `CompleteEvaluationRecord` | EVL supplies all required valid report proofs AND the committed recipient record/task delivery identity. Failed delivery retains Signing and all valid proofs; retry uses the same delivery identity. No Complete/Release button and no second receipt approval. |
+| `AppendEvaluationCorrection` | Immutable owner correction or source-supplement reference; retain delivered report and original proofs. EVL supplies source-specific review/impact tasks; PRC cannot reopen an award basis. |
+| Scoped read/export | Return authorised sessions, ordered owner evidence, exact reports/proofs and linked later corrections; no reusable unscoped evidence URL. |
+
+Appointment, replacement, declaration, individual finding, own disagreement, note, suspension, cancellation, no-bids closure and delivery failure are append-only owner events using the shared event envelope. They do not create an additional user command. PRC must not manufacture a session merely to store one of these events.
+
+### 20.3 State, recovery and design bindings
+
+EVL lifecycle **Preparing / Reviewing / Signing / Report sent / No evaluation required / Cancelled** is authoritative. PRC stores the owner state/version and evidence status; it does not run the Bid Opening Pending→In session→minutes→Finalized lifecycle for Evaluation. A verified empty outcome preserves any preparation/roster history and closes it without sessions, assessment/report/signing tasks; without an existing case, no PRC case is created. Cancellation retains partial sessions/proofs, stops further decisions/signing, and records terminal closure; an already delivered report remains delivered. Suspension retains current work/proofs while EVL enforces allowed administrative scope and resumption. A source issue is not an empty outcome.
+
+| Failure | Evaluation-facing recovery |
+|---|---|
+| Absent/ineligible member at collective commit | EVL_MEMBERS_ABSENT / EVL eligibility guard; current named member joins or AO resolves appointment. Reading and individual notes continue. |
+| Target changed or proof uncertain | EVL stale-target/proof recovery; refresh or reconcile the same proof attempt, never count uncertainty as signed. |
+| PRC evidence write unavailable | Keep owner operation pending/failed with its correlation identity; retry/reconcile once, no duplicate conclusion/task or false completion. Technical support cannot supply the missing decision. |
+| Delivery unavailable after valid proofs | EVL_REPORT_DELIVERY_FAILED; secretary Retry delivery; preserve Signing and signatures until durable recipient delivery. |
+| Cross-scope read | Not found; no record existence or bid facts. |
+
+EVL v0.4 §9 owns the complete design input (discussion D05, report D07, verification D08); §10 maps visible actions to EVL commands. This service supplies no standalone artboard. Use owner-specific plain language rather than the opening-specific messages in §8. Preserve the approved Opening messages and tests.
+
+### 20.4 Acceptance and regression evidence
+
+| ID | Required implementation evidence |
+|---|---|
+| PRC-E01 | Replayed publication/intake creates one Evaluation case; two successive discussions create two children, never two Evaluation cases; concurrent Start admits one active child. |
+| PRC-E02 | Start joins chair once; other members join personally; a leave/recusal before decision prevents collective commit; secretary presence and historical attendance never substitute. |
+| PRC-E03 | Specialised clarification/verification commands commit one conclusion reference and PRC event; failed evidence writes cannot appear complete; own dissent remains attributed. |
+| PRC-E04 | Freeze exact report/annex targets; exercise ordinary and due-diligence target sets, stale/failed/uncertain/wrong-signer proofs and roster/target supersession. All current required targets must pass. |
+| PRC-E05 | Final proof plus failed recipient delivery retains Signing and proofs; retry creates one recipient task, then completion. No extra human completion action. |
+| PRC-E06 | Empty closure, cancellation at preparation/review/signing/after delivery, suspension and pre-/post-decision correction preserve the EVL histories and guards. |
+| PRC-E07 | Supplier and technical readers cannot use PRC IDs to reach internal findings; export reproduces exact reports, proofs and later corrections. |
+| PRC-E08 | Existing PRC-A01–A13 and BOP v0.10 owner outcomes retain their Opening meaning; no Evaluation command opens a bid or changes completed opening evidence. |
+
+These are required tests, not executed results. v0.10 adds the Evaluation profile only; production signing/custody remains deferred as stated in TRUST-ADR-001.
+
+## Change record — v0.13 (10 October 2026)
+
+v0.13 is a notice-withdrawal revision made on the Project Owner's instruction of 10 October 2026 (quoted in the control table). Every changed place keeps its v0.12 wording beside the new wording in the text above.
+
+| Place | v0.12 wording | v0.13 wording |
+|---|---|---|
+| §1 Interim test binding | “a clearly marked, individually attributable target-digest test attestation” | “an individually attributable target-digest test attestation” |
+| §13 first paragraph | Test opening — synthetic bids only; Test attestation — not an electronic signature; Record test attestation | No test banner or label; product wording from BOP-CHG-001 §10 |
+
+Source preservation: v0.12, SHA-256 `aeec95d9db1c2a72cd0082be52500b12bbe21cb2ea9e29bf5a4787ceac8206d3`; the v0.12 file is unchanged. Approval and the existing implementation, legal and interface verification requirements remain outstanding.

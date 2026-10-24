@@ -1,0 +1,1270 @@
+kind	iso_dates_2025_2028	prose_dates_2025_2028	file
+browser tests and specs	9	8	tests/ui/smoke/design-fidelity/departmental-needs-fidelity.spec.ts
+browser tests and specs	8	2	tests/ui/smoke/departmental_needs/departmental-needs-workspace.spec.ts
+browser tests and specs	8	4	tests/ui/smoke/bid-submission/bds-release-evidence.spec.ts
+browser tests and specs	5	0	tests/ui/smoke/strategy/strategy-unsaved.spec.ts
+browser tests and specs	4	0	tests/ui/smoke/budget/budget-officer.spec.ts
+browser tests and specs	4	2	tests/ui/smoke/award/awd-demo-walk.spec.ts
+browser tests and specs	3	0	tests/ui/smoke/contracts/cm-existing-contract.spec.ts
+browser tests and specs	3	0	tests/ui/smoke/contracts/cm-payment-settlement.spec.ts
+browser tests and specs	3	1	tests/ui/smoke/contracts/cm-formation.spec.ts
+browser tests and specs	3	1	tests/ui/smoke/contracts/cm-warranty-security.spec.ts
+browser tests and specs	3	1	tests/ui/smoke/system_setup/system-setup-responsibilities.spec.ts
+browser tests and specs	3	2	tests/ui/smoke/departmental_needs/departmental-needs-review-task.spec.ts
+browser tests and specs	2	0	tests/ui/smoke/budget/budget-approver.spec.ts
+browser tests and specs	2	0	tests/ui/smoke/contracts/cm-termination.spec.ts
+browser tests and specs	2	1	tests/ui/smoke/departmental_needs/helpers.ts
+browser tests and specs	1	3	tests/ui/smoke/bid-evaluation/evl-demo-walk.spec.ts
+browser tests and specs	1	1	tests/ui/smoke/planning/pln-item.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/contracts/ordinary-thread.spec.ts
+browser tests and specs	1	1	tests/ui/smoke/contracts/cm-reports.spec.ts
+browser tests and specs	1	6	tests/ui/smoke/contracts/cm-change.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/contracts/cm-closeout.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/strategy/strategy-author.spec.ts
+browser tests and specs	1	2	tests/ui/smoke/award/awd-wait-deliver.spec.ts
+browser tests and specs	1	1	tests/ui/smoke/award/awd-debrief-hold.spec.ts
+browser tests and specs	1	1	tests/ui/smoke/tenders/tnd-editor-details.spec.ts
+browser tests and specs	1	1	tests/ui/smoke/tenders/tnd-release-evidence.spec.ts
+browser tests and specs	1	2	tests/ui/smoke/bid-opening/bop-release-evidence.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/system_setup/system-setup-pe-stale-save.spec.ts
+browser tests and specs	1	2	tests/ui/smoke/system_setup/procurement-settings.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/bid-submission/bds-requirements-price.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/bid-submission/bds-workspace.spec.ts
+browser tests and specs	1	0	tests/ui/smoke/bid-submission/bds-receipt-changes.spec.ts
+browser tests and specs	1	1	tests/ui/smoke/bid-submission/bds-common-states.spec.ts
+browser tests and specs	1	2	tests/ui/smoke/bid-submission/bds-company-task.spec.ts
+browser tests and specs	0	1	tests/ui/fidelity/covered.spec.js
+browser tests and specs	0	1	tests/ui/fidelity/skeleton.js
+browser tests and specs	0	1	tests/ui/fidelity/departures/bid-submission.js
+browser tests and specs	0	1	tests/ui/fidelity/departures/contracts.js
+browser tests and specs	0	2	tests/ui/fidelity/departures/analytics.js
+browser tests and specs	0	1	tests/ui/fidelity/departures/home.js
+browser tests and specs	0	1	tests/ui/fidelity/departures/design-system.js
+browser tests and specs	0	18	tests/ui/fidelity/departures/system-setup.js
+browser tests and specs	0	2	tests/ui/fidelity/departures/budget.js
+browser tests and specs	0	12	tests/ui/fidelity/departures/procurement-planning.js
+browser tests and specs	0	1	tests/ui/fidelity/departures/tenders.js
+browser tests and specs	0	1	tests/ui/helpers/designFidelity.ts
+browser tests and specs	0	1	tests/ui/smoke/planning/planning-visual.spec.ts
+browser tests and specs	0	2	tests/ui/smoke/planning/pln-late-need.spec.ts
+browser tests and specs	0	3	tests/ui/smoke/planning/planning-guidance.spec.ts
+browser tests and specs	0	2	tests/ui/smoke/planning/helpers.ts
+browser tests and specs	0	4	tests/ui/smoke/planning/planning-release-evidence.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/planning/planning-governance.spec.ts
+browser tests and specs	0	3	tests/ui/smoke/planning/planning-publication.spec.ts
+browser tests and specs	0	4	tests/ui/smoke/home/home-work.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/home/home-technical-work.spec.ts
+browser tests and specs	0	2	tests/ui/smoke/home/helpers.ts
+browser tests and specs	0	3	tests/ui/smoke/home/home-style-parity.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/contracts/shell.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/strategy/strategy-access.spec.ts
+browser tests and specs	0	2	tests/ui/smoke/strategy/helpers.ts
+browser tests and specs	0	3	tests/ui/smoke/strategy/strategy-approver.spec.ts
+browser tests and specs	0	2	tests/ui/smoke/award/awd-supplier.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/award/awd-decision.spec.ts
+browser tests and specs	0	3	tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/design-fidelity/system-setup-fidelity.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/oversight/ovs-first-slice.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/departmental_needs/departmental-needs-planning-status.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/bid-submission/bds-acceptance-gaps.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/bid-submission/bds-sealed-access.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/bid-submission/bds-review.spec.ts
+browser tests and specs	0	5	tests/ui/smoke/bid-submission/bds-security-intake.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/bid-submission/bds-bound-release.spec.ts
+browser tests and specs	0	1	tests/ui/smoke/bid-submission/bds-security-duty.spec.ts
+client code and fixtures	15	31	kentender_core/kentender_core/public/js/system_setup/system-setup.fidelity.spec.js
+client code and fixtures	14	4	kentender_core/kentender_core/public/js/system_setup/tabs/ProcurementSettingsTab.spec.js
+client code and fixtures	12	0	kentender_core/kentender_core/public/js/system_setup/components/RuleEditor.spec.js
+client code and fixtures	10	0	kentender_core/kentender_core/public/js/system_setup/components/CalendarEditor.spec.js
+client code and fixtures	9	0	kentender_procurement/kentender_procurement/public/js/tenders/components/TaskDetails.spec.js
+client code and fixtures	8	2	kentender_procurement/kentender_procurement/public/js/procurement_requisitions/components/RequestDetailsTask.spec.js
+client code and fixtures	8	0	kentender_core/kentender_core/public/js/system_setup/components/ScheduleVersionEditor.spec.js
+client code and fixtures	8	1	kentender_core/kentender_core/public/js/system_setup/components/SourceCheckScreen.spec.js
+client code and fixtures	8	1	kentender_core/kentender_core/public/js/system_setup/components/MethodVersionEditor.spec.js
+client code and fixtures	7	2	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/NeedEditorScreen.spec.js
+client code and fixtures	7	0	kentender_budget/kentender_budget/public/js/budget_funding/components/BudgetVersionEditorScreen.vue
+client code and fixtures	6	56	kentender_procurement/kentender_procurement/public/js/tenders/components/fixtures.js
+client code and fixtures	5	29	kentender_procurement/kentender_procurement/public/js/procurement_requisitions/components/fixtures.js
+client code and fixtures	5	7	kentender_procurement/kentender_procurement/public/js/departmental_needs/data/format.spec.js
+client code and fixtures	5	8	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/guidance.fixtures.js
+client code and fixtures	4	0	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/ReviewTaskScreen.spec.js
+client code and fixtures	4	5	kentender_core/kentender_core/public/js/system_setup/data/format.spec.js
+client code and fixtures	4	1	kentender_core/kentender_core/public/js/system_setup/components/AssignDialog.spec.js
+client code and fixtures	4	1	kentender_core/kentender_core/public/js/system_setup/components/RuleVersionDetail.spec.js
+client code and fixtures	3	8	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/NeedDetailScreen.spec.js
+client code and fixtures	3	0	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/DppEntryEditorScreen.spec.js
+client code and fixtures	3	18	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/PlanItemEditorScreen.spec.js
+client code and fixtures	3	1	kentender_core/kentender_core/public/js/kt_desk_page.js
+client code and fixtures	2	1	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/RequirementsTaskScreen.spec.js
+client code and fixtures	2	4	kentender_procurement/kentender_procurement/public/js/tender_security_receipts/TenderSecurityReceipts.spec.js
+client code and fixtures	2	6	kentender_procurement/kentender_procurement/public/js/departmental_needs/DepartmentalNeeds.vue
+client code and fixtures	2	1	kentender_procurement/kentender_procurement/public/js/tender_security_duty/TenderSecurityDuty.spec.js
+client code and fixtures	2	12	kentender_core/kentender_core/public/js/system_setup/components/ResponsibilityDetail.spec.js
+client code and fixtures	2	0	kentender_core/kentender_core/public/js/system_setup/components/ScheduleProfileDetail.spec.js
+client code and fixtures	2	5	kentender_suppliers/kentender_suppliers/public/js/supplier_account_portal/screens/account.fixtures.js
+client code and fixtures	2	0	kentender_budget/kentender_budget/public/js/budget_funding/components/BudgetWorkspaceScreen.vue
+client code and fixtures	1	0	kentender_procurement/kentender_procurement/public/js/procurement_planning_page.js
+client code and fixtures	1	0	kentender_procurement/kentender_procurement/public/js/procurement_sidebar_header.js
+client code and fixtures	1	2	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/requirements.fixtures.js
+client code and fixtures	1	3	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/company.fixtures.js
+client code and fixtures	1	0	kentender_procurement/kentender_procurement/public/js/pln_shared/frappeCall.js
+client code and fixtures	1	4	kentender_procurement/kentender_procurement/public/js/tenders/components/OpenPeriodScreens.spec.js
+client code and fixtures	1	3	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/WorkspaceScreen.spec.js
+client code and fixtures	1	4	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/departmental-needs.fidelity.spec.js
+client code and fixtures	1	2	kentender_procurement/kentender_procurement/public/js/procurement_planning/ProcurementPlanning.vue
+client code and fixtures	1	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/data/format.spec.js
+client code and fixtures	1	0	kentender_core/kentender_core/public/js/system_setup/tabs/ProcuringEntityTab.vue
+client code and fixtures	1	1	kentender_core/kentender_core/public/js/system_setup/components/AssignDialog.vue
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/bid_portal/common-states.fidelity.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/bid-portal.fidelity.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/composables/saveDestination.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/replacement.fixtures.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/submit.fixtures.js
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/TenderOverviewScreen.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/AvailableTendersScreen.spec.js
+client code and fixtures	0	12	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/receipt.fixtures.js
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/StatusScreen.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/DocumentsTaskScreen.spec.js
+client code and fixtures	0	17	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/workspace.fixtures.js
+client code and fixtures	0	12	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/TenderOverviewScreen.fixtures.js
+client code and fixtures	0	8	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/documents.fixtures.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/review.fixtures.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/BidWorkspaceScreen.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/CompanyTaskScreen.vue
+client code and fixtures	0	7	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/myBids.fixtures.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/bid_portal/screens/SubmitScreen.spec.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/bid_portal/components/MyQuestions.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/components/TaskStepper.vue
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/bid_portal/components/TenderSecurityStatus.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/components/NotifySignatory.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/components/MyQuestions.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_portal/components/TenderSecurityStatus.vue
+client code and fixtures	0	7	kentender_procurement/kentender_procurement/public/js/bid_portal/components/NotifySignatory.spec.js
+client code and fixtures	0	5	kentender_procurement/kentender_procurement/public/js/bid_portal/components/FieldControl.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/pager_shared/usePagedRows.js
+client code and fixtures	0	8	kentender_procurement/kentender_procurement/public/js/bid_evaluation/committee.spec.js
+client code and fixtures	0	5	kentender_procurement/kentender_procurement/public/js/bid_evaluation/oversight.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_evaluation/screens/record.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/procurement_meetings/ProcurementMeetings.spec.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/award/department.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/award/screens/record.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/tender_security_receipts/IntakeDialog.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/tender_security_receipts/TenderSecurityReceipts.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/tenders/Tenders.vue
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/tenders/components/DecisionsAndProgress.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/tenders/components/WorkspaceScreen.spec.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/tenders/components/PublishedScreen.closed.spec.js
+client code and fixtures	0	5	kentender_procurement/kentender_procurement/public/js/tenders/components/DecisionScreens.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_requisitions/components/shared/DateField.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_opening/data/api.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_opening/components/IncidentDetails.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_opening/components/AddMemberDialog.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/bid_opening/components/IncidentDetails.spec.js
+client code and fixtures	0	6	kentender_procurement/kentender_procurement/public/js/std_templates/components/fixtures.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/std_templates/components/components.spec.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/departmental_needs/data/format.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/ReviewTaskScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/WorkspaceScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/NeedsTable.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/WithdrawalReviewScreen.vue
+client code and fixtures	0	5	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/NeedDetailScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/RequirementCard.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/departmental_needs/components/NeedsTable.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/tender_security_duty/tender_security_duty.bundle.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/tender_security_duty/TenderSecurityDuty.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/data/format.js
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/FinanceTaskScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/WorkspaceScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/SourceEvidenceScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/CommonStates.spec.js
+client code and fixtures	0	15	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/planning.fidelity.spec.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/LateExplanationDialog.spec.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/WorkspaceScreen.spec.js
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ClassificationEvidenceScreen.spec.js
+client code and fixtures	0	6	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/CorrectionRequestsScreen.spec.js
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/WithdrawalDialog.spec.js
+client code and fixtures	0	13	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/DppValidationScreen.spec.js
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/EntryFundingPanel.spec.js
+client code and fixtures	0	7	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/AnnualPlanScreen.vue
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/FinanceTaskScreen.spec.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/DppPlanScreen.spec.js
+client code and fixtures	0	4	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/DppPlanScreen.vue
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ReviewScreen.vue
+client code and fixtures	0	11	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ReviewScreen.spec.js
+client code and fixtures	0	16	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/PublicationResultScreen.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ReturnIssuesDialog.vue
+client code and fixtures	0	9	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/PlanItemEditorScreen.vue
+client code and fixtures	0	5	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ProgressScreen.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/CommonStates.vue
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/DppValidationScreen.vue
+client code and fixtures	0	5	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/LateExplanationHistory.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/MissingSettingPanel.vue
+client code and fixtures	0	19	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/AnnualPlanScreen.spec.js
+client code and fixtures	0	3	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/AnnualPlanScreen.fidelity.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/DppEntryEditorScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/FinanceReturnDialog.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ClassificationEvidenceScreen.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/ReturnPlanDialog.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/NotProceedDialog.vue
+client code and fixtures	0	2	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/FinanceHistory.spec.js
+client code and fixtures	0	7	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/SourceEvidenceScreen.spec.js
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/FinanceHistory.vue
+client code and fixtures	0	1	kentender_procurement/kentender_procurement/public/js/procurement_planning/components/EntryFundingPanel.vue
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/kt_cl_surface_registry.js
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/kt_desk_page.spec.js
+client code and fixtures	0	3	kentender_core/kentender_core/public/js/analytics/Analytics.spec.js
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/analytics/components/presentation.js
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/pager_shared/usePagedRows.js
+client code and fixtures	0	4	kentender_core/kentender_core/public/js/home/Home.spec.js
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/home/fixtures/boards.js
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/kt_industry/components/RecordPicker.vue
+client code and fixtures	0	13	kentender_core/kentender_core/public/js/kt_industry/components/guidance.spec.js
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/kt_industry/components/JourneyTracker.vue
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/kt_industry/components/NextStep.vue
+client code and fixtures	0	4	kentender_core/kentender_core/public/js/system_setup/data/format.js
+client code and fixtures	0	3	kentender_core/kentender_core/public/js/system_setup/tabs/FiscalYearsTab.spec.js
+client code and fixtures	0	4	kentender_core/kentender_core/public/js/system_setup/tabs/UserResponsibilitiesTab.spec.js
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/system_setup/tabs/ProcuringEntityTab.spec.js
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/system_setup/tabs/ProcurementSettingsTab.vue
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/system_setup/components/AddFiscalYearDialog.vue
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/system_setup/components/RuleVersionDetail.vue
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/system_setup/components/ResponsibilityDetail.vue
+client code and fixtures	0	1	kentender_core/kentender_core/public/js/system_setup/components/MethodVersionEditor.vue
+client code and fixtures	0	2	kentender_core/kentender_core/public/js/system_setup/components/IntakeForm.spec.js
+client code and fixtures	0	1	kentender_strategy/kentender_strategy/public/js/pager_shared/usePagedRows.js
+client code and fixtures	0	1	kentender_strategy/kentender_strategy/public/js/strategy/screens/PlanWorkspaceScreen.vue
+client code and fixtures	0	1	kentender_contracts/kentender_contracts/public/js/pager_shared/usePagedRows.js
+client code and fixtures	0	1	kentender_suppliers/kentender_suppliers/public/js/ktsm_supplier_workbench.js
+client code and fixtures	0	1	kentender_budget/kentender_budget/public/js/pager_shared/usePagedRows.js
+design fixtures (json)	117	177	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/returned.json
+design fixtures (json)	101	183	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/cancelled-sign.json
+design fixtures (json)	98	183	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/planned.json
+design fixtures (json)	96	198	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/dd-frozen.json
+design fixtures (json)	94	146	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/paused-sign.json
+design fixtures (json)	91	156	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/resigning.json
+design fixtures (json)	90	123	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/supplement-sent.json
+design fixtures (json)	89	143	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/delivery-failed.json
+design fixtures (json)	89	120	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/corrected.json
+design fixtures (json)	89	154	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/supplement.json
+design fixtures (json)	88	164	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/withdrawn.json
+design fixtures (json)	87	180	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/observed.json
+design fixtures (json)	87	223	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/dd-signed.json
+design fixtures (json)	83	120	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/awarded.json
+design fixtures (json)	83	135	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/chair-signed.json
+design fixtures (json)	83	119	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/report-sent.json
+design fixtures (json)	83	119	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/decision-unknown.json
+design fixtures (json)	82	157	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/overdue.json
+design fixtures (json)	82	150	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/resolved.json
+design fixtures (json)	80	175	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/no-agreement.json
+design fixtures (json)	78	129	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/signing.json
+design fixtures (json)	76	167	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/expired.json
+design fixtures (json)	75	162	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/replacement.json
+design fixtures (json)	70	142	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/no-reply-closed.json
+design fixtures (json)	60	155	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/outcome.json
+design fixtures (json)	60	147	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/no-reply.json
+design fixtures (json)	60	120	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/replied.json
+design fixtures (json)	60	155	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/late-reply.json
+design fixtures (json)	59	112	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/sent.json
+design fixtures (json)	59	112	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/notice-failed.json
+design fixtures (json)	59	57	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/corrected.json
+design fixtures (json)	55	87	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/paused.json
+design fixtures (json)	54	57	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/complete.json
+design fixtures (json)	53	124	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/authorised.json
+design fixtures (json)	47	80	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/cancelled.json
+design fixtures (json)	44	47	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/member-signed.json
+design fixtures (json)	44	52	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/changed.json
+design fixtures (json)	43	123	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/member-left.json
+design fixtures (json)	42	109	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/joined.json
+design fixtures (json)	42	95	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/discussion.json
+design fixtures (json)	42	74	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/concern.json
+design fixtures (json)	42	113	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/noted.json
+design fixtures (json)	39	47	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/frozen.json
+design fixtures (json)	39	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/commented.json
+design fixtures (json)	38	57	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/empty-complete.json
+design fixtures (json)	36	69	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/failed-report.json
+design fixtures (json)	34	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/answered.json
+design fixtures (json)	34	43	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/ended.json
+design fixtures (json)	34	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/account.json
+design fixtures (json)	34	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/cancelled.json
+design fixtures (json)	34	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/resolved.json
+design fixtures (json)	29	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/unresolved.json
+design fixtures (json)	29	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/rejoined.json
+design fixtures (json)	29	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/mismatch.json
+design fixtures (json)	29	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/unreadable.json
+design fixtures (json)	29	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/read-out.json
+design fixtures (json)	29	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/member-left.json
+design fixtures (json)	24	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/opened.json
+design fixtures (json)	24	48	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/not-held-due.json
+design fixtures (json)	24	48	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/notify-failed.json
+design fixtures (json)	24	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/empty-started.json
+design fixtures (json)	24	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/not-held.json
+design fixtures (json)	24	70	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/joined.json
+design fixtures (json)	24	42	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/started.json
+design fixtures (json)	24	48	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/not-available.json
+design fixtures (json)	24	49	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/access.json
+design fixtures (json)	24	49	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/ready.json
+design fixtures (json)	24	49	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/missing.json
+design fixtures (json)	24	70	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/published.json
+design fixtures (json)	19	45	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/declare-first.json
+design fixtures (json)	16	49	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/reviewing.json
+design fixtures (json)	16	49	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/failed.json
+design fixtures (json)	13	8	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/intake-first.json
+design fixtures (json)	11	52	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/source-failed.json
+design fixtures (json)	9	15	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-answered.json
+design fixtures (json)	9	15	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-joined.json
+design fixtures (json)	9	15	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-complete-preparing.json
+design fixtures (json)	9	15	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-complete.json
+design fixtures (json)	9	15	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-published.json
+design fixtures (json)	9	15	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-complete-requested.json
+design fixtures (json)	7	10	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/paused-prep.json
+design fixtures (json)	6	28	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/appointed.json
+design fixtures (json)	5	10	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/prepared.json
+design fixtures (json)	4	51	kentender_procurement/kentender_procurement/public/js/award/fixtures/correction-authorised.json
+design fixtures (json)	4	51	kentender_procurement/kentender_procurement/public/js/award/fixtures/correction-decision.json
+design fixtures (json)	4	49	kentender_procurement/kentender_procurement/public/js/award/fixtures/corrected-report.json
+design fixtures (json)	4	61	kentender_procurement/kentender_procurement/public/js/award/fixtures/corrected-opinion-positive.json
+design fixtures (json)	4	61	kentender_procurement/kentender_procurement/public/js/award/fixtures/corrected-opinion.json
+design fixtures (json)	3	38	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/assigned.json
+design fixtures (json)	3	40	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/appointed.json
+design fixtures (json)	3	7	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/cancelled-prep.json
+design fixtures (json)	3	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D12-G.json
+design fixtures (json)	2	48	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/conflict.json
+design fixtures (json)	1	5	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/prepared.json
+design fixtures (json)	1	39	kentender_procurement/kentender_procurement/public/js/award/fixtures/unsuccessful.json
+design fixtures (json)	1	48	kentender_procurement/kentender_procurement/public/js/award/fixtures/delivered.json
+design fixtures (json)	1	10	kentender_procurement/kentender_procurement/public/js/award/fixtures/signing-unavailable.json
+design fixtures (json)	1	9	kentender_procurement/kentender_procurement/public/js/award/fixtures/expired.json
+design fixtures (json)	1	51	kentender_procurement/kentender_procurement/public/js/award/fixtures/declined.json
+design fixtures (json)	1	64	kentender_procurement/kentender_procurement/public/js/award/fixtures/revised-held.json
+design fixtures (json)	1	49	kentender_procurement/kentender_procurement/public/js/award/fixtures/no-response.json
+design fixtures (json)	1	18	kentender_procurement/kentender_procurement/public/js/award/fixtures/signed.json
+design fixtures (json)	1	21	kentender_procurement/kentender_procurement/public/js/award/fixtures/returned.json
+design fixtures (json)	1	46	kentender_procurement/kentender_procurement/public/js/award/fixtures/receiver-down.json
+design fixtures (json)	1	30	kentender_procurement/kentender_procurement/public/js/award/fixtures/closed-correction.json
+design fixtures (json)	1	24	kentender_procurement/kentender_procurement/public/js/award/fixtures/no-award.json
+design fixtures (json)	1	18	kentender_procurement/kentender_procurement/public/js/award/fixtures/cancelled.json
+design fixtures (json)	1	40	kentender_procurement/kentender_procurement/public/js/award/fixtures/notified.json
+design fixtures (json)	1	9	kentender_procurement/kentender_procurement/public/js/award/fixtures/tie.json
+design fixtures (json)	1	54	kentender_procurement/kentender_procurement/public/js/award/fixtures/late-response.json
+design fixtures (json)	1	40	kentender_procurement/kentender_procurement/public/js/award/fixtures/notice-failed.json
+design fixtures (json)	1	45	kentender_procurement/kentender_procurement/public/js/award/fixtures/accepted.json
+design fixtures (json)	1	15	kentender_procurement/kentender_procurement/public/js/award/fixtures/source-incomplete.json
+design fixtures (json)	1	51	kentender_procurement/kentender_procurement/public/js/award/fixtures/post-decision-correction.json
+design fixtures (json)	1	15	kentender_procurement/kentender_procurement/public/js/award/fixtures/rules-unverified.json
+design fixtures (json)	1	9	kentender_procurement/kentender_procurement/public/js/award/fixtures/received.json
+design fixtures (json)	1	41	kentender_procurement/kentender_procurement/public/js/award/fixtures/technical.json
+design fixtures (json)	1	52	kentender_procurement/kentender_procurement/public/js/award/fixtures/order-hold.json
+design fixtures (json)	1	55	kentender_procurement/kentender_procurement/public/js/award/fixtures/request-closed.json
+design fixtures (json)	1	50	kentender_procurement/kentender_procurement/public/js/award/fixtures/request.json
+design fixtures (json)	1	13	kentender_procurement/kentender_procurement/public/js/award/fixtures/status-unknown.json
+design fixtures (json)	1	58	kentender_procurement/kentender_procurement/public/js/award/fixtures/revised-ready.json
+design fixtures (json)	1	52	kentender_procurement/kentender_procurement/public/js/award/fixtures/challenge-hold.json
+design fixtures (json)	1	0	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D09-F.json
+design fixtures (json)	1	0	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D26-H.json
+design fixtures (json)	1	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D18-C.json
+design fixtures (json)	1	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D40-T.json
+design fixtures (json)	1	0	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D26.json
+design fixtures (json)	1	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D33.json
+design fixtures (json)	1	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D33-U.json
+design fixtures (json)	0	49	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/no-bids.json
+design fixtures (json)	0	46	kentender_procurement/kentender_procurement/public/js/bid_evaluation/fixtures/declared.json
+design fixtures (json)	0	3	kentender_procurement/kentender_procurement/public/js/bid_opening/fixtures/public-prepared.json
+design fixtures (json)	0	1	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31H.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-26.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-29F.json
+design fixtures (json)	0	4	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-22.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31B.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31C.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-29.json
+design fixtures (json)	0	4	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31F.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-30B.json
+design fixtures (json)	0	3	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-30.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-27.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-24.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31E.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31A.json
+design fixtures (json)	0	3	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-23.json
+design fixtures (json)	0	1	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31D.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-25.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-28.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-21.json
+design fixtures (json)	0	2	kentender_core/kentender_core/public/js/analytics/fixtures/ANL-DES-31J.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D13-C.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D02.json
+design fixtures (json)	0	3	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D28-C.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D37.json
+design fixtures (json)	0	3	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D03-W.json
+design fixtures (json)	0	5	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D27-R.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D02-missing.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D13-S.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D23.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D36-S.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D16-W.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01-T.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D37-P.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01-S.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D37-A.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D31-A.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D24-S.json
+design fixtures (json)	0	3	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D25.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D36-H.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D31.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D07.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D36-E.json
+design fixtures (json)	0	3	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D28.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D02-V.json
+design fixtures (json)	0	3	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D14-P.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D03.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D20-T.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D36-A.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D32-H.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D11-C.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D34-H.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D22.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D03-A.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D20-P.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01-AUD.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D32.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D17.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D25-J.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D22-P.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D36.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D08-L.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D23-P.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D29.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D33-A.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01-F.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D06.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D16-P.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D15-L.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D26-E.json
+design fixtures (json)	0	3	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D03-S.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D35-C.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D35.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D38-R.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D39-C.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D16.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D29-V.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01-S-E.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D27-A.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D27.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D18-R.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D38-P.json
+design fixtures (json)	0	67	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D41.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D04.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D15.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D13.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D14.json
+design fixtures (json)	0	1	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D01-E.json
+design fixtures (json)	0	4	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D28-V.json
+design fixtures (json)	0	2	kentender_contracts/kentender_contracts/public/js/contracts/fixtures/D37-X.json
+other product code	14	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_2/moh_published_bid_definition_expected.json
+other product code	14	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_3/moh_published_bid_definition_expected.json
+other product code	14	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_4/moh_published_bid_definition_expected.json
+other product code	12	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_1/moh_published_bid_definition_expected.json
+other product code	9	2	kentender_procurement/kentender_procurement/patches/pln_chg_001_v127_instants_in_site_time.py
+other product code	7	0	kentender_procurement/kentender_procurement/procurement_lifecycle/evidence_timeline.py
+other product code	7	7	kentender_core/kentender_core/services/business_role_registry.py
+other product code	7	1	kentender_contracts/kentender_contracts/simulation/sources.py
+other product code	4	0	kentender_procurement/kentender_procurement/setup/procurement_home_page.py
+other product code	4	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_1/moh_input.json
+other product code	4	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_2/moh_input.json
+other product code	4	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_3/moh_input.json
+other product code	4	0	kentender_procurement/kentender_procurement/std_templates/tests/vectors/release_1_4/moh_input.json
+other product code	3	0	kentender_procurement/kentender_procurement/award/test_services/sources.py
+other product code	3	0	kentender_procurement/kentender_procurement/procurement_planning/services/plan_requisition.py
+other product code	3	0	kentender_budget/kentender_budget/services/budget_line_contracts.py
+other product code	3	2	kentender_budget/kentender_budget/services/budget_contracts.py
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_supplement/proceeding_supplement.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_event/proceeding_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_attendance/proceeding_attendance.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_minutes_target/proceeding_minutes_target.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_minutes_version/proceeding_minutes_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_attestation/proceeding_attestation.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_session/proceeding_session.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_member/proceeding_member.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding/proceeding.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/doctype/proceeding_command_journal/proceeding_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/proceedings/page/procurement_meetings/procurement_meetings.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_submission_version/bid_submission_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_receipt/bid_receipt.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/tender_security_exposure/tender_security_exposure.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/tender_box_envelope/tender_box_envelope.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_draft_change/bid_draft_change.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_command_journal/bid_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/test_trust_certificate/test_trust_certificate.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bidder_arrangement/bidder_arrangement.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_opening_handoff/bid_opening_handoff.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_workspace/bid_workspace.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_submission_incident/bid_submission_incident.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_submission_event/bid_submission_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_submission_change/bid_submission_change.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/tender_security_duty_conflict/tender_security_duty_conflict.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/tender_security_verification/tender_security_verification.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_organisation_snapshot/bid_organisation_snapshot.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/test_trust_signature/test_trust_signature.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bidder_arrangement_member/bidder_arrangement_member.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bds_test_environment_controls/bds_test_environment_controls.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/tender_security_intake_match/tender_security_intake_match.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_evidence/bid_evidence.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/tender_security_intake/tender_security_intake.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_submission_close/bid_submission_close.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_section_response/bid_section_response.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_submission_attempt/bid_submission_attempt.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bidder_arrangement_notice_contact/bidder_arrangement_notice_contact.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/doctype/bid_hand_off/bid_hand_off.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/page/tender_security_receipts/tender_security_receipts.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_submission/page/tender_security_duty/tender_security_duty.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_check_result/evaluation_check_result.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_secretary_appointment/evaluation_secretary_appointment.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_committee_member/evaluation_committee_member.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_clarification_reply/evaluation_clarification_reply.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/bid_evaluation_settings/bid_evaluation_settings.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_discussion_item/evaluation_discussion_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_member_unavailability/evaluation_member_unavailability.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_command_journal/evaluation_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_source_event/evaluation_source_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_appointment/evaluation_appointment.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_check_run/evaluation_check_run.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_report_delivery/evaluation_report_delivery.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_bid/evaluation_bid.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_report_version/evaluation_report_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_conclusion/evaluation_conclusion.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_case/evaluation_case.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_source_intake/evaluation_source_intake.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_finding/evaluation_finding.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_verification_plan/evaluation_verification_plan.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_clarification/evaluation_clarification.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_disagreement/evaluation_disagreement.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_verification_observation/evaluation_verification_observation.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_correction_notice/evaluation_correction_notice.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evl_test_environment_controls/evl_test_environment_controls.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/doctype/evaluation_declaration/evaluation_declaration.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_evaluation/page/bid_evaluation/bid_evaluation.json
+other product code	2	0	kentender_procurement/kentender_procurement/desktop_icon/tenders.json
+other product code	2	0	kentender_procurement/kentender_procurement/desktop_icon/procurement.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_section_attachment/tender_section_attachment.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_required_form/tender_required_form.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/procurement_journey/procurement_journey.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_boq_item/tender_boq_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_validation_message/tender_validation_message.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/procurement_handoff_card/procurement_handoff_card.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_works_requirement/tender_works_requirement.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_hardening_finding/tender_hardening_finding.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_derived_model_readiness/tender_derived_model_readiness.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/procurement_journey_step/procurement_journey_step.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/tender_lot/tender_lot.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/doctype/procurement_navigation/procurement_navigation.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/page/plc_procurement_journey/plc_procurement_journey.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/page/plc_module_journey_context/plc_module_journey_context.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/page/coming_soon/coming_soon.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/page/kt_procurement_home/kt_procurement_home.json
+other product code	2	0	kentender_procurement/kentender_procurement/kentender_procurement/page/kt_cl_shell_poc/kt_cl_shell_poc.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_contracting_package/award_contracting_package.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_source_report/award_source_report.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_command_journal/award_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_correspondence/award_correspondence.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_professional_opinion/award_professional_opinion.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_decision/award_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_issue/award_issue.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_test_environment_controls/award_test_environment_controls.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_notice_batch/award_notice_batch.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_test_contracting_inbox/award_test_contracting_inbox.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_decision_event/award_decision_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_case/award_case.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_clock/award_clock.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_decision_cycle/award_decision_cycle.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_supplier_response/award_supplier_response.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_notice/award_notice.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/doctype/award_settings/award_settings.json
+other product code	2	0	kentender_procurement/kentender_procurement/award/page/award/award.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_candidate_notice/tender_candidate_notice.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_version/tender_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_candidate_notice_attempt/tender_candidate_notice_attempt.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_clarification/tender_clarification.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_submission_handoff/tender_submission_handoff.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_addendum/tender_addendum.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_review_finding/tender_review_finding.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_task/tender_task.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_evidence_requirement/tender_evidence_requirement.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender/tender.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_security_statement/tender_security_statement.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_document/tender_document.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_event/tender_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_decision/tender_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_command_journal/tender_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_publication/tender_publication.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_cancellation_obligation/tender_cancellation_obligation.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_channel_confirmation/tender_channel_confirmation.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_cancellation/tender_cancellation.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/doctype/tender_bid_definition/tender_bid_definition.json
+other product code	2	0	kentender_procurement/kentender_procurement/tenders/page/tenders/tenders.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_correction_outcome/requisition_correction_outcome.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_acceptance_requirement/requisition_acceptance_requirement.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_decision/requisition_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_contributing_unit/requisition_contributing_unit.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/it_equipment_requirement_package/it_equipment_requirement_package.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_item/requisition_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_related_service/requisition_related_service.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_technical_requirement/requisition_technical_requirement.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_command_journal/requisition_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/authorised_requisition_handoff/authorised_requisition_handoff.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/procurement_requisition/procurement_requisition.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_drawdown_line/requisition_drawdown_line.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_event/requisition_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_supporting_material/requisition_supporting_material.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/it_equipment_requirement_package_version/it_equipment_requirement_package_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_task/requisition_task.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/doctype/requisition_version/requisition_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_requisitions/page/procurement_requisitions/procurement_requisitions.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/bid_opening_case/bid_opening_case.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_custody_participation/opening_custody_participation.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_committee_appointment/opening_committee_appointment.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/bop_test_environment_controls/bop_test_environment_controls.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_access_incident/opening_access_incident.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_register/opening_register.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/evaluation_handoff/evaluation_handoff.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_entry/opening_entry.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_exception/opening_exception.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_arrangement/opening_arrangement.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/bid_opening_settings/bid_opening_settings.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_presence/opening_presence.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_committee_member/opening_committee_member.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_incident_access_event/opening_incident_access_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_decision_item/opening_decision_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_register_request/opening_register_request.json
+other product code	2	0	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_command_journal/opening_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/std_templates/doctype/installed_std_release/installed_std_release.json
+other product code	2	0	kentender_procurement/kentender_procurement/std_templates/doctype/installed_std_release_asset/installed_std_release_asset.json
+other product code	2	0	kentender_procurement/kentender_procurement/std_templates/doctype/std_template_concern/std_template_concern.json
+other product code	2	0	kentender_procurement/kentender_procurement/std_templates/page/std_templates/std_templates.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/departmental_need_revision/departmental_need_revision.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/need_planning_usage_projection/need_planning_usage_projection.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/departmental_need_review_task/departmental_need_review_task.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/departmental_need_decision/departmental_need_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/departmental_need/departmental_need.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/need_planning_intake_projection/need_planning_intake_projection.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/departmental_need_event/departmental_need_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/need_withdrawal_request/need_withdrawal_request.json
+other product code	2	0	kentender_procurement/kentender_procurement/departmental_needs/page/departmental_needs/departmental_needs.json
+other product code	2	0	kentender_procurement/kentender_procurement/workspace_sidebar/procurement.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/late_activation_explanation/late_activation_explanation.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/treasury_submission_evidence/treasury_submission_evidence.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/proceeding_coverage/proceeding_coverage.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_version/departmental_plan_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_entry/departmental_plan_entry.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_publication_hold/plan_publication_hold.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/publication_intent/publication_intent.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_item_correction_request/plan_item_correction_request.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_governance_task/plan_governance_task.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/planning_command_journal/planning_command_journal.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/annual_plan_version/annual_plan_version.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_finance_basis_reuse/plan_finance_basis_reuse.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/annual_plan_publication/annual_plan_publication.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_financial_basis/plan_financial_basis.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_governance_decision/plan_governance_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_drawdown_reference/plan_drawdown_reference.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_publication/plan_publication.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_source_allocation/plan_source_allocation.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_budget_revision_request/plan_budget_revision_request.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/approved_plan_snapshot/approved_plan_snapshot.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/publication_attempt/publication_attempt.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_publication_confirmation/plan_publication_confirmation.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/annual_plan_item/annual_plan_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_validation_decision/departmental_plan_validation_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/dpp_classification_correction/dpp_classification_correction.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/publication_acknowledgement/publication_acknowledgement.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_finance_decision/plan_finance_decision.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan/departmental_plan.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/annual_plan/annual_plan.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/annual_plan_publication_destination/annual_plan_publication_destination.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_validation_task/departmental_plan_validation_task.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_item/plan_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/milestone_actual_event/milestone_actual_event.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_item_correction_disposition/plan_item_correction_disposition.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_finance_task/plan_finance_task.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/plan_preparation_signature/plan_preparation_signature.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_submission/departmental_plan_submission.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_update_request/departmental_plan_update_request.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/page/annual_procurement_plan/annual_procurement_plan.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/page/departmental_procurement_plan/departmental_procurement_plan.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/page/procurement_plan_item/procurement_plan_item.json
+other product code	2	0	kentender_procurement/kentender_procurement/procurement_planning/page/procurement_planning/procurement_planning.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/pe_type/pe_type.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/delivery_location/delivery_location.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/contact_office/contact_office.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/intake_control/intake_control.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/workflow_routing_rule/workflow_routing_rule.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/procuring_department/procuring_department.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/unit_of_measure/unit_of_measure.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/financial_year/financial_year.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/business_unit/business_unit.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/user_responsibility_assignment/user_responsibility_assignment.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/workflow_queue_membership/workflow_queue_membership.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/audit_event/audit_event.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/procuring_entity/procuring_entity.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/capability_profile/capability_profile.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/operational_scope_assignment/operational_scope_assignment.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/support_issue/support_issue.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/funding_source/funding_source.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/authorization_delegation/authorization_delegation.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/public_portal_settings/public_portal_settings.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/pe_fiscal_year_context/pe_fiscal_year_context.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/business_id_counter/business_id_counter.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/separation_of_duties_rule/separation_of_duties_rule.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/requirement_type/requirement_type.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/typed_attachment/typed_attachment.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/workflow_queue/workflow_queue.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/procuring_entity_version/procuring_entity_version.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/procedure_schedule_profile/procedure_schedule_profile.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/business_day_calendar/business_day_calendar.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/reference_data_command_journal/reference_data_command_journal.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/procurement_method/procurement_method.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/workflow_task/workflow_task.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/doctype/exception_record/exception_record.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/technical_search/technical_search.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/analytics/analytics.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/workflow_routing_rul/workflow_routing_rul.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/reference_data/reference_data.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/home/home.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/user_operational_acc/user_operational_acc.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/access_diagnostic/access_diagnostic.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/system_setup/system_setup.json
+other product code	2	0	kentender_core/kentender_core/kentender_core/page/kt_cl_components/kt_cl_components.json
+other product code	2	1	kentender_core/kentender_core/patches/v1_27/intake_closing_times_in_site_time.py
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/doctype/strategic_plan/strategic_plan.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/doctype/strategy_node/strategy_node.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/doctype/strategy_command_journal/strategy_command_journal.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/doctype/strategic_plan_version/strategic_plan_version.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/doctype/performance_target/performance_target.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/doctype/performance_indicator/performance_indicator.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/page/strategy/strategy.json
+other product code	2	0	kentender_strategy/kentender_strategy/kentender_strategy/workspace/strategy_management/strategy_management.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_certification/contract_certification.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_event/contract_event.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_test_environment_controls/contract_test_environment_controls.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_issue/contract_issue.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_source_package/contract_source_package.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_certificate/contract_certificate.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_operation_intent/contract_operation_intent.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_agreement_version/contract_agreement_version.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_adjustment/contract_adjustment.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_appointment/contract_appointment.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_security_claim/contract_security_claim.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_invoice/contract_invoice.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_obligation/contract_obligation.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_signature/contract_signature.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_simulated_funding/contract_simulated_funding.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_correction/contract_correction.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_command_journal/contract_command_journal.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_inspection/contract_inspection.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_settlement/contract_settlement.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_transaction_link/contract_transaction_link.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_case/contract_case.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_security/contract_security.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_arrival/contract_arrival.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_task/contract_task.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_acceptance/contract_acceptance.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_change/contract_change.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_simulated_signature/contract_simulated_signature.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_report/contract_report.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_award_inbox/contract_award_inbox.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_termination/contract_termination.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_closeout/contract_closeout.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/doctype/contract_advance/contract_advance.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/page/contracts/contracts.json
+other product code	2	0	kentender_contracts/kentender_contracts/contract_management/workspace/contract_management/contract_management.json
+other product code	2	0	kentender_contracts/kentender_contracts/workspace_sidebar/contracts.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_account_contact/supplier_account_contact.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_organisation/supplier_organisation.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_user_assignment/supplier_user_assignment.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_account_access_decision/supplier_account_access_decision.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_account_verification/supplier_account_verification.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_business_profile_person/supplier_business_profile_person.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_account_command_journal/supplier_account_command_journal.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_account_evidence/supplier_account_evidence.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_accounts/doctype/supplier_business_profile/supplier_business_profile.json
+other product code	2	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_supplier_profile/ktsm_supplier_profile.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/budget_audit_event/budget_audit_event.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/funding_reservation/funding_reservation.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/procurement_budget_line_version/procurement_budget_line_version.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/budget_revision_request/budget_revision_request.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/procurement_budget_version/procurement_budget_version.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/procurement_commitment/procurement_commitment.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/procurement_budget/procurement_budget.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/budget_revision_request_event/budget_revision_request_event.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/budget_command_journal/budget_command_journal.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/procurement_budget_line/procurement_budget_line.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/doctype/budget_submission_attempt/budget_submission_attempt.json
+other product code	2	0	kentender_budget/kentender_budget/kentender_budget/page/budget_funding/budget_funding.json
+other product code	1	0	kentender_procurement/kentender_procurement/procurement_lifecycle/strategy_alignment_handoff.py
+other product code	1	0	kentender_procurement/kentender_procurement/patches/retire_std_engine_v2_cleanup.py
+other product code	1	0	kentender_procurement/kentender_procurement/patches/nds_chg_001_v16_grant_uom_read_permission.py
+other product code	1	0	kentender_procurement/kentender_procurement/procurement_requisitions/services/technical_read.py
+other product code	1	0	kentender_procurement/kentender_procurement/setup/after_migrate_navigation.py
+other product code	1	0	kentender_procurement/kentender_procurement/setup/departmental_needs_page.py
+other product code	1	0	kentender_procurement/kentender_procurement/departmental_needs/doctype/need_planning_disposition_projection/need_planning_disposition_projection.json
+other product code	1	3	kentender_procurement/kentender_procurement/departmental_needs/services/workspace.py
+other product code	1	0	kentender_procurement/kentender_procurement/procurement_planning/services/technical_read.py
+other product code	1	5	kentender_procurement/kentender_procurement/procurement_planning/services/my_work_provider.py
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/user_scope_assignment/user_scope_assignment.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/regulatory_schedule_buffer/regulatory_schedule_buffer.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/regulatory_market_price/regulatory_market_price.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/reference_verification_event/reference_verification_event.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/organisation_unit/organisation_unit.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/procurement_settings/procurement_settings.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/regulatory_threshold_band/regulatory_threshold_band.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/regulatory_reservation_category/regulatory_reservation_category.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/strategy_scope_assignment/strategy_scope_assignment.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/procurement_method_profile/procurement_method_profile.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/organisation_unit_type/organisation_unit_type.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/site_procuring_entity/site_procuring_entity.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/regulatory_reference_set/regulatory_reference_set.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/method_profile_condition/method_profile_condition.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/schedule_profile_milestone/schedule_profile_milestone.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/business_day_calendar_holiday/business_day_calendar_holiday.json
+other product code	1	0	kentender_core/kentender_core/kentender_core/doctype/regulatory_reference/regulatory_reference.json
+other product code	1	0	kentender_core/kentender_core/patches/v1_0/relax_kt_page_role_gates.py
+other product code	1	0	kentender_strategy/kentender_strategy/services/strategy_audit.py
+other product code	1	0	kentender_strategy/kentender_strategy/patches/str_chg_001_phase1_domain_model_rebuild.py
+other product code	1	0	kentender_contracts/tools/gen_doctypes.py
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_accounts/services/business_profile.py
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_supplier_api_access/ktsm_supplier_api_access.json
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_document_type/ktsm_document_type.json
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_category_assignment/ktsm_category_assignment.json
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_supplier_category/ktsm_supplier_category.json
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_performance_note/ktsm_performance_note.json
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_status_history/ktsm_status_history.json
+other product code	1	0	kentender_suppliers/kentender_suppliers/supplier_management/doctype/ktsm_supplier_document/ktsm_supplier_document.json
+other product code	1	0	kentender_budget/kentender_budget/services/technical_read.py
+other product code	1	0	kentender_budget/kentender_budget/services/budget_readiness_contracts.py
+other product code	0	4	kentender_procurement/kentender_procurement/hooks.py
+other product code	0	4	kentender_procurement/kentender_procurement/bid_submission/api.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/security_duty.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_submission/services/sealed.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/close.py
+other product code	0	3	kentender_procurement/kentender_procurement/bid_submission/services/security_matching.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/tender_contact.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/signatory_notice.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/simulation.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_submission/services/handoffs.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/technical_read.py
+other product code	0	3	kentender_procurement/kentender_procurement/bid_submission/services/labels.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/guidance.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_submission/services/company_view.py
+other product code	0	4	kentender_procurement/kentender_procurement/bid_submission/services/tender_security.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/definition_runtime.py
+other product code	0	3	kentender_procurement/kentender_procurement/bid_submission/services/security_intake.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_submission/services/security_verification.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/consistency.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/services/evidence.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_submission/test_services/issuer.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_evaluation/services/evidence_manifest.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_evaluation/services/appointment.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_evaluation/services/separation.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_evaluation/services/secretary.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_evaluation/services/oversight.py
+other product code	0	1	kentender_procurement/kentender_procurement/award/services/clock.py
+other product code	0	2	kentender_procurement/kentender_procurement/award/services/guards.py
+other product code	0	1	kentender_procurement/kentender_procurement/award/services/reads.py
+other product code	0	3	kentender_procurement/kentender_procurement/tenders/api.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/doctype/tender_security_statement/tender_security_statement.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/configuration_gateway.py
+other product code	0	3	kentender_procurement/kentender_procurement/tenders/services/controls.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/events.py
+other product code	0	2	kentender_procurement/kentender_procurement/tenders/services/bid_definition.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/security_statement_review.py
+other product code	0	5	kentender_procurement/kentender_procurement/tenders/services/serializer.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/draft_commands.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/read.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/security_statement.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/template_binding.py
+other product code	0	1	kentender_procurement/kentender_procurement/tenders/services/addenda.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/ovs_chg_001_v06_tender_lead_from_certification.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/tpr_chg_001_v08_retire_tender_preparation.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/std_tpl_imp_001_retire_std_configuration.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/bds_chg_001_v08_retire_bid_slice.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/drop_retired_tm2_surface.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/pln_nds_late_need_positions.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/req_chg_001_v115_review_carried_over_drafts.py
+other product code	0	2	kentender_procurement/kentender_procurement/patches/ovs_chg_001_v06_evaluation_evidence_manifest.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/tsi_chg_001_flag_duty_conflicts.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/evl_chg_001_v08_default_secretary.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/tpr_fu25_retire_candidate_stand_in.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/home_chg_001_retire_my_work_page.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/drop_retired_tender_configurations.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/bds_v08_purge_content_versions.py
+other product code	0	1	kentender_procurement/kentender_procurement/patches/pln_chg_001_v127_retire_my_work_workspace.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/services/handoff.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/services/presenters.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/services/draft_commands.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/services/analytics_provider.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/api.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/doctype/opening_incident_access_event/opening_incident_access_event.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/services/incident_access.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/services/notify.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/services/technical_read.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/services/export.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_opening/services/labels.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/services/appointment.py
+other product code	0	1	kentender_procurement/kentender_procurement/bid_opening/services/boundary.py
+other product code	0	2	kentender_procurement/kentender_procurement/bid_opening/services/reads.py
+other product code	0	1	kentender_procurement/kentender_procurement/std_templates/doctype/installed_std_release/installed_std_release.py
+other product code	0	1	kentender_procurement/kentender_procurement/std_templates/services/installer.py
+other product code	0	1	kentender_procurement/kentender_procurement/std_templates/services/read.py
+other product code	0	1	kentender_procurement/kentender_procurement/std_templates/release/gates.py
+other product code	0	2	kentender_procurement/kentender_procurement/std_templates/compiler/selectors.py
+other product code	0	2	kentender_procurement/kentender_procurement/std_templates/compiler/projection.py
+other product code	0	2	kentender_procurement/kentender_procurement/std_templates/compiler/formats.py
+other product code	0	1	kentender_procurement/kentender_procurement/departmental_needs/doctype/need_planning_intake_projection/need_planning_intake_projection.py
+other product code	0	1	kentender_procurement/kentender_procurement/departmental_needs/services/events.py
+other product code	0	1	kentender_procurement/kentender_procurement/departmental_needs/services/usage.py
+other product code	0	1	kentender_procurement/kentender_procurement/departmental_needs/services/my_work_provider.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_planning/api.py
+other product code	0	2	kentender_procurement/kentender_procurement/procurement_planning/errors.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_planning/doctype/departmental_plan_update_request/departmental_plan_update_request.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_planning/services/departmental_update.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_planning/services/publication_pipeline.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_planning/services/missing_setting.py
+other product code	0	1	kentender_procurement/kentender_procurement/procurement_planning/services/plan_finance.py
+other product code	0	3	kentender_procurement/kentender_procurement/procurement_planning/services/dpp_classification.py
+other product code	0	2	kentender_procurement/kentender_procurement/procurement_planning/services/needs_intake.py
+other product code	0	2	kentender_procurement/kentender_procurement/procurement_planning/services/budget_revision.py
+other product code	0	2	kentender_procurement/kentender_procurement/procurement_planning/services/guards.py
+other product code	0	2	kentender_procurement/kentender_procurement/procurement_planning/services/dpp_autostart.py
+other product code	0	6	kentender_procurement/kentender_procurement/procurement_planning/services/next_step.py
+other product code	0	11	kentender_procurement/kentender_procurement/procurement_planning/services/workspace.py
+other product code	0	10	kentender_procurement/kentender_procurement/procurement_planning/services/dpp_read.py
+other product code	0	2	kentender_procurement/kentender_procurement/procurement_planning/services/publication_confirmation.py
+other product code	0	13	kentender_procurement/kentender_procurement/procurement_planning/services/plan_read.py
+other product code	0	1	kentender_core/kentender_core/hooks.py
+other product code	0	4	kentender_core/kentender_core/install.py
+other product code	0	1	kentender_core/kentender_core/services/support_issues.py
+other product code	0	1	kentender_core/kentender_core/services/procurement_settings.py
+other product code	0	1	kentender_core/kentender_core/services/my_work.py
+other product code	0	1	kentender_core/kentender_core/services/authorization.py
+other product code	0	1	kentender_core/kentender_core/services/next_step.py
+other product code	0	2	kentender_core/kentender_core/services/configuration_versions.py
+other product code	0	1	kentender_core/kentender_core/services/home_support_issues.py
+other product code	0	3	kentender_core/kentender_core/services/home_time.py
+other product code	0	1	kentender_core/kentender_core/services/public_portal.py
+other product code	0	4	kentender_core/kentender_core/services/responsibility_administration.py
+other product code	0	1	kentender_core/kentender_core/services/regulatory_reference.py
+other product code	0	1	kentender_core/kentender_core/kentender_core/doctype/user_responsibility_assignment/user_responsibility_assignment.py
+other product code	0	1	kentender_core/kentender_core/patches/v1_28/open_tender_preparation_minimum.py
+other product code	0	1	kentender_core/kentender_core/utils/instants.py
+other product code	0	6	kentender_core/kentender_core/utils/display.py
+other product code	0	1	kentender_core/kentender_core/utils/raw_delete.py
+other product code	0	1	kentender_strategy/kentender_strategy/services/strategy_ui_contracts.py
+other product code	0	2	kentender_strategy/kentender_strategy/services/strategy_authorization.py
+other product code	0	1	kentender_contracts/kentender_contracts/services/clock.py
+other product code	0	1	kentender_contracts/kentender_contracts/services/service_principal.py
+other product code	0	1	kentender_suppliers/kentender_suppliers/supplier_accounts/services/home_provider.py
+other product code	0	3	kentender_suppliers/kentender_suppliers/supplier_accounts/services/labels.py
+other product code	0	1	kentender_suppliers/kentender_suppliers/api/smw_public.py
+other product code	0	1	kentender_budget/kentender_budget/services/budget_service_principal.py
+other product code	0	1	kentender_budget/kentender_budget/services/analytics_provider.py
+python tests	52	0	kentender_procurement/kentender_procurement/tenders/tests/test_analytics_provider.py
+python tests	51	6	kentender_procurement/kentender_procurement/tenders/tests/test_open_period.py
+python tests	38	0	kentender_procurement/kentender_procurement/procurement_requisitions/tests/test_analytics_provider.py
+python tests	38	10	kentender_procurement/kentender_procurement/procurement_planning/tests/test_home_provider.py
+python tests	32	5	kentender_procurement/kentender_procurement/bid_submission/tests/test_acceptance_gaps.py
+python tests	32	1	kentender_contracts/kentender_contracts/tests/test_cm_reporting.py
+python tests	31	5	kentender_contracts/kentender_contracts/tests/test_cm_obligation_boards.py
+python tests	30	4	kentender_procurement/kentender_procurement/tenders/tests/test_home_provider.py
+python tests	28	0	kentender_contracts/kentender_contracts/tests/test_cm_change.py
+python tests	27	0	kentender_contracts/kentender_contracts/tests/test_cm_tasks.py
+python tests	22	4	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_seed.py
+python tests	21	1	kentender_contracts/kentender_contracts/tests/test_cm_security_actions.py
+python tests	20	0	kentender_procurement/kentender_procurement/tenders/tests/test_bds_seams.py
+python tests	19	0	kentender_procurement/kentender_procurement/award/tests/test_awd_eligibility.py
+python tests	19	2	kentender_procurement/kentender_procurement/tenders/tests/test_publication.py
+python tests	18	4	kentender_procurement/kentender_procurement/bid_submission/tests/test_security_and_price.py
+python tests	17	0	kentender_procurement/kentender_procurement/award/tests/test_analytics_facts.py
+python tests	14	1	kentender_core/kentender_core/tests/test_seed_clock.py
+python tests	13	0	kentender_procurement/kentender_procurement/proceedings/tests/test_prc_events.py
+python tests	13	6	kentender_procurement/kentender_procurement/procurement_planning/tests/test_missing_setting.py
+python tests	12	0	kentender_procurement/kentender_procurement/proceedings/tests/test_prc_lifecycle.py
+python tests	12	3	kentender_procurement/kentender_procurement/award/tests/test_awd_reads.py
+python tests	12	1	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_lifecycle.py
+python tests	12	0	kentender_contracts/kentender_contracts/tests/test_cm_adjustment.py
+python tests	12	0	kentender_contracts/kentender_contracts/tests/test_cm_security.py
+python tests	12	0	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_people_and_access.py
+python tests	11	0	kentender_contracts/kentender_contracts/tests/test_cm_whole_chain.py
+python tests	11	0	kentender_contracts/kentender_contracts/tests/test_cm_advance.py
+python tests	11	0	kentender_contracts/kentender_contracts/tests/test_cm_warranty.py
+python tests	10	0	kentender_procurement/kentender_procurement/proceedings/tests/test_ovs_register_counting.py
+python tests	10	19	kentender_core/kentender_core/tests/test_canonical_seed.py
+python tests	10	0	kentender_contracts/kentender_contracts/tests/test_cm_settlement.py
+python tests	10	1	kentender_contracts/kentender_contracts/tests/test_cm_completion.py
+python tests	9	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_rules.py
+python tests	9	0	kentender_procurement/kentender_procurement/tenders/tests/test_dead_end_matrix.py
+python tests	9	0	kentender_procurement/kentender_procurement/tenders/tests/sample.py
+python tests	9	0	kentender_procurement/kentender_procurement/procurement_requisitions/tests/test_validation.py
+python tests	9	0	kentender_contracts/kentender_contracts/tests/test_cm_formation_rules.py
+python tests	9	1	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_registration_verification.py
+python tests	8	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_dead_end_matrix.py
+python tests	8	3	kentender_procurement/kentender_procurement/bid_submission/tests/test_submission.py
+python tests	8	1	kentender_strategy/kentender_strategy/tests/test_str_chg_001_v1_8_usability.py
+python tests	8	1	kentender_contracts/kentender_contracts/tests/thread_world.py
+python tests	7	0	kentender_procurement/kentender_procurement/proceedings/tests/test_prc_evaluation_profile.py
+python tests	7	3	kentender_procurement/kentender_procurement/bid_submission/tests/test_changes_and_close.py
+python tests	7	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_addendum_refresh.py
+python tests	7	1	kentender_procurement/kentender_procurement/award/tests/test_awd_evaluation_separation.py
+python tests	7	2	kentender_procurement/kentender_procurement/tenders/tests/test_security_statement_review.py
+python tests	7	3	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_contracts.py
+python tests	7	4	kentender_contracts/kentender_contracts/tests/test_cm_completion_boards.py
+python tests	7	0	kentender_contracts/kentender_contracts/tests/test_cm_termination.py
+python tests	6	0	kentender_procurement/kentender_procurement/proceedings/tests/test_prc_minutes.py
+python tests	6	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_candidate_registry_contract.py
+python tests	6	0	kentender_procurement/kentender_procurement/award/tests/test_awd_command_envelope.py
+python tests	6	1	kentender_procurement/kentender_procurement/award/tests/test_awd_role_matrix.py
+python tests	6	0	kentender_contracts/kentender_contracts/tests/test_cm_invoice.py
+python tests	6	1	kentender_contracts/kentender_contracts/tests/test_cm_existing.py
+python tests	6	0	kentender_contracts/kentender_contracts/tests/test_cm_arrival_exceptions.py
+python tests	6	0	kentender_budget/kentender_budget/tests/test_bud_chg_001_phase3_lifecycle.py
+python tests	5	2	kentender_procurement/kentender_procurement/bid_submission/tests/test_guidance.py
+python tests	5	0	kentender_procurement/kentender_procurement/award/tests/test_awd_cycles.py
+python tests	5	0	kentender_procurement/kentender_procurement/award/tests/support.py
+python tests	5	0	kentender_procurement/kentender_procurement/award/tests/test_awd_opinion.py
+python tests	5	0	kentender_procurement/kentender_procurement/award/tests/test_awd_idempotency.py
+python tests	5	0	kentender_procurement/kentender_procurement/award/tests/test_awd_restrictions.py
+python tests	5	0	kentender_contracts/kentender_contracts/tests/browser_world.py
+python tests	5	0	kentender_contracts/kentender_contracts/tests/test_cm_liability.py
+python tests	5	1	kentender_contracts/kentender_contracts/tests/test_cm_date_guard.py
+python tests	5	0	kentender_contracts/kentender_contracts/tests/test_cm_dead_end.py
+python tests	5	0	kentender_contracts/kentender_contracts/tests/test_cm_finance_boards.py
+python tests	4	0	kentender_procurement/kentender_procurement/proceedings/tests/support.py
+python tests	4	8	kentender_procurement/kentender_procurement/bid_submission/tests/test_my_bids.py
+python tests	4	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_save_bid_task.py
+python tests	4	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_runtime_rules.py
+python tests	4	0	kentender_procurement/kentender_procurement/award/tests/test_awd_delivery.py
+python tests	4	5	kentender_procurement/kentender_procurement/award/tests/test_home_provider.py
+python tests	4	6	kentender_procurement/kentender_procurement/procurement_requisitions/tests/test_home_provider.py
+python tests	4	1	kentender_procurement/kentender_procurement/setup/tests/test_procurement_sidebar_g0_012_contract.py
+python tests	4	2	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_audit_and_notifications.py
+python tests	4	7	kentender_procurement/kentender_procurement/procurement_planning/tests/test_planning_workspace.py
+python tests	4	0	kentender_core/kentender_core/tests/test_test_clock.py
+python tests	4	0	kentender_core/kentender_core/tests/test_reference_data_seed_mvp1.py
+python tests	4	0	kentender_contracts/kentender_contracts/tests/test_cm_outside_signature.py
+python tests	4	3	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_account_read_and_contract.py
+python tests	3	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_simulation.py
+python tests	3	2	kentender_procurement/kentender_procurement/bid_submission/tests/test_documents_task.py
+python tests	3	1	kentender_procurement/kentender_procurement/bid_submission/tests/support.py
+python tests	3	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_receipt_page.py
+python tests	3	3	kentender_procurement/kentender_procurement/bid_submission/tests/test_signatory_notice.py
+python tests	3	0	kentender_procurement/kentender_procurement/award/tests/test_awd_cancellation.py
+python tests	3	2	kentender_procurement/kentender_procurement/award/tests/test_awd_notices.py
+python tests	3	1	kentender_procurement/kentender_procurement/award/tests/test_awd_supplier.py
+python tests	3	0	kentender_procurement/kentender_procurement/award/tests/test_awd_corrections.py
+python tests	3	0	kentender_procurement/kentender_procurement/award/tests/test_awd_explanation.py
+python tests	3	0	kentender_procurement/kentender_procurement/tenders/tests/test_template_binding.py
+python tests	3	1	kentender_procurement/kentender_procurement/tenders/tests/test_published_release.py
+python tests	3	0	kentender_procurement/kentender_procurement/setup/tests/test_workspace_sidebar_fastpath.py
+python tests	3	6	kentender_procurement/kentender_procurement/departmental_needs/tests/test_home_provider.py
+python tests	3	0	kentender_core/kentender_core/tests/test_kentender_mvp_v1_seed_contract.py
+python tests	3	0	kentender_strategy/kentender_strategy/tests/test_str_chg_001_phase1_domain_model.py
+python tests	3	0	kentender_contracts/kentender_contracts/tests/test_cm_thread.py
+python tests	3	0	kentender_contracts/kentender_contracts/tests/test_cm_idempotency.py
+python tests	3	1	kentender_contracts/kentender_contracts/tests/test_cm_services.py
+python tests	3	1	kentender_contracts/kentender_contracts/tests/test_cm_records.py
+python tests	2	2	kentender_procurement/kentender_procurement/bid_submission/tests/test_evidence.py
+python tests	2	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_review_task.py
+python tests	2	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_workspace_view.py
+python tests	2	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_available_tenders.py
+python tests	2	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_clarification.py
+python tests	2	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_bound_release.py
+python tests	2	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/support.py
+python tests	2	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_report.py
+python tests	2	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_discussion.py
+python tests	2	0	kentender_procurement/kentender_procurement/award/tests/test_awd_authority.py
+python tests	2	0	kentender_procurement/kentender_procurement/award/tests/test_awd_seams.py
+python tests	2	0	kentender_procurement/kentender_procurement/award/tests/test_contract_sources.py
+python tests	2	0	kentender_procurement/kentender_procurement/award/tests/test_awd_intake.py
+python tests	2	1	kentender_procurement/kentender_procurement/tenders/tests/test_snapshot_contract.py
+python tests	2	0	kentender_procurement/kentender_procurement/std_templates/tests/support.py
+python tests	2	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_events.py
+python tests	2	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_navigation.py
+python tests	2	5	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_permissions.py
+python tests	2	1	kentender_core/kentender_core/tests/test_home_entries.py
+python tests	2	1	kentender_core/kentender_core/tests/test_instants.py
+python tests	2	0	kentender_core/kentender_core/tests/test_cfg_rule_details.py
+python tests	2	0	kentender_strategy/kentender_strategy/tests/test_str_chg_001_phase3_governance.py
+python tests	2	0	kentender_strategy/kentender_strategy/tests/test_str_chg_001_phase4_contracts.py
+python tests	2	0	kentender_strategy/kentender_strategy/tests/test_str_chg_001_phase5_seed.py
+python tests	2	0	kentender_contracts/kentender_contracts/tests/test_cm_home_provider.py
+python tests	2	0	kentender_contracts/kentender_contracts/tests/test_cm_leakage.py
+python tests	2	0	kentender_contracts/kentender_contracts/tests/test_cm_issues.py
+python tests	2	0	kentender_contracts/kentender_contracts/tests/test_cm_delivery.py
+python tests	2	0	kentender_contracts/kentender_contracts/tests/test_cm_adversarial.py
+python tests	2	1	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_home_provider.py
+python tests	1	0	kentender_procurement/kentender_procurement/proceedings/tests/test_prc_command_envelope.py
+python tests	1	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_sealed_surfaces.py
+python tests	1	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_security_duty.py
+python tests	1	0	kentender_procurement/kentender_procurement/bid_submission/tests/test_handoffs.py
+python tests	1	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_start_bid.py
+python tests	1	2	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_stage_summary.py
+python tests	1	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_intake_duty.py
+python tests	1	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_analytics_facts.py
+python tests	1	0	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_committee.py
+python tests	1	0	kentender_procurement/kentender_procurement/award/tests/test_awd_funding.py
+python tests	1	0	kentender_procurement/kentender_procurement/award/tests/test_awd_decision.py
+python tests	1	0	kentender_procurement/kentender_procurement/tenders/tests/test_lifecycle.py
+python tests	1	1	kentender_procurement/kentender_procurement/tenders/tests/test_bid_definition.py
+python tests	1	0	kentender_procurement/kentender_procurement/tests/test_home_placeholder_page_access.py
+python tests	1	1	kentender_procurement/kentender_procurement/procurement_requisitions/tests/fixtures.py
+python tests	1	0	kentender_procurement/kentender_procurement/procurement_requisitions/tests/test_digest.py
+python tests	1	1	kentender_procurement/kentender_procurement/bid_opening/tests/test_bop_intake_duty.py
+python tests	1	0	kentender_procurement/kentender_procurement/bid_opening/tests/test_bop_ceremony.py
+python tests	1	0	kentender_procurement/kentender_procurement/std_templates/tests/test_template_quality.py
+python tests	1	0	kentender_procurement/kentender_procurement/std_templates/tests/test_installer.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_principal.py
+python tests	1	2	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_dead_end_matrix.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_my_work.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_estimate.py
+python tests	1	6	kentender_procurement/kentender_procurement/departmental_needs/tests/support.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_domain_model.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_unsent_draft.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_architecture.py
+python tests	1	0	kentender_procurement/kentender_procurement/departmental_needs/tests/test_analytics_provider.py
+python tests	1	4	kentender_procurement/kentender_procurement/procurement_planning/tests/test_plan_workbench.py
+python tests	1	0	kentender_procurement/kentender_procurement/procurement_planning/tests/test_plan_requisition.py
+python tests	1	0	kentender_procurement/kentender_procurement/procurement_planning/tests/test_planning_context_ctx_chg_001.py
+python tests	1	5	kentender_procurement/kentender_procurement/procurement_planning/tests/test_plan_governance.py
+python tests	1	3	kentender_procurement/kentender_procurement/procurement_planning/tests/fixtures.py
+python tests	1	15	kentender_procurement/kentender_procurement/procurement_planning/tests/test_plan_v127_guidance.py
+python tests	1	3	kentender_core/kentender_core/tests/test_next_step.py
+python tests	1	1	kentender_core/kentender_core/tests/test_artboard_provenance_gate.py
+python tests	1	0	kentender_core/kentender_core/tests/test_stable_platform_seed.py
+python tests	1	0	kentender_core/kentender_core/tests/test_cfg_chg_002_v11_intake_control.py
+python tests	1	1	kentender_core/kentender_core/tests/responsibility_test_cleanup.py
+python tests	1	0	kentender_core/kentender_core/tests/test_vue_desk_bundle_translation_binding_gate.py
+python tests	1	2	kentender_core/kentender_core/tests/test_business_role_registry.py
+python tests	1	0	kentender_strategy/kentender_strategy/tests/test_str_chg_001_v1_7_correction.py
+python tests	1	0	kentender_contracts/kentender_contracts/tests/test_cm_source_availability.py
+python tests	1	0	kentender_contracts/kentender_contracts/tests/test_cm_award_receiver.py
+python tests	1	0	kentender_contracts/kentender_contracts/tests/test_cm_boards.py
+python tests	1	0	kentender_contracts/kentender_contracts/tests/test_cm_formation_end.py
+python tests	1	4	kentender_contracts/kentender_contracts/tests/test_cm_change_boards.py
+python tests	1	0	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/support.py
+python tests	1	1	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_account_events.py
+python tests	1	0	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_business_profile.py
+python tests	1	0	kentender_budget/kentender_budget/tests/test_bud_chg_001_v16_my_work_provider.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_requirements_attention.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_signatory_notes.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_task_flow.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_close_recovery.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_company_task.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_security_wording_guard.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_goods_lines.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_technical_read.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_legacy_retirement.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_submission/tests/test_security_verification.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_canonical_seed.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_manifest.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_evaluation/tests/test_evl_separation.py
+python tests	0	1	kentender_procurement/kentender_procurement/award/tests/test_awd_errors.py
+python tests	0	1	kentender_procurement/kentender_procurement/tenders/tests/test_fixture_scope.py
+python tests	0	4	kentender_procurement/kentender_procurement/tenders/tests/test_serializer.py
+python tests	0	6	kentender_procurement/kentender_procurement/tenders/tests/test_documents.py
+python tests	0	1	kentender_procurement/kentender_procurement/tenders/tests/fixtures.py
+python tests	0	5	kentender_procurement/kentender_procurement/tenders/tests/test_read.py
+python tests	0	1	kentender_procurement/kentender_procurement/tenders/tests/test_seed_clear.py
+python tests	0	1	kentender_procurement/kentender_procurement/tests/test_no_environment_notices.py
+python tests	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/tests/test_compatibility.py
+python tests	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/tests/test_clean_up_child_rows.py
+python tests	0	1	kentender_procurement/kentender_procurement/bid_opening/tests/test_tender_page_step.py
+python tests	0	2	kentender_procurement/kentender_procurement/bid_opening/tests/test_bop_incident_sealing.py
+python tests	0	2	kentender_procurement/kentender_procurement/bid_opening/tests/test_bop_gateways.py
+python tests	0	2	kentender_procurement/kentender_procurement/bid_opening/tests/test_home_provider.py
+python tests	0	2	kentender_procurement/kentender_procurement/bid_opening/tests/test_bop_api.py
+python tests	0	1	kentender_procurement/kentender_procurement/std_templates/tests/test_security_statements.py
+python tests	0	1	kentender_procurement/kentender_procurement/std_templates/tests/test_release_1_5_security.py
+python tests	0	1	kentender_procurement/kentender_procurement/departmental_needs/tests/test_departmental_needs_static_scan.py
+python tests	0	2	kentender_procurement/kentender_procurement/procurement_planning/tests/test_late_accepted_need.py
+python tests	0	6	kentender_procurement/kentender_procurement/procurement_planning/tests/test_planning_seed.py
+python tests	0	3	kentender_procurement/kentender_procurement/procurement_planning/tests/test_plan_publication_confirmation.py
+python tests	0	1	kentender_procurement/kentender_procurement/procurement_planning/tests/test_dpp_validation.py
+python tests	0	5	kentender_procurement/kentender_procurement/procurement_planning/tests/test_dpp_read.py
+python tests	0	1	kentender_procurement/kentender_procurement/procurement_planning/tests/test_planning_v123_schema.py
+python tests	0	4	kentender_procurement/kentender_procurement/procurement_planning/tests/test_dead_end_matrix.py
+python tests	0	1	kentender_core/kentender_core/tests/test_responsibility_administration.py
+python tests	0	9	kentender_core/kentender_core/tests/test_home_time.py
+python tests	0	1	kentender_core/kentender_core/tests/test_industry_design_scope.py
+python tests	0	1	kentender_core/kentender_core/tests/test_home_workspace.py
+python tests	0	1	kentender_core/kentender_core/tests/test_technical_operator_reader.py
+python tests	0	1	kentender_core/kentender_core/tests/test_public_portal_settings.py
+python tests	0	1	kentender_core/kentender_core/tests/test_home_design_scope.py
+python tests	0	1	kentender_core/kentender_core/tests/test_support_issues.py
+python tests	0	1	kentender_core/kentender_core/tests/test_home_support_issues.py
+python tests	0	2	kentender_core/kentender_core/tests/test_home_routing.py
+python tests	0	1	kentender_core/kentender_core/tests/test_cfg_supersession.py
+python tests	0	2	kentender_core/kentender_core/tests/test_notification_upsert.py
+python tests	0	1	kentender_core/kentender_core/tests/test_cfg_chg_002_v11_business_day_calendar.py
+python tests	0	1	kentender_core/kentender_core/tests/test_cfg_idempotency.py
+python tests	0	1	kentender_core/kentender_core/tests/test_file_integrity.py
+python tests	0	5	kentender_core/kentender_core/tests/test_analytics_workspace.py
+python tests	0	1	kentender_core/kentender_core/tests/analytics_a1.py
+python tests	0	1	kentender_core/kentender_core/tests/test_regulatory_reference.py
+python tests	0	2	kentender_core/kentender_core/tests/test_procurement_settings.py
+python tests	0	1	kentender_core/kentender_core/tests/test_module_def_repair.py
+python tests	0	1	kentender_core/kentender_core/tests/test_raw_delete.py
+python tests	0	1	kentender_strategy/kentender_strategy/tests/test_str_technical_read.py
+python tests	0	1	kentender_strategy/kentender_strategy/tests/test_str_chg_001_phase7_ui_contracts.py
+python tests	0	2	kentender_strategy/kentender_strategy/tests/test_ovs_strategy_reads.py
+python tests	0	7	kentender_strategy/kentender_strategy/tests/test_home_provider.py
+python tests	0	2	kentender_strategy/kentender_strategy/tests/test_strategy_canonical_seed.py
+python tests	0	1	kentender_contracts/kentender_contracts/tests/test_cm_outputs.py
+python tests	0	1	kentender_contracts/kentender_contracts/tests/test_cm_service_principal.py
+python tests	0	1	kentender_contracts/kentender_contracts/tests/test_cm_formation.py
+python tests	0	1	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_account_dead_end_matrix.py
+python tests	0	1	kentender_suppliers/kentender_suppliers/supplier_accounts/tests/test_canonical_accounts.py
+python tests	0	1	kentender_budget/kentender_budget/tests/test_budget_canonical_seed.py
+python tests	0	1	kentender_budget/kentender_budget/tests/test_budget_service_principal.py
+python tests	0	2	kentender_budget/kentender_budget/tests/test_analytics_provider.py
+python tests	0	7	kentender_budget/kentender_budget/tests/test_home_provider.py
+seed code	151	3	kentender_core/kentender_core/seeds/portfolio.py
+seed code	71	2	kentender_procurement/kentender_procurement/bid_evaluation/seeds/playwright_ui_fixtures.py
+seed code	66	0	kentender_procurement/kentender_procurement/award/seeds/playwright_ui_fixtures.py
+seed code	47	23	kentender_procurement/kentender_procurement/procurement_planning/seeds/kentender_mvp_v1.py
+seed code	38	9	kentender_procurement/kentender_procurement/bid_submission/seeds/kentender_mvp_v1.py
+seed code	35	9	kentender_procurement/kentender_procurement/bid_evaluation/seeds/kentender_mvp_v1.py
+seed code	34	7	kentender_procurement/kentender_procurement/tenders/seeds/kentender_mvp_v1.py
+seed code	32	32	kentender_core/kentender_core/seeds/site_setup.py
+seed code	29	8	kentender_procurement/kentender_procurement/bid_opening/seeds/kentender_mvp_v1.py
+seed code	25	2	kentender_contracts/kentender_contracts/seeds/demo.py
+seed code	24	0	kentender_procurement/kentender_procurement/tenders/seeds/playwright_ui_fixtures.py
+seed code	22	2	kentender_procurement/kentender_procurement/departmental_needs/seeds/kentender_mvp_r1.py
+seed code	18	2	kentender_procurement/kentender_procurement/bid_submission/seeds/playwright_ui_fixtures.py
+seed code	12	8	kentender_strategy/kentender_strategy/seeds/kentender_mvp_v1_strategy.py
+seed code	8	6	kentender_procurement/kentender_procurement/procurement_requisitions/seeds/kentender_mvp_v1.py
+seed code	8	1	kentender_suppliers/kentender_suppliers/supplier_accounts/seeds/playwright_ui_fixtures.py
+seed code	7	3	kentender_core/kentender_core/seeds/kentender_mvp_v1/reference_data.py
+seed code	7	8	kentender_budget/kentender_budget/seeds/kentender_mvp_v1_portfolio.py
+seed code	6	6	kentender_procurement/kentender_procurement/award/seeds/kentender_mvp_v1.py
+seed code	5	0	kentender_procurement/kentender_procurement/award/seeds/profiles.py
+seed code	5	5	kentender_procurement/kentender_procurement/departmental_needs/seeds/profiles.py
+seed code	5	0	kentender_procurement/kentender_procurement/departmental_needs/seeds/playwright_ui_fixtures.py
+seed code	4	4	kentender_suppliers/kentender_suppliers/supplier_accounts/seeds/canonical.py
+seed code	3	2	kentender_procurement/kentender_procurement/procurement_requisitions/seeds/profiles.py
+seed code	3	4	kentender_strategy/kentender_strategy/seeds/playwright_ui_fixtures.py
+seed code	2	5	kentender_core/kentender_core/seeds/playwright_ui_fixtures.py
+seed code	2	0	kentender_core/kentender_core/seeds/kentender_mvp_v1/constants.py
+seed code	1	0	kentender_procurement/kentender_procurement/bid_submission/seeds/filling.py
+seed code	1	3	kentender_procurement/kentender_procurement/procurement_requisitions/seeds/playwright_ui_fixtures.py
+seed code	1	2	kentender_procurement/kentender_procurement/procurement_planning/seeds/playwright_ui_fixtures.py
+seed code	1	19	kentender_core/kentender_core/seeds/canonical.py
+seed code	1	2	kentender_core/kentender_core/seeds/clock.py
+seed code	1	0	kentender_core/kentender_core/seeds/mvp1_role_user_cleanup.py
+seed code	1	3	kentender_core/kentender_core/seeds/calendar.py
+seed code	1	0	kentender_core/kentender_core/seeds/kentender_mvp_v1/org.py
+seed code	1	0	kentender_core/kentender_core/seeds/stable_platform_seed/clear.py
+seed code	1	0	kentender_core/kentender_core/seeds/stable_platform_seed/purge.py
+seed code	1	0	kentender_core/kentender_core/seeds/stable_platform_seed/validate.py
+seed code	0	1	kentender_procurement/kentender_procurement/bid_submission/seeds/canonical.py
+seed code	0	1	kentender_procurement/kentender_procurement/tenders/seeds/clear.py
+seed code	0	1	kentender_procurement/kentender_procurement/procurement_requisitions/seeds/clear.py
+seed code	0	2	kentender_procurement/kentender_procurement/bid_opening/seeds/profiles.py
+seed code	0	3	kentender_procurement/kentender_procurement/bid_opening/seeds/playwright_ui_fixtures.py
+seed code	0	1	kentender_budget/kentender_budget/seeds/playwright_ui_fixtures.py

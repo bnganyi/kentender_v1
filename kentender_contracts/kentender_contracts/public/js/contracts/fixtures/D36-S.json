@@ -1,0 +1,115 @@
+{
+ "actions": {
+  "Sign certification": {
+   "args": {
+    "invoice": "CM-INV-990935"
+   },
+   "command": "SignContractCertification",
+   "do": "command"
+  },
+  "View calculation": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delay_adjustment_",
+ "d": "D36",
+ "dialogs": {},
+ "ev": [
+  "Delivery 25 Jul 2027",
+  "Clause TEST-DELAY-01",
+  "Supplier response 1"
+ ],
+ "id": "D36-S",
+ "name": "Contractual delay adjustment",
+ "next": {
+  "h": "Review the invoice and sign the certification.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Sign certification",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delay_adjustment_",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Supported gross",
+      "Authorised adjustment",
+      "Proposed cash"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      0,
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "KES 1,000,000",
+       "KES 5,000",
+       "KES 995,000"
+      ]
+     ]
+    },
+    {
+     "k": "help",
+     "v": "Finance applies the adjustment through the reviewed native mapping; the invoice rate is not edited. The KES 5,000 is a noncash adjustment, never cash."
+    }
+   ],
+   "t": "Certification"
+  }
+ ],
+ "s2": [
+  "View calculation"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review invoice",
+ "version": 20
+}

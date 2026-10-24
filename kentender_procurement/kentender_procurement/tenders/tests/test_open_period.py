@@ -15,6 +15,8 @@ TPR09-AC-056..068, 097..100, TPR10-AC-001..011, TPR12-AC-012."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -41,11 +43,11 @@ class OpenPeriodCase(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_all()
 		self.addCleanup(frappe.set_user, "Administrator")
-		frappe.flags.kt_tenders_clock = "2027-05-15 07:55:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-15 07:55:00")
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_clock", None)
 		self.name = self._published()
 
-	def _confirm(self, subject: str, channel: str, *, addendum: str = "", available_at="2027-05-15 08:00:00"):
+	def _confirm(self, subject: str, channel: str, *, addendum: str = "", available_at=W("2027-05-15 08:00:00")):
 		root = frappe.get_doc("Tender", self.name)
 		online = channel in configuration_gateway.ONLINE_CHANNELS
 		common = dict(available_at=available_at, evidence_reference=f"REF-{channel}", evidence_file=fx.evidence_file(f"{channel}.png"), public_url=f"https://portal.example.test/{channel}" if online else "", url_not_applicable_reason="" if online else "Physical channel", expected_record_version=root.record_version, idempotency_key=fx.key(), attestation_confirmed=True, user=fx.HOPF)
@@ -92,7 +94,7 @@ class OpenPeriodCase(IntegrationTestCase):
 
 class TestAddenda(OpenPeriodCase):
 	def test_a_draft_records_before_after_and_is_stale_when_the_published_value_changed(self):
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")
 		name = self._addendum(values=self.FIXTURE_ADDENDUM)
 		doc = frappe.get_doc("Tender Addendum", name)
 		self.assertEqual((doc.addendum_number, doc.addendum_reference.endswith("-001"), doc.previous_value, doc.status), (1, True, fx.LOCATION, "Draft"))
@@ -104,7 +106,7 @@ class TestAddenda(OpenPeriodCase):
 		with self.assertRaises(TendersError) as ctx:  # no revised deadline yet
 			addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(ctx.exception.code, "TND_ADDENDUM_DEADLINE_REQUIRED")
-		refused = addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": "2027-06-04 11:00:00"}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		refused = addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": W("2027-06-04 11:00:00")}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertIn("revised_submission_deadline", refused["errors"])
 		# a second created draft returns the open one
 		again = addenda.create_addendum_draft(tender=self.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
@@ -162,8 +164,8 @@ class TestAddenda(OpenPeriodCase):
 		self.assertEqual(read.get_tender(tender=self.name, user=fx.OFFICER)["open_period"]["addenda"], [])
 
 	def test_issue_creates_channel_records_and_the_addendum_becomes_issued_with_the_revised_deadline(self):
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
-		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": "2027-06-12 11:00:00"})
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		root = self._root()
 		submitted = addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(frappe.db.get_value("Tender Task", submitted["task"], "task_type"), "HOPF addendum issue")
@@ -183,7 +185,7 @@ class TestAddenda(OpenPeriodCase):
 		root.reload()
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 09:00:00")
 		original = bid_definition.current(self.name)
 		issued = addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self.assertEqual(len(issued["confirmations"]), 4)
@@ -193,24 +195,24 @@ class TestAddenda(OpenPeriodCase):
 		self.assertEqual(frappe.db.get_value("Tender Bid Definition", doc.successor_bid_definition, ["status", "definition_version"]), ("Frozen", 2))
 		self.assertEqual(bid_definition.current(self.name)["bid_definition_id"], original["bid_definition_id"])
 		self.assertTrue(frappe.db.exists("Tender Document", {"addendum": name, "kind": "Addendum notice"}))
-		self.assertEqual(frappe.db.get_value("Tender", self.name, "submission_deadline"), frappe.utils.get_datetime("2027-06-05 11:00:00"))  # unchanged until Issued
+		self.assertEqual(frappe.db.get_value("Tender", self.name, "submission_deadline"), frappe.utils.get_datetime(W("2027-06-05 11:00:00")))  # unchanged until Issued
 		record = read.get_tender(tender=self.name, user=fx.HOPF)
 		self.assertEqual(record["open_period"]["effective_addenda_count"], 0)  # not yet effective
 		for channel in CHANNELS[:3]:
-			self._confirm("addendum", channel, addendum=name, available_at="2027-05-31 09:00:00")
+			self._confirm("addendum", channel, addendum=name, available_at=W("2027-05-31 09:00:00"))
 		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Awaiting publication confirmation")
-		final = self._confirm("addendum", CHANNELS[3], addendum=name, available_at="2027-05-31 09:00:00")
+		final = self._confirm("addendum", CHANNELS[3], addendum=name, available_at=W("2027-05-31 09:00:00"))
 		self.assertTrue(final["all_confirmed"])
 		doc.reload()
-		self.assertEqual((doc.status, str(doc.issued_at)), ("Issued", "2027-05-31 09:00:00"))
+		self.assertEqual((doc.status, str(doc.issued_at)), ("Issued", W("2027-05-31 09:00:00")))
 		# TPR09-AC-099: the successor definition and revised deadline are effective together
 		self.assertEqual(bid_definition.current(self.name)["bid_definition_id"], doc.successor_bid_definition_id)
 		self.assertEqual(frappe.db.get_value("Tender Bid Definition", {"bid_definition_id": original["bid_definition_id"]}, "status"), "Superseded")
-		self.assertEqual(str(frappe.db.get_value("Tender", self.name, "submission_deadline")), "2027-06-12 11:00:00")
+		self.assertEqual(str(frappe.db.get_value("Tender", self.name, "submission_deadline")), W("2027-06-12 11:00:00"))
 		record = read.get_tender(tender=self.name, user=fx.HOPF)
 		self.assertEqual((record["open_period"]["effective_addenda_count"], record["open_period"]["addenda"][0]["change_summary"]), (1, "Delivery point clarified"))
 		ws = read.get_tenders_workspace(user=fx.OFFICER)
-		self.assertEqual(next(r for r in ws["rows"] if r.get("tender") == self.name)["status_label"], "Published — open until 12 Jun 2027, 11:00 EAT")
+		self.assertEqual(next(r for r in ws["rows"] if r.get("tender") == self.name)["status_label"], f"Published — open until {ad.dt_eat('2027-06-12 11:00:00')}")
 		# the effective value now carries the revised wording, so a second addendum against the old wording is stale
 		self.assertEqual(next(r for r in addenda.affected_references(self._root()) if r["key"] == "delivery_location")["value"], self.FIXTURE_ADDENDUM["revised_value"])
 		self.assertEqual(sorted(e["event_type"] for e in events.list_for_tender(self.name) if e["event_type"].startswith("Addendum")), ["AddendumDraftCreated", "AddendumDraftSaved", "AddendumDraftSaved", "AddendumIssueDecided", "AddendumIssued", "AddendumReturned", "AddendumSubmittedForIssue", "AddendumSubmittedForIssue"])
@@ -219,7 +221,7 @@ class TestAddenda(OpenPeriodCase):
 class TestAddendumEffects(OpenPeriodCase):
 	"""AUD-TND-001 / AUD-TND-004: when an addendum may become effective, and what each non-material row changes once it does."""
 
-	def _issued(self, values: dict, *, at="2027-05-20 09:00:00") -> str:
+	def _issued(self, values: dict, *, at=W("2027-05-20 09:00:00")) -> str:
 		"""An addendum issued (channel work created, nothing confirmed yet) at `at`."""
 		frappe.flags.kt_tenders_clock = at
 		name = self._addendum(values=values)
@@ -229,82 +231,82 @@ class TestAddendumEffects(OpenPeriodCase):
 		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		return name
 
-	def _confirm_all(self, name: str, *, available_at="2027-05-20 09:00:00", skip_last=False):
+	def _confirm_all(self, name: str, *, available_at=W("2027-05-20 09:00:00"), skip_last=False):
 		channels = CHANNELS[:-1] if skip_last else CHANNELS
 		for channel in channels:
 			self._confirm("addendum", channel, addendum=name, available_at=available_at)
 
 	def test_an_addendum_cannot_become_effective_after_the_submission_period_closed(self):
-		name = self._issued({**self.FIXTURE_ADDENDUM, "change_class": "Submission deadline extension", "revised_submission_deadline": "2027-06-12 11:00:00"}, at="2027-05-31 09:00:00")
-		self._confirm_all(name, available_at="2027-05-31 09:00:00", skip_last=True)
+		name = self._issued({**self.FIXTURE_ADDENDUM, "change_class": "Submission deadline extension", "revised_submission_deadline": W("2027-06-12 11:00:00")}, at=W("2027-05-31 09:00:00"))
+		self._confirm_all(name, available_at=W("2027-05-31 09:00:00"), skip_last=True)
 		before = bid_definition.current(self.name)["bid_definition_id"]
-		frappe.flags.kt_tenders_clock = "2027-06-05 11:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-06-05 11:00:00")
 		self.assertEqual(submission_close.close_due_submission_periods()["closed"], [self.name])
 		with self.assertRaises(TendersError) as ctx:  # the last required channel is confirmed after the period has closed
-			self._confirm("addendum", CHANNELS[-1], addendum=name, available_at="2027-05-31 09:00:00")
+			self._confirm("addendum", CHANNELS[-1], addendum=name, available_at=W("2027-05-31 09:00:00"))
 		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
 		root = self._root()
-		self.assertEqual((root.overall_status, str(root.submission_deadline)), ("Submission period ended", "2027-06-05 11:00:00"))
+		self.assertEqual((root.overall_status, str(root.submission_deadline)), ("Submission period ended", W("2027-06-05 11:00:00")))
 		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Awaiting publication confirmation")
 		self.assertEqual(bid_definition.current(self.name)["bid_definition_id"], before)
 		# offer parity: the screen no longer offers the confirmation it would refuse
 		self.assertNotIn("confirm_addendum_channel", open_period_read.get_tender_addendum(tender=self.name, addendum=name, user=fx.HOPF)["allowed_actions"])
 
 	def test_an_addendum_cannot_be_issued_or_confirmed_once_the_deadline_is_reached_even_before_the_close_job_ran(self):
-		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
-		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "change_class": "Submission deadline extension", "revised_submission_deadline": "2027-06-12 11:00:00"})
+		frappe.flags.kt_tenders_clock = W("2027-05-31 09:00:00")
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "change_class": "Submission deadline extension", "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		root = self._root()
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-06-05 11:00:00"  # the deadline itself; the hourly close has not run
+		frappe.flags.kt_tenders_clock = W("2027-06-05 11:00:00")  # the deadline itself; the hourly close has not run
 		self.assertEqual(self._root().overall_status, "Published — open")
 		with self.assertRaises(TendersError) as ctx:
 			addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
 		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Awaiting issue")
-		self.assertEqual(str(self._root().submission_deadline), "2027-06-05 11:00:00")
+		self.assertEqual(str(self._root().submission_deadline), W("2027-06-05 11:00:00"))
 
 	def test_a_clarification_deadline_row_moves_the_tenders_clarification_deadline_and_the_definition(self):
-		name = self._issued({**self.FIXTURE_ADDENDUM, "affected_area": "Invitation detail", "affected_reference_key": "clarification_deadline", "revised_value": "2027-05-29 17:00",
+		name = self._issued({**self.FIXTURE_ADDENDUM, "affected_area": "Invitation detail", "affected_reference_key": "clarification_deadline", "revised_value": W("2027-05-29 17:00:00")[:16],
 			"reason": "Suppliers asked for two more days to submit clarification questions"})
 		doc = frappe.get_doc("Tender Addendum", name)
-		self.assertEqual((doc.previous_value, doc.revised_value), ("27 May 2027, 17:00 EAT", "29 May 2027, 17:00 EAT"))
-		self.assertEqual(str(self._root().clarification_deadline), "2027-05-27 17:00:00")  # not effective until confirmed
+		self.assertEqual((doc.previous_value, doc.revised_value), (f"{ad.dt_eat('2027-05-27 17:00:00')}", f"{ad.dt_eat('2027-05-29 17:00:00')}"))
+		self.assertEqual(str(self._root().clarification_deadline), W("2027-05-27 17:00:00"))  # not effective until confirmed
 		self._confirm_all(name)
 		self.assertEqual(frappe.db.get_value("Tender Addendum", name, "status"), "Issued")
-		self.assertEqual(str(self._root().clarification_deadline), "2027-05-29 17:00:00")
+		self.assertEqual(str(self._root().clarification_deadline), W("2027-05-29 17:00:00"))
 		# the projection the effective definition and the supplier documents are built from carries it too
 		projected = bid_definition.apply_addenda({"tender": {"clarification_deadline": "old"}}, [{"affected_reference_key": "clarification_deadline", "revised_value": doc.revised_value}])
-		self.assertEqual(projected["tender"]["clarification_deadline"], bid_definition.iso_datetime("2027-05-29 17:00:00"))
+		self.assertEqual(projected["tender"]["clarification_deadline"], bid_definition.iso_datetime(W("2027-05-29 17:00:00")))
 		# the late-question rule now follows the new deadline: a question at 28 May is on time
-		self.assertEqual(next(r for r in addenda.affected_references(self._root()) if r["key"] == "clarification_deadline")["value"], "29 May 2027, 17:00 EAT")
+		self.assertEqual(next(r for r in addenda.affected_references(self._root()) if r["key"] == "clarification_deadline")["value"], f"{ad.dt_eat('2027-05-29 17:00:00')}")
 
 	def test_a_clarification_deadline_must_be_a_date_before_the_submission_deadline(self):
 		name = self._addendum()
 		root = self._root()
 		base = {**self.FIXTURE_ADDENDUM, "affected_area": "Invitation detail", "affected_reference_key": "clarification_deadline"}
-		for bad in ("soon", "2027-06-06 10:00"):
+		for bad in ("soon", W("2027-06-06 10:00:00")[:16]):
 			refused = addenda.update_addendum_draft(tender=self.name, addendum=name, values={**base, "revised_value": bad}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 			self.assertIn("revised_value", refused.get("errors", {}), bad)
 
 	def test_a_submission_deadline_row_needs_the_revised_deadline_and_then_takes_effect(self):
-		frappe.flags.kt_tenders_clock = "2027-05-20 09:00:00"  # outside the late-amendment window: only the row itself asks for a deadline
+		frappe.flags.kt_tenders_clock = W("2027-05-20 09:00:00")  # outside the late-amendment window: only the row itself asks for a deadline
 		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "affected_area": "Submission or opening detail", "affected_reference_key": "submission_deadline", "reason": "Suppliers need more time to price the equipment"})
 		root = self._root()
 		with self.assertRaises(TendersError) as ctx:  # a changed deadline row with no deadline is not an addendum
 			addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(ctx.exception.code, "TND_ADDENDUM_DEADLINE_REQUIRED")
-		saved = addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": "2027-06-12 11:00:00"}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		saved = addenda.update_addendum_draft(tender=self.name, addendum=name, values={"revised_submission_deadline": W("2027-06-12 11:00:00")}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertTrue(saved["ok"], saved)
 		doc = frappe.get_doc("Tender Addendum", name)
-		self.assertEqual((doc.deadline_extension_required, doc.revised_value), (1, "12 Jun 2027, 11:00 EAT"))
+		self.assertEqual((doc.deadline_extension_required, doc.revised_value), (1, f"{ad.dt_eat('2027-06-12 11:00:00')}"))
 		root.reload()
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
 		addenda.issue_addendum(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self._confirm_all(name)
-		self.assertEqual(str(self._root().submission_deadline), "2027-06-12 11:00:00")
-		self.assertEqual(bid_definition.current(self.name)["definition"]["submission_deadline"], bid_definition.iso_datetime("2027-06-12 11:00:00"))
+		self.assertEqual(str(self._root().submission_deadline), W("2027-06-12 11:00:00"))
+		self.assertEqual(bid_definition.current(self.name)["definition"]["submission_deadline"], bid_definition.iso_datetime(W("2027-06-12 11:00:00")))
 
 
 class TestClarifications(OpenPeriodCase):
@@ -314,7 +316,7 @@ class TestClarifications(OpenPeriodCase):
 
 	def setUp(self):
 		super().setUp()
-		frappe.flags.kt_tenders_clock = "2027-05-19 09:20:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-19 09:20:00")
 		self.candidates = fake_candidates.install(self)
 		for candidate in (self.CANDIDATE, self.SECOND):
 			self.candidates.register(tender=self.name, **candidate)
@@ -331,7 +333,7 @@ class TestClarifications(OpenPeriodCase):
 			return {"result": "Failed", "provider_reference": "", "failure_reason": "Mailbox unavailable."}
 		return {"result": "Delivered", "provider_reference": f"test:{notice.name}", "failure_reason": ""}
 
-	def _receive(self, *, event="EVT-1", candidate="ARR-TNDT-001", at="2027-05-26 09:00:00", question=None, user=fx.PRODUCER):
+	def _receive(self, *, event="EVT-1", candidate="ARR-TNDT-001", at=W("2027-05-26 09:00:00"), question=None, user=fx.PRODUCER):
 		return clarifications.receive_tender_clarification(tender=self.name, candidate_registration_id=candidate, question=question or self.QUESTION, received_at=at, inbound_event_id=event, user=user)
 
 	def test_only_a_registered_candidate_through_the_producer_asks_before_the_deadline(self):
@@ -342,7 +344,7 @@ class TestClarifications(OpenPeriodCase):
 			self._receive(candidate="ARR-UNKNOWN")
 		self.assertEqual(ctx.exception.code, "TND_CLARIFICATION_CANDIDATE_REQUIRED")
 		with self.assertRaises(TendersError) as ctx:  # TPR10-AC-003: at the deadline creates nothing
-			self._receive(event="EVT-LATE", at="2027-05-27 17:00:00")
+			self._receive(event="EVT-LATE", at=W("2027-05-27 17:00:00"))
 		self.assertEqual(ctx.exception.code, "TND_CLARIFICATION_LATE")
 		self.assertEqual(frappe.db.count("Tender Clarification", {"tender": self.name}), 0)
 		received = self._receive()  # TPR10-AC-001: no addendum needed
@@ -356,7 +358,7 @@ class TestClarifications(OpenPeriodCase):
 	def test_a_general_answer_reaches_every_candidate_without_naming_the_asker_and_a_direct_one_only_the_asker(self):
 		first = self._receive()
 		root = self._root()
-		frappe.flags.kt_tenders_clock = "2027-05-26 11:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-26 11:00:00")
 		with self.assertRaises(TendersError) as ctx:  # the audience is a deliberate choice
 			clarifications.respond_to_tender_clarification(tender=self.name, clarification=first["clarification"], response="Yes, from different customers.", affects_published_tender=False, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(ctx.exception.code, "TND_CONTROL_INVALID")
@@ -387,8 +389,8 @@ class TestClarifications(OpenPeriodCase):
 		self.assertEqual((awaiting["status"], awaiting["reason_code"]), ("Awaiting addendum", "TND_CLARIFICATION_ADDENDUM_REQUIRED"))
 		self.assertEqual(self.sent, [])  # TPR10-AC-005: nothing is sent
 		self.assertEqual(frappe.db.get_value("Tender Clarification", received["clarification"], "response"), "The delivery point is the 3rd Floor Procurement Stores.")
-		frappe.flags.kt_tenders_clock = "2027-05-26 12:00:00"
-		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": "2027-06-12 11:00:00"})
+		frappe.flags.kt_tenders_clock = W("2027-05-26 12:00:00")
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		root.reload()
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
@@ -399,7 +401,7 @@ class TestClarifications(OpenPeriodCase):
 		waiting = open_period_read.get_tender_clarification(tender=self.name, clarification=received["clarification"], user=fx.OFFICER)
 		self.assertEqual((waiting["guidance"]["next_step"]["kind"], waiting["required_addendum_effective"], waiting["allowed_actions"]), ("your_turn_blocked", False, ["prepare_addendum"]))
 		for channel in CHANNELS:
-			self._confirm("addendum", channel, addendum=name, available_at="2027-05-26 12:30:00")
+			self._confirm("addendum", channel, addendum=name, available_at=W("2027-05-26 12:30:00"))
 		ready = open_period_read.get_tender_clarification(tender=self.name, clarification=received["clarification"], user=fx.OFFICER)
 		self.assertEqual((ready["guidance"]["next_step"]["headline"], ready["required_addendum_effective"], ready["allowed_actions"]), ("Send the answer to all registered candidates.", True, ["send_response"]))
 		self.assertEqual(len([n for n in frappe.get_all("Tender Candidate Notice", filters={"subject_id": name}, pluck="status")]), 2)  # addendum notices (one per candidate)
@@ -432,18 +434,19 @@ class TestClarifications(OpenPeriodCase):
 class TestCancellationAndClose(OpenPeriodCase):
 	def test_recommendation_is_optional_and_cancellation_is_final_with_obligations(self):
 		root = self._root()
-		frappe.flags.kt_tenders_clock = "2027-06-04 13:30:00"
+		frappe.flags.kt_tenders_clock = W("2027-06-04 13:30:00")
 		with self.assertRaises(TendersError) as ctx:
 			cancellation.recommend_tender_cancellation(tender=self.name, ground="NOT_A_GROUND", reason="I recommend cancellation because the confirmed budget is insufficient.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self.assertEqual(ctx.exception.code, "TND_CANCELLATION_GROUND_INVALID")
 		recommended = cancellation.recommend_tender_cancellation(tender=self.name, ground="INADEQUATE_BUDGET", reason="I recommend cancellation because the confirmed budget is insufficient to complete this procurement.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self.assertEqual(frappe.db.get_value("Tender", self.name, "overall_status"), "Published — open")
+		self.assertEqual(frappe.db.count("Cancellation Resource Recovery", {"tender": self.name}), 0)  # a recommendation is not cancellation authority (TPR-CR-AC-002)
 		screen = open_period_read.get_tender_cancellation(tender=self.name, user=fx.AO)
 		self.assertEqual((screen["recommendation"]["ground"], screen["allowed_actions"], screen["summary"]["channel_count"]), ("INADEQUATE_BUDGET", ["cancel_tender"], 4))
-		self.assertEqual(screen["consequences"]["ppra_report_due_by"], "18 Jun 2027")
+		self.assertEqual(screen["consequences"]["ppra_report_due_by"], f"{ad.d_short('2027-06-18')}")
 		self.assertEqual([g["label"] for g in screen["grounds"]][2], "Inadequate budgetary provision")
 		root.reload()
-		frappe.flags.kt_tenders_clock = "2027-06-04 14:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-06-04 14:00:00")
 		for user in (fx.HOPF, fx.OFFICER):
 			with self.assertRaises(frappe.DoesNotExistError):
 				cancellation.cancel_tender(tender=self.name, ground="INADEQUATE_BUDGET", reason="The confirmed budget available for this procurement is insufficient to proceed.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=user)
@@ -451,7 +454,11 @@ class TestCancellationAndClose(OpenPeriodCase):
 		root.reload()
 		doc = frappe.get_doc("Tender Cancellation", cancelled["cancellation"])
 		self.assertEqual((root.overall_status, doc.ground_label, doc.decided_by, doc.recommendation), ("Cancelled", "Inadequate budgetary provision", fx.AO, recommended["decision"]))
-		self.assertEqual((str(doc.ppra_report_due_by), str(doc.candidate_notice_due_by)), ("2027-06-18", "2027-06-18"))
+		# the Accounting Officer's decision itself registered the recovery of the unused allowance and funding, Pending, in the same transaction
+		self.assertEqual(frappe.db.get_value("Cancellation Resource Recovery", {"tender": self.name}, ["name", "status"]), (doc.resource_recovery, "Pending"))
+		# AWD-CHG-001 v0.9 §5.11: ... and stamped the cancellation on the Tender's durable authority record, which still reads Not issued
+		self.assertEqual(frappe.db.get_value("Award Tender Authority", self.name, ["cancellation_ref", "notification_status"]), (doc.name, "Not issued"))
+		self.assertEqual((str(doc.ppra_report_due_by), str(doc.candidate_notice_due_by)), (W("2027-06-18"), W("2027-06-18")))
 		self.assertEqual([o.obligation_type for o in doc.obligations], ["Notice channel"] * 4 + ["PPRA report", "Candidate notice"])
 		# §5.7: no candidate registered, so the absence is recorded from the registry
 		self.assertEqual([o.status for o in doc.obligations], ["Due"] * 5 + ["Recorded"])
@@ -479,20 +486,20 @@ class TestCancellationAndClose(OpenPeriodCase):
 		self.assertEqual(recorded["status"], "Recorded")
 		root.reload()
 		with self.assertRaises((TendersError, frappe.DoesNotExistError)):
-			cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-NOTICE_BOARD", evidence_reference="NB-CANCEL-2027-034", evidence_file=fx.evidence_file("nb.png"), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AUDITOR, available_at="2027-06-05 08:00:00", attestation_confirmed=True)
+			cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-NOTICE_BOARD", evidence_reference="NB-CANCEL-2027-034", evidence_file=fx.evidence_file("nb.png"), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AUDITOR, available_at=W("2027-06-05 08:00:00"), attestation_confirmed=True)
 		# the attester's own attestation is required; it is never assumed (v0.8 defect)
 		with self.assertRaises(TendersError) as ctx:
-			cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-NOTICE_BOARD", evidence_reference="NB-CANCEL-2027-034", evidence_file=fx.evidence_file("nb.png"), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER, available_at="2027-06-05 08:00:00")
+			cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-NOTICE_BOARD", evidence_reference="NB-CANCEL-2027-034", evidence_file=fx.evidence_file("nb.png"), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER, available_at=W("2027-06-05 08:00:00"))
 		self.assertEqual((ctx.exception.code, set(ctx.exception.detail["fields"])), ("TND_PUBLICATION_CONFIRMATION_INCOMPLETE", {"attestation"}))
 		root.reload()
-		notice = cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-NOTICE_BOARD", evidence_reference="NB-CANCEL-2027-034", evidence_file=fx.evidence_file("nb.png"), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER, available_at="2027-06-05 08:00:00", attestation_confirmed=True)
+		notice = cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-NOTICE_BOARD", evidence_reference="NB-CANCEL-2027-034", evidence_file=fx.evidence_file("nb.png"), expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER, available_at=W("2027-06-05 08:00:00"), attestation_confirmed=True)
 		self.assertEqual(notice["status"], "Recorded")
 		self.assertEqual(frappe.db.get_value("Tender Channel Confirmation", {"subject_type": "Cancellation notice", "subject_id": doc.name, "channel": "NOTICE_BOARD"}, "attested_by"), fx.OFFICER)
 		root.reload()
-		hopf = cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-MINISTRY_WEBSITE", evidence_reference="MW-CANCEL-2027-034", evidence_file=fx.evidence_file("mw.png"), public_url="https://www.health.go.ke/tenders/cancel", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, available_at="2027-06-05 08:10:00", attestation_confirmed=True)
+		hopf = cancellation.record_cancellation_compliance_evidence(tender=self.name, obligation_id="NOTICE-MINISTRY_WEBSITE", evidence_reference="MW-CANCEL-2027-034", evidence_file=fx.evidence_file("mw.png"), public_url="https://www.health.go.ke/tenders/cancel", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, available_at=W("2027-06-05 08:10:00"), attestation_confirmed=True)
 		self.assertEqual(hopf["status"], "Recorded")
 		self.assertEqual(frappe.db.get_value("Tender Channel Confirmation", {"subject_type": "Cancellation notice", "subject_id": doc.name, "channel": "NOTICE_BOARD"}, "status"), "Confirmed")
-		frappe.flags.kt_tenders_clock = "2027-06-20 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-06-20 09:00:00")
 		stored_before = frappe.db.get_value("Tender Cancellation", doc.name, ["record_version", "modified"], as_dict=True)
 		stored_statuses = {o.obligation_id: o.status for o in frappe.get_doc("Tender Cancellation", doc.name).obligations}
 		screen = open_period_read.get_tender_cancellation(tender=self.name, user=fx.AUDITOR)
@@ -514,7 +521,7 @@ class TestCancellationAndClose(OpenPeriodCase):
 		with self.assertRaises(TendersError) as ctx:  # never a business user
 			submission_close.close_tender_submission_period(tender=self.name, idempotency_key=fx.key(), user=fx.HOPF, force=True)
 		self.assertEqual(ctx.exception.code, "TND_RESPONSIBILITY_REQUIRED")
-		frappe.flags.kt_tenders_clock = "2027-06-05 11:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-06-05 11:00:00")
 		run = submission_close.close_due_submission_periods()
 		self.assertEqual(run["closed"], [self.name])
 		root.reload()
@@ -522,7 +529,7 @@ class TestCancellationAndClose(OpenPeriodCase):
 		handoff = frappe.get_doc("Tender Submission Handoff", root.submission_handoff)
 		payload = json.loads(handoff.payload_json)
 		self.assertEqual((payload["handoff_version"], payload["tender_version"]["package_digest"], payload["publication"]["published_at"]), ("1.0", frappe.db.get_value("Tender Version", root.approved_version, "package_digest"), str(frappe.db.get_value("Tender Publication", root.publication, "published_at"))))
-		self.assertEqual(payload["effective_submission_deadline"], "2027-06-05 11:00:00")
+		self.assertEqual(payload["effective_submission_deadline"], W("2027-06-05 11:00:00"))
 		self.assertEqual(len(payload["publication"]["required_channels"]), 4)
 		self.assertEqual(frappe.db.get_value("Tender Event", {"tender": self.name, "event_type": "TenderSubmissionPeriodEnded"}, "status"), "Pending")
 		again = submission_close.close_due_submission_periods()

@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-TRM-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A termination: the grounds and notice, what had been accepted and paid, the Accounting Officer's decision, the notice as actually delivered, the effective instant and the settlement. Terminated is neither Completed nor Settled.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "termination_no",
+  "state",
+  "grounds",
+  "basis_json",
+  "financial_json",
+  "decision_json",
+  "notice_json",
+  "effective_at",
+  "settlement_json",
+  "requested_by",
+  "requested_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "termination_no",
+   "label": "Termination no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Requested\nReturned\nApproved\nDeclined\nNotice delivered\nEffective\nSettlement prepared\nSettled"
+  },
+  {
+   "fieldname": "grounds",
+   "label": "Grounds",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis_json",
+   "label": "Basis json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "financial_json",
+   "label": "Financial json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_json",
+   "label": "Decision json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_json",
+   "label": "Notice json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_at",
+   "label": "Effective at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "settlement_json",
+   "label": "Settlement json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "label": "Requested by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "label": "Requested at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Termination",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

@@ -6,6 +6,8 @@ AC-006; tracker AWD4-302, AWD4-303)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import opinion, simulation, state
@@ -26,7 +28,7 @@ class TestOpinion(AwardCase):
 		signed = state.signed_opinion(doc)
 		self.assertEqual((signed.state, signed.conclusion, signed.version), ("Signed", "Recommend award", 1))
 		self.assertTrue(signed.proof_reference.startswith("TATT-"))
-		self.assertEqual(str(signed.signed_at), "2027-06-17 09:10:00")
+		self.assertEqual(str(signed.signed_at), W("2027-06-17 09:10:00"))
 		self.assertEqual(state.cycle(doc).opinion, signed.name)
 
 	def test_only_the_head_of_procurement_signs(self):
@@ -75,8 +77,8 @@ class TestOpinion(AwardCase):
 		self.assertEqual(ctx.exception.code, "AWD_SOURCE_INCOMPLETE")
 
 	def test_expired_report_supports_a_signed_factual_opinion(self):
-		self.at("2027-10-11 09:00:00")
-		self.deliver(overrides={"validity_end": "2027-10-10 11:00:00"})
+		self.at(W("2027-10-11 09:00:00"))
+		self.deliver(overrides={"validity_end": W("2027-10-10 11:00:00")})
 		self.run_as(HOP, opinion.save, award=CASE, conclusion="No current recommendation", reason="Tender validity expired before an award could be notified.",
 			expected_version=self.version())
 		self.assertTrue(self.run_as(HOP, opinion.sign, award=CASE, expected_version=self.version())["ok"])
@@ -104,8 +106,8 @@ class TestReturn(AwardCase):
 		with self.assertRaises(AwardError):
 			self.run_as(HOP, opinion.save, award=CASE, conclusion="Recommend award", reason=REASON, expected_version=self.version())
 		# the corrected report arrives: same case, same cycle, a fresh opinion is required
-		self.at("2027-06-19 09:00:00")
-		self.deliver(version=2, delivered_at="2027-06-19 09:00:00")
+		self.at(W("2027-06-19 09:00:00"))
+		self.deliver(version=2, delivered_at=W("2027-06-19 09:00:00"))
 		doc = self.case()
 		self.assertEqual((doc.current_cycle, state.cycle(doc).awaiting_report, state.current_report(doc).version_number), (1, 0, 2))
 		self.assertEqual(frappe.db.count(state.REPORT, {"award_case": CASE}), 2)

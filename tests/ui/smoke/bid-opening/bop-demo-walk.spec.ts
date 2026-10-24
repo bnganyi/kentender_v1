@@ -4,6 +4,7 @@ import path from "node:path";
 import { Browser, expect, Page, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import { addRecord } from "../../helpers/picker";
 import { loginToPortal, waitForPortal } from "../../helpers/portal";
 import { collectConsoleErrors, expectNextStep, expectScreen } from "./bopWorld";
 
@@ -20,7 +21,7 @@ const BENCH_ROOT = path.resolve(__dirname, "../../../../../..");
 const SITE = process.env.UI_SITE || "kentender.midas.com";
 const PROFILES = "kentender_procurement.bid_opening.seeds.profiles";
 const PASSWORD = process.env.UI_SEED_PASSWORD || "Test@123";
-const REF = "TND-MOH-2027-002";
+const REF = "TND-MOH-2026-002";
 const AMINA = "amina.hassan@moh.example.test";
 const CHARLES = "charles.mutiso@moh.example.test";
 const BRIAN = "brian.wafula@moh.example.test";
@@ -61,15 +62,18 @@ async function openFromMenu(page: Page): Promise<void> {
 	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
 	await page.locator(`tr[data-tender="${REF}"] button`).first().click();
 	await expect(shell).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
-	await page.locator('[data-testid="tnd-link-bid-opening"]').click();
+	// The Tender page's header link gives way to the Bid opening stage block's own "View record" when that block is shown (OVS-CHG-001 v0.6 §8):
+	// the way in is whichever the page offers.
+	await page.locator('[data-testid="tnd-link-bid-opening"], [data-testid="tnd-stage-bid-opening-view-record"]').first().click();
 }
 
 /** Desk home → the notification bell → the named notification. */
 async function openFromBell(page: Page, subject: string): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 1024 });
-	await page.goto("/app", { waitUntil: "domcontentloaded" });
-	await page.locator(".dropdown-notifications .nav-link, .dropdown-notifications > a").first().click();
-	await page.locator(".notification-list-body").getByText(subject).first().click();
+	// Home carries the bell (the "Notification" control); Desk's own navbar bell is not the way in any more
+	await page.goto("/app/home", { waitUntil: "domcontentloaded" });
+	await page.getByText("Notification", { exact: true }).first().click();
+	await page.getByText(subject).first().click();
 }
 
 test.describe.configure({ mode: "serial", timeout: 600_000 });
@@ -89,21 +93,15 @@ test.describe("Bid Opening demo profiles, walked from the menu", () => {
 		await openFromMenu(page);
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Appoint opening committee");
-		const add = async (user: string, role: string) => {
-			await page.locator('[data-testid="bop-add-member"]').click();
-			await page.locator('[data-testid="bop-add-member-person"]').selectOption(user);
-			await page.locator('[data-testid="bop-add-member-role"]').selectOption(role);
-			await page.locator('[data-testid="bop-add-member-confirm"]').click();
-		};
-		await add(CHARLES, "Chair and recorder");
-		await add(BRIAN, "Member");
-		await page.locator('[data-testid="bop-appoint"]').click();
+		await page.locator('[data-testid="bop-add-member"]').click();
+		await addRecord(page, "#bop-add-member-person", CHARLES);
+		await addRecord(page, "#bop-add-member-person", BRIAN);
+		await page.locator(`[data-testid="bop-staged-role-${BRIAN}"]`).selectOption("Member");
+		await page.locator('[data-testid="bop-add-member-confirm"]').click();
 		await expectNextStep(page, "your_turn_blocked", "The opening committee needs an independent third member");
 		await page.locator('[data-testid="bop-guidance"] [data-kt="next-step"] button', { hasText: "Add an independent third member" }).click();
-		await page.locator('[data-testid="bop-add-member-person"]').selectOption(BEATRICE);
-		await page.locator('[data-testid="bop-add-member-role"]').selectOption("Independent member");
+		await addRecord(page, "#bop-add-member-person", BEATRICE);
 		await page.locator('[data-testid="bop-add-member-confirm"]').click();
-		await page.locator('[data-testid="bop-appoint"]').click();
 		await expectScreen(page, "prepare");
 		await expectNextStep(page, "your_turn", "Publish how to attend");
 

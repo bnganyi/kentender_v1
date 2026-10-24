@@ -11,6 +11,7 @@ first request is running waits for it and returns its original result."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.proceedings.services import lifecycle
@@ -29,7 +30,7 @@ class TestProceedingsCommandEnvelope(ProceedingsCase):
 		def setup():
 			frappe.flags.kt_prc_owner_adapters = {OWNER_TYPE: self.owner}
 			frappe.flags.kt_prc_fixture_namespace = NS
-			frappe.flags.kt_prc_clock = "2027-06-12 11:00:12"
+			frappe.flags.kt_prc_clock = W("2027-06-12 11:00:12")
 
 		return setup
 

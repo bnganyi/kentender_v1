@@ -71,7 +71,8 @@ STAGES = {
 	"resolved": ("unreadable", "c11b"),
 	"unresolved": ("unreadable", "c11c (chair), c11e (Accounting Officer)"),
 	"mismatch": ("started", "c11d"),
-	"cancelled": ("answered", "c12"),
+	"cancelled": ("answered", "c12: the Accounting Officer cancelled the Tender after the opening started; the partial record is kept"),
+	"not-held-cancelled": ("not-held", "c12b: the Accounting Officer then cancelled the Tender; the not-held record gains the cancellation"),
 	"ended": ("answered", "r1 r2"),
 	"frozen": ("ended", "r3"),
 	"member-signed": ("frozen", "r4 (member), r3 (independent)"),
@@ -92,6 +93,9 @@ REQUEST = {"exception_class": "Repeat request", "speaker_name": "David Ouma", "w
 ACCOUNT = "I heard the total repeated after the attendee’s request, but I could not hear the security reference clearly."
 COMMENT = {"comment": "The security reference shown on the price page differs from the reference read aloud.",
 	"response": "The observation is recorded for the Evaluation Committee to check. No decision is made at opening."}
+CANCEL_GROUND = "INADEQUATE_BUDGET"
+CANCEL_REASON = "The confirmed budget available for this procurement is insufficient to proceed."
+AT_NOT_HELD_CANCEL = 700  # after the not-held record at 610 s
 NOT_HELD_REASON = "The public attendance service was unavailable; opening did not start"
 
 
@@ -379,12 +383,29 @@ class OpeningWorld:
 		self._open_next()
 		self.at(61)
 
-	def stage_cancelled(self) -> None:
-		from kentender_procurement.bid_opening.services import cancellation
+	def cancel_tender(self, seconds: int) -> dict[str, Any]:
+		"""The Accounting Officer's real post-close CancelTender (TPR-CHG-001 v0.24 §5.7) on the Tenders ground profile of this test environment, then the
+		delivery of TenderCancelled to its consumers from the Tender's own ledger — exactly what the browser would do at the real clock."""
+		from kentender_procurement.tenders.services import cancellation, opening_seam
+		from kentender_procurement.tenders.test_services import ground_verifier
 
-		self.at(180)
-		cancellation.close_cancelled_opening(tender=self.tender, cancellation_reference="TND-PW-CANCEL-AFTER-START")
-		self.at(190)
+		self.at(seconds)
+		ground_verifier.set_controls(verified_cancellation_grounds=CANCEL_GROUND)
+		frappe.set_user(self.ao)
+		try:
+			out = cancellation.cancel_tender(tender=self.tender, ground=CANCEL_GROUND, reason=CANCEL_REASON,
+				expected_record_version=frappe.db.get_value("Tender", self.tender, "record_version"), idempotency_key=_key(), user=self.ao)
+		finally:
+			frappe.set_user("Administrator")
+		opening_seam.deliver_pending_cancellation(self.tender)
+		self.at(seconds + 10)
+		return out
+
+	def stage_cancelled(self) -> None:
+		self.cancel_tender(180)
+
+	def stage_not_held_cancelled(self) -> None:
+		self.cancel_tender(AT_NOT_HELD_CANCEL)
 
 	# -- the record -------------------------------------------------------------
 	def _read_remaining(self) -> None:
@@ -542,6 +563,15 @@ def set_register_self_service(*, on: bool) -> dict[str, Any]:
 	return {"register_self_service": on}
 
 
+def set_tender_controls(**values) -> dict[str, Any]:
+	"""A browser spec names the cancellation grounds this test environment verifies (the post-close route, TPR-CHG-001 v0.24 §5.12), or none."""
+	from kentender_procurement.tenders.test_services import ground_verifier
+
+	out = ground_verifier.set_controls(**values)
+	frappe.db.commit()
+	return out
+
+
 def request_register(*, user: str) -> dict[str, Any]:
 	"""The submitting supplier asks for the register (as the portal button does)."""
 	from kentender_procurement.bid_opening.services import register_copy
@@ -580,6 +610,30 @@ def capture(*, users: list[str] | None = None) -> dict[str, Any]:
 		except frappe.DoesNotExistError:
 			out[user] = None
 	return frappe.parse_json(frappe.as_json(out))
+
+
+#: The key each reader has in a captured fixture (the fidelity spec's `USERS`).
+READERS = {AO: "ao", CHAIR: "chair", MEMBER: "member", INDEPENDENT: "independent", AUDITOR: "auditor", "Administrator": "admin"}
+#: Worlds for the public page are captured by `capture_public`; every other stage here is one Desk fixture.
+
+
+def capture_all(*, stages: list[str] | None = None) -> dict[str, Any]:
+	"""Write `public/js/bid_opening/fixtures/<stage>.json` for each stage: what every reader's GetOpening returns there. One world is built per stage
+	(each from its parent chain) and the site is restored at the end. Never run while a Python test module or a Playwright run is using the site."""
+	import json
+	import os
+
+	out_dir = frappe.get_app_path("kentender_procurement", "public", "js", "bid_opening", "fixtures")
+	os.makedirs(out_dir, exist_ok=True)
+	written = []
+	for stage in stages or list(STAGES):
+		reset_opening_fixture(stage=stage)
+		answers = capture()
+		with open(os.path.join(out_dir, f"{stage}.json"), "w") as fh:
+			json.dump({READERS[user]: answer for user, answer in answers.items() if user in READERS}, fh, indent=1, sort_keys=True)
+		written.append(stage)
+	restore_site()
+	return {"written": written}
 
 
 def restore_site(*, commit: bool = True) -> dict[str, Any]:

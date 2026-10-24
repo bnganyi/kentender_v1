@@ -1,0 +1,207 @@
+{
+ "actions": {
+  "Reject replacement": {
+   "dialog": "reject",
+   "do": "dialog"
+  },
+  "Verify replacement": {
+   "dialog": "verify",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_replacement_instr",
+ "d": "D37",
+ "dialogs": {
+  "reject": {
+   "args": {
+    "security": "CM-SEC-991759"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RejectContractSecurity",
+   "p": "Reject",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Reject replacement"
+  },
+  "verify": {
+   "args": {
+    "security": "CM-SEC-991759"
+   },
+   "b": [
+    {
+     "items": [
+      [
+       "Instrument",
+       "TEST-SG-02"
+      ],
+      [
+       "Issuer",
+       "Test Bank"
+      ],
+      [
+       "Amount",
+       "KES 100,000"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      {
+       "l": "Issuer's confirmation reference",
+       "name": "confirmation_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Confirmation received",
+       "name": "received_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Basis",
+       "name": "basis",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "VerifyContractSecurity",
+   "p": "Verify",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Verify replacement"
+  }
+ },
+ "ev": [
+  "Instrument TEST-SG-02"
+ ],
+ "id": "D37-X",
+ "name": "Security claim",
+ "next": {
+  "h": "Check the issuer's confirmation.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Verify replacement",
+ "page": "record",
+ "ref": "CM-TEST-test_a_replacement_instr",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Instrument",
+      "Amount",
+      "Expiry",
+      "Status"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1
+     ],
+     "rows": [
+      [
+       "TEST-SG-01",
+       "KES 100,000",
+       "31 Aug 2027",
+       "!Operative"
+      ],
+      [
+       "TEST-SG-02",
+       "KES 100,000",
+       "30 Sep 2027",
+       "!Not verified"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Issuer confirmation",
+       "Awaiting the issuer's confirmation"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "help",
+     "v": "The old instrument remains operative until the replacement is verified. Nothing is released on expiry."
+    }
+   ],
+   "t": "Instruments"
+  }
+ ],
+ "s2": [
+  "Reject replacement"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_replacement_instr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_replacement_instr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_replacement_instr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_replacement_instr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_replacement_instr",
+    "history"
+   ]
+  }
+ ],
+ "title": "Verify replacement security",
+ "version": 12
+}

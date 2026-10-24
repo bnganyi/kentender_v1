@@ -18,6 +18,7 @@ untouched. Bid Submission's canonical seed calls this through the
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W, world0 as W0  # noqa: F401
 from io import BytesIO
 from typing import Any
 
@@ -34,7 +35,7 @@ AFYA = {
 #: Afya's standing business facts (a private company with two directors); every canonical bid copies them.
 AFYA_PROFILE = {
 	"business_structure": "Registered company", "company_type": "Private company", "nominal_capital": "5000000.00", "issued_capital": "2500000.00",
-	"trade_licence_number": "TL-2027-0451", "trade_licence_expiry": "2027-12-31", "maximum_business_value": "80000000.00", "state_owned": "No", "year_of_registration": 2014,
+	"trade_licence_number": "TL-2027-0451", "trade_licence_expiry": F("2027-12-31"), "maximum_business_value": "80000000.00", "state_owned": "No", "year_of_registration": 2014,
 	"directors": [
 		{"name": "Mary Wanjiku", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "60"},
 		{"name": "John Kamau", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "40"},
@@ -50,7 +51,7 @@ def default_profile(owner: str) -> dict[str, Any]:
 AUTHORITY_FILE = "mary-wanjiku-signing-authority.pdf"
 # Two-year seed world (4 Oct 2026): registered before the executed portfolio's
 # first bids in April 2027 (was 18 May 2027).
-CLOCK = {"register": "2027-03-01 09:00:00", "verify": "2027-03-01 09:10:00", "representative": "2027-03-01 09:20:00"}
+CLOCK = {"register": W0("2027-03-01 09:00:00"), "verify": W0("2027-03-01 09:10:00"), "representative": W0("2027-03-01 09:20:00")}
 
 
 def _pdf() -> bytes:

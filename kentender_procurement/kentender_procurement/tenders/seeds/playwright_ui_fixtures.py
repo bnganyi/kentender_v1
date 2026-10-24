@@ -20,7 +20,9 @@ concurrently on one site (both move the same flags; PLN-CHG-001 D13)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
+from contextlib import contextmanager
 from io import BytesIO
 from typing import Any
 from uuid import uuid4
@@ -29,6 +31,31 @@ import frappe
 
 from kentender_procurement.procurement_requisitions.seeds import playwright_ui_fixtures as req_pw
 from kentender_procurement.tenders.seeds import clear as tender_clear
+
+
+# A world the browser then acts on at the real clock (an addendum the Head issues, a publication the Accounting Officer withdraws) needs deadlines
+# that are still ahead of the real clock. The story's own deadlines (5 and 12 June 2027) lie in the past of an anchored world, where the story's
+# "now" is the anchor, so such a world takes its deadlines a number of days from today instead (SEED-002 v0.9 R1). The world's own history stays
+# on the story's instants.
+_LIVE = {"on": False}
+
+
+@contextmanager
+def _live(on: bool):
+	before = _LIVE["on"]
+	_LIVE["on"] = bool(on) or before
+	try:
+		yield
+	finally:
+		_LIVE["on"] = before
+
+
+def _deadline(story: str, days_ahead: int, at: str) -> str:
+	if _LIVE["on"]:
+		from frappe.utils import add_days, nowdate
+
+		return f"{add_days(nowdate(), days_ahead)} {at}"
+	return W(story)
 
 NS_PW = "KENTENDER_TND_PLAYWRIGHT"
 OFFICER = "pw.tnd.officer@example.test"
@@ -48,12 +75,12 @@ CHANNELS = ("STATE_PORTAL", "MINISTRY_WEBSITE", "NOTICE_BOARD", "NATIONAL_NEWSPA
 
 # §13.3 instants, pinned.
 CLOCK = {
-	"start": "2027-03-20 09:00:00", "submit": "2027-03-20 11:40:00", "return": "2027-03-25 14:00:00", "resubmit": "2027-04-15 09:15:00",
-	"approve": "2027-04-20 10:00:00", "authorise": "2027-05-15 07:55:00", "confirm": "2027-05-15 08:03:00", "addendum": "2027-05-31 08:30:00",
-	"addendum_confirm": "2027-05-31 09:00:00", "candidate": "2027-05-19 09:20:00", "clarification": "2027-05-26 09:00:00", "respond": "2027-05-26 11:00:00",
-	"cancel": "2027-06-04 14:00:00", "close": "2027-06-12 11:00:00",
+	"start": W("2027-03-20 09:00:00"), "submit": W("2027-03-20 11:40:00"), "return": W("2027-03-25 14:00:00"), "resubmit": W("2027-04-15 09:15:00"),
+	"approve": W("2027-04-20 10:00:00"), "authorise": W("2027-05-15 07:55:00"), "confirm": W("2027-05-15 08:03:00"), "addendum": W("2027-05-31 08:30:00"),
+	"addendum_confirm": W("2027-05-31 09:00:00"), "candidate": W("2027-05-19 09:20:00"), "clarification": W("2027-05-26 09:00:00"), "respond": W("2027-05-26 11:00:00"),
+	"cancel": W("2027-06-04 14:00:00"), "close": W("2027-06-12 11:00:00"),
 }
-AVAILABLE = {"STATE_PORTAL": "2027-05-15 08:00:00", "MINISTRY_WEBSITE": "2027-05-15 08:00:00", "NOTICE_BOARD": "2027-05-15 08:15:00", "NATIONAL_NEWSPAPERS": "2027-05-15 08:20:00"}
+AVAILABLE = {"STATE_PORTAL": W("2027-05-15 08:00:00"), "MINISTRY_WEBSITE": W("2027-05-15 08:00:00"), "NOTICE_BOARD": W("2027-05-15 08:15:00"), "NATIONAL_NEWSPAPERS": W("2027-05-15 08:20:00")}
 
 # Candidates register through Bid Submission's Start bid (TPR FU-25): the
 # first is the canonical Afya account; the second, whose notices fail, gets a
@@ -202,8 +229,8 @@ def _authorised() -> dict[str, Any]:
 
 def officer_values(**overrides) -> dict[str, Any]:
 	values = {
-		"tender_title": "Supply and delivery of business laptops", "issue_date": "2027-05-15", "clarification_deadline": "2027-05-27 17:00:00",
-		"submission_deadline": "2027-06-05 11:00:00", "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
+		"tender_title": "Supply and delivery of business laptops", "issue_date": W("2027-05-15"), "clarification_deadline": _deadline("2027-05-27 17:00:00", 7, "17:00:00"),
+		"submission_deadline": _deadline("2027-06-05 11:00:00", 14, "11:00:00"), "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
 		"manufacturer_authorisation_required": True, "datasheets_required": True, "past_experience_required": True, "minimum_comparable_contracts": 2,
 		"experience_period_years": 5, "after_sales_evidence_required": True, "after_sales_evidence": "Kenya service-centre details and escalation contacts",
 		"inspection_location": LOCATION, "payment_timing_days": "30", "performance_security_required": True, "performance_security_percent": 10,
@@ -315,9 +342,9 @@ def reset_draft_complete_fixture(*, commit: bool = True, meeting: str = "No") ->
 	state = reset_draft_fixture(commit=False)
 	values = officer_values()
 	if meeting == "Physical":
-		values.update({"pre_tender_meeting": True, "meeting_datetime": "2027-05-22 10:00:00", "meeting_mode": "Physical", "meeting_venue": LOCATION})
+		values.update({"pre_tender_meeting": True, "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_mode": "Physical", "meeting_venue": LOCATION})
 	elif meeting == "Online":
-		values.update({"pre_tender_meeting": True, "meeting_datetime": "2027-05-22 10:00:00", "meeting_mode": "Online", "online_joining_information": "Microsoft Teams — https://meet.example.test/tnd-pw"})
+		values.update({"pre_tender_meeting": True, "meeting_datetime": W("2027-05-22 10:00:00"), "meeting_mode": "Online", "online_joining_information": "Microsoft Teams — https://meet.example.test/tnd-pw"})
 	_save(state["tender"], values)
 	return _done(state, commit)
 
@@ -373,22 +400,29 @@ def reset_segregation_fixture(*, commit: bool = True, stage: str = "hopf") -> di
 	return _done(state, commit)
 
 
-def reset_publication_fixture(*, commit: bool = True, confirmed: int = 2) -> dict[str, Any]:
-	"""TPR-DES-08 opening state: publication authorised, `confirmed` of four channels confirmed."""
-	state = reset_awaiting_ao_fixture(commit=False)
-	authorised = _authorise(state["tender"], state["task"])
-	state["publication"] = authorised["publication"]
-	_clock("confirm")
-	for channel in CHANNELS[: max(0, int(confirmed))]:
-		_confirm(state["tender"], channel)
-	return _done(state, commit)
+def reset_publication_fixture(*, commit: bool = True, confirmed: int = 2, live: bool = True) -> dict[str, Any]:
+	"""TPR-DES-08 opening state: publication authorised, `confirmed` of four channels confirmed. The browser withdraws or confirms at the real
+	clock, so the world's deadlines are still ahead of it (`live`)."""
+	with _live(live):
+		state = reset_awaiting_ao_fixture(commit=False)
+		authorised = _authorise(state["tender"], state["task"])
+		state["publication"] = authorised["publication"]
+		_clock("confirm")
+		for channel in CHANNELS[: max(0, int(confirmed))]:
+			_confirm(state["tender"], channel)
+		return _done(state, commit)
 
 
-def reset_published_fixture(*, commit: bool = True, with_addendum: bool = False, with_clarification: bool = False, answered: bool = False) -> dict[str, Any]:
+def reset_published_fixture(*, commit: bool = True, with_addendum: bool = False, with_clarification: bool = False, answered: bool = False, live: bool = False) -> dict[str, Any]:
 	"""TPR-DES-09 opening state: Published — open with one registered
 	candidate; optionally its general clarification (awaiting or answered)
 	and one issued, fully confirmed addendum."""
-	state = reset_publication_fixture(commit=False, confirmed=4)
+	with _live(live):
+		return _published_world(commit=commit, with_addendum=with_addendum, with_clarification=with_clarification, answered=answered, live=live)
+
+
+def _published_world(*, commit: bool, with_addendum: bool, with_clarification: bool, answered: bool, live: bool) -> dict[str, Any]:
+	state = reset_publication_fixture(commit=False, confirmed=4, live=live)
 	state.update(_candidate(state["tender"]))
 	if with_clarification:
 		state.update(_clarification(state["tender"], answered=answered))
@@ -408,11 +442,13 @@ def reset_ended_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
-ADDENDUM_VALUES = {
-	"change_class": "Administrative clarification", "affected_area": "Goods/delivery schedule", "affected_reference_key": "delivery_location",
-	"revised_value": "Playwright — Requisitions Delivery Location, Loading Bay 3", "reason": "Loading bay reassigned after warehouse reorganisation.",
-	"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.", "revised_submission_deadline": "2027-06-12 11:00:00",
-}
+def _addendum_values() -> dict[str, Any]:
+	return {
+		"change_class": "Administrative clarification", "affected_area": "Goods/delivery schedule", "affected_reference_key": "delivery_location",
+		"revised_value": "Playwright — Requisitions Delivery Location, Loading Bay 3", "reason": "Loading bay reassigned after warehouse reorganisation.",
+		"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.",
+		"revised_submission_deadline": _deadline("2027-06-12 11:00:00", 21, "11:00:00"),
+	}
 
 
 def _addendum_draft(name: str, *, values: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -432,7 +468,7 @@ def _addendum_draft(name: str, *, values: dict[str, Any] | None = None) -> dict[
 def _issued_addendum(name: str) -> dict[str, Any]:
 	from kentender_procurement.tenders.services import addenda
 
-	state = _addendum_draft(name, values=ADDENDUM_VALUES)
+	state = _addendum_draft(name, values=_addendum_values())
 	with _as(OFFICER):
 		addenda.submit_addendum_for_issue(tender=name, addendum=state["addendum"], expected_record_version=_root(name).record_version, idempotency_key=_key())
 	with _as(HOPF):
@@ -482,21 +518,23 @@ def _clarification(name: str, *, answered: bool = False, question: str = "May th
 	return state
 
 
-def reset_addendum_draft_fixture(*, commit: bool = True, saved: bool = True) -> dict[str, Any]:
+def reset_addendum_draft_fixture(*, commit: bool = True, saved: bool = True, live: bool = False) -> dict[str, Any]:
 	"""TPR-DES-10 "Draft (Procurement Officer)": a saved (or empty) draft addendum."""
-	state = reset_published_fixture(commit=False)
-	state.update(_addendum_draft(state["tender"], values=ADDENDUM_VALUES if saved else None))
-	return _done(state, commit)
+	with _live(live):
+		state = reset_published_fixture(commit=False, live=live)
+		state.update(_addendum_draft(state["tender"], values=_addendum_values() if saved else None))
+		return _done(state, commit)
 
 
-def reset_addendum_awaiting_issue_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""TPR-DES-10 "HOPF issue": submitted for issue."""
+def reset_addendum_awaiting_issue_fixture(*, commit: bool = True, live: bool = True) -> dict[str, Any]:
+	"""TPR-DES-10 "HOPF issue": submitted for issue. The Head issues it in the browser at the real clock, so the deadlines are still ahead of it (`live`)."""
 	from kentender_procurement.tenders.services import addenda
 
-	state = reset_addendum_draft_fixture(commit=False)
-	with _as(OFFICER):
-		addenda.submit_addendum_for_issue(tender=state["tender"], addendum=state["addendum"], expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
-	return _done(state, commit)
+	with _live(live):
+		state = reset_addendum_draft_fixture(commit=False, live=live)
+		with _as(OFFICER):
+			addenda.submit_addendum_for_issue(tender=state["tender"], addendum=state["addendum"], expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
+		return _done(state, commit)
 
 
 def reset_addendum_confirming_fixture(*, commit: bool = True) -> dict[str, Any]:
@@ -519,7 +557,7 @@ def reset_material_addendum_fixture(*, commit: bool = True, review: str = "") ->
 	state = reset_published_fixture(commit=False)
 	line = next(r for r in addenda.affected_references(_root(state["tender"])) if r["key"].startswith("goods:"))
 	quantity = int(float(line["value"].split(" ", 1)[0].replace(",", "")))
-	state.update(_addendum_draft(state["tender"], values={**ADDENDUM_VALUES, "affected_reference_key": line["key"], "revised_value": f"{quantity + 50} Each", "reason": "Additional deployment sites require 50 more laptops", "materiality_statement": "", "revised_submission_deadline": None}))
+	state.update(_addendum_draft(state["tender"], values={**_addendum_values(), "affected_reference_key": line["key"], "revised_value": f"{quantity + 50} Each", "reason": "Additional deployment sites require 50 more laptops", "materiality_statement": "", "revised_submission_deadline": None}))
 	state["current_quantity"] = line["value"]
 	if review in ("requested", "closed"):
 		with _as(OFFICER):
@@ -579,6 +617,49 @@ def reset_cancelled_fixture(*, commit: bool = True) -> dict[str, Any]:
 		cancelled = cancellation.cancel_tender(tender=state["tender"], ground="INADEQUATE_BUDGET", reason="The confirmed budget available for this procurement is insufficient to proceed.", expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
 	state["cancellation"] = cancelled["cancellation"]
 	return _done(state, commit)
+
+
+def _recovery_facts(tender: str) -> dict[str, Any]:
+	"""The ids a browser spec needs to walk the four screens of one cancelled Tender's recovery."""
+	recovery = frappe.db.get_value("Cancellation Resource Recovery", {"tender": tender}, ["name", "requisition", "plan_item_id", "status"], as_dict=True)
+	if not recovery:
+		return {}
+	source = frappe.db.get_value("Cancellation Recovery Source", {"parent": recovery.name}, ["reservation_id"], as_dict=True)
+	return {
+		"recovery": recovery.name, "recovery_status": recovery.status, "requisition": recovery.requisition,
+		"requisition_reference": frappe.db.get_value("Procurement Requisition", recovery.requisition, "requisition_reference"), "plan_item_id": recovery.plan_item_id,
+		"plan_reference": frappe.db.get_value("Annual Plan", frappe.db.get_value("Plan Item", recovery.plan_item_id, "annual_plan"), "plan_reference"),
+		"reservation": source.reservation_id if source else "", "budget_line": frappe.db.get_value("Funding Reservation", source.reservation_id, "budget_line") if source else "",
+	}
+
+
+def reset_cancelled_recovery_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""TPR-DES-12 'Cancelled detail' with the recovery of the unused allowance and funding that the real cancellation registered (Pending)."""
+	state = reset_cancelled_fixture(commit=False)
+	state.update(_recovery_facts(state["tender"]))
+	return _done(state, commit)
+
+
+def cancellation_recovery_facts(*, tender: str) -> dict[str, Any]:
+	"""Read-only: the ids of a cancelled Tender's recovery, for a browser spec that cancelled it through the screen."""
+	return _recovery_facts(tender)
+
+
+def run_cancellation_recovery(*, tender: str, other_reason: bool = False, commit: bool = True) -> dict[str, Any]:
+	"""Carry out the recovery the way the scheduler's worker does (the test site has none running). With `other_reason`, the reservation is first
+	released for another reason through Budget, so the recovery has to stop with the owner's own reason."""
+	from kentender_procurement.procurement_requisitions.services import funding_gateway, recovery_sweep
+
+	facts = _recovery_facts(tender)
+	frappe.set_user("Administrator")
+	if other_reason:
+		funding_gateway.release_reservation(
+			reservation=facts["reservation"], requisition_reference=facts["requisition_reference"], downstream_event_id="playwright-other-reason", idempotency_key=_key(),
+		)
+	outcome = recovery_sweep.run_one(facts["recovery"])
+	if commit:
+		frappe.db.commit()
+	return {**facts, "recovery_status": outcome["status"], "reason": outcome["reason"]}
 
 
 def reset_correction_requested_fixture(*, commit: bool = True, successor: bool = False) -> dict[str, Any]:

@@ -8,6 +8,7 @@ Tender or Requisition rows."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -60,7 +61,7 @@ class TestReleaseNotice(TemplateBindingCase):
 		self.assertEqual((notice["state"], notice["full_page"], notice["update_to"]), ("Superseded", True, current.template_release))
 		self.assertFalse(template_binding.release_notice(self.record(overall_status="Draft"), "Guest")["can_update"])
 		# a published Tender keeps its release: no notice, no update
-		self.assertIsNone(template_binding.release_notice(self.record(published_at="2027-05-15 08:00:00"), "Administrator"))
+		self.assertIsNone(template_binding.release_notice(self.record(published_at=W("2027-05-15 08:00:00")), "Administrator"))
 
 	def test_superseded_unpublished_names_the_release_and_offers_the_route_to_readers_only(self):
 		lifecycle.supersede(self.release.name, release_owner="test release owner")
@@ -78,14 +79,14 @@ class TestReleaseNotice(TemplateBindingCase):
 		before = template_binding.release_notice(self.record(), "Administrator")
 		self.assertEqual((before["tone"], before["heading"]), ("is-critical", "Tender format withdrawn"))
 		self.assertIn("Your work is preserved", before["text"])
-		after = template_binding.release_notice(self.record(published_at="2027-05-15 08:00:00"), "Administrator")
+		after = template_binding.release_notice(self.record(published_at=W("2027-05-15 08:00:00")), "Administrator")
 		self.assertEqual(after["tone"], "is-info")
 		self.assertIn("remain the record", after["text"])
 
 	def test_a_failed_integrity_check_blocks_only_unpublished_work(self):
 		frappe.db.set_value("Installed STD Release", self.release.name, "integrity_status", "Failed", update_modified=False)
 		self.assertEqual(template_binding.release_notice(self.record(), "Administrator")["state"], "Failed")
-		self.assertIsNone(template_binding.release_notice(self.record(published_at="2027-05-15 08:00:00"), "Administrator"))
+		self.assertIsNone(template_binding.release_notice(self.record(published_at=W("2027-05-15 08:00:00")), "Administrator"))
 
 	def test_a_record_without_a_bound_release_shows_nothing(self):
 		self.assertIsNone(template_binding.release_notice(self.record(template_key=""), "Administrator"))

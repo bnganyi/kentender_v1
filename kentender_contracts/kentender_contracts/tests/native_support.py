@@ -1,0 +1,83 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""Functions the native tests run in **separate processes** (`bench execute`): a hard crash and a concurrent race cannot be shown in-process.
+Not product code."""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+
+import frappe
+from frappe.utils import add_days, today
+
+from kentender_contracts.native import adapter
+from kentender_contracts.services import intents
+from kentender_contracts.tests import native_world as world
+
+
+def crash_after_native_commit(intent: str, identity: str) -> None:
+	"""Carry the intent through `intents.execute`, create and commit the native order, then die before the link is written."""
+
+	def executor(ident):
+		po = adapter.create_purchase_order(ident, company=world.COMPANY, supplier=world.SUPPLIER, currency=world.CURRENCY, schedule_date=add_days(today(), 30),
+			items=[{"item_code": world.ITEM_FA, "qty": 10, "rate": 100000}])
+		frappe.db.commit()
+		print(f"CRASH native order {po} committed; dying before the link is written", flush=True)
+		os._exit(137)
+
+	intents.execute(intent, executor, lambda ident: adapter.find_by_identity("Purchase Order", ident), native_doctype="Purchase Order")
+
+
+def race_approve(pe: str, start_at: float) -> None:
+	"""One contender of a race: wait for the common start instant, then approve inside the controlled operation."""
+	time.sleep(max(0.0, start_at - time.time()))
+	started = time.time()
+	try:
+		result = adapter.approve_payment(pe, f"CM_TEST|race {pe}|1|Native payment|k-1", world.USERS["approver"])
+		frappe.db.commit()
+		print("RACE " + json.dumps({"pe": pe, "ok": True, "result": result, "waited_s": round(time.time() - started, 2)}))
+	except Exception as exc:  # noqa: BLE001
+		frappe.db.rollback()
+		print("RACE " + json.dumps({"pe": pe, "ok": False, "error": f"{type(exc).__name__}: {str(exc)[:200]}", "waited_s": round(time.time() - started, 2)}))
+
+
+def job_submits_payment(pe: str) -> str:
+	"""The body of a background job: what a queued task does when it submits a payment."""
+	doc = frappe.get_doc("Payment Entry", pe)
+	doc.submit()
+	return doc.name
+
+
+def race_claim(case: str, actor: str, reference: str, version: int, start_at: float) -> None:
+	"""One contender of a race for the same entitlement: wait for the common start instant, then submit a claim for the whole accepted quantity through the command."""
+	import time as _time
+
+	from kentender_contracts.services import errors, payment
+	from kentender_contracts.tests import thread_world as tw
+
+	tw.Environment().__enter__()  # the same supplier accounts and trusted clock the test world runs under
+	frappe.flags.kt_cm_fixture_namespace = "CM_TEST"  # what this process writes is removed with the test's own rows
+	_time.sleep(max(0.0, start_at - _time.time()))
+	started = _time.time()
+	try:
+		frappe.set_user(actor)
+		for attempt in (1, 2):  # a client whose screen went stale reloads and sends the same claim again
+			try:
+				out = payment.submit_invoice(case, expected_version=version, idempotency_key=f"race-{reference}-{attempt}", actor=actor, claim_reference=reference, invoice_date=today(), lines=[{"line_id": "L1", "quantity": 8}])
+				break
+			except errors.ContractError as exc:
+				if exc.code != "CM_CHANGED" or attempt == 2:
+					raise
+				frappe.db.rollback()
+				version = frappe.db.get_value("Contract Case", case, "record_version")
+		frappe.db.commit()
+		print("RACE " + json.dumps({"reference": reference, "ok": True, "state": out["state"], "attempts": attempt, "waited_s": round(_time.time() - started, 2)}))
+	except (errors.ContractError, errors.InputError) as exc:
+		frappe.db.rollback()
+		print("RACE " + json.dumps({"reference": reference, "ok": False, "code": getattr(exc, "code", ""), "waited_s": round(_time.time() - started, 2)}))
+	except Exception as exc:  # noqa: BLE001
+		frappe.db.rollback()
+		print("RACE " + json.dumps({"reference": reference, "ok": False, "error": f"{type(exc).__name__}: {str(exc)[:200]}"}))

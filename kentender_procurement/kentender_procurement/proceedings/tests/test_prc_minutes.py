@@ -8,6 +8,7 @@ PRC-N07. Test attestations are not electronic signatures (TRUST-ADR-001 v0.1
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.proceedings.tests.support import (
@@ -19,19 +20,19 @@ class TestHappyPath(ProceedingsCase):
 	def test_prc_s02_start_to_finalized(self):
 		created = self.create()
 		self.start(created)
-		self.at("2027-06-12 11:01:00")
+		self.at(W("2027-06-12 11:01:00"))
 		reveal = self.owner_event(created, "PackageRevealed", "reveal-1")
-		self.at("2027-06-12 11:01:45")
+		self.at(W("2027-06-12 11:01:45"))
 		self.owner_event(created, "ReadoutConfirmed", "readout-1", linked_event=reveal["event_id"])
 		self.end(created)
 		frozen = self.freeze(created)
 		self.assertEqual((frozen["version_number"], frappe.db.get_value("Proceeding", created["proceeding"], "state")), (1, "Awaiting attestations"))
 		self.attest_all(created, self.current_minutes(created))
-		self.at("2027-06-12 11:10:30")
+		self.at(W("2027-06-12 11:10:30"))
 		done = finalize.finalize_proceeding(**self.ref(created), idempotency_key=self.key(), actor=finalize.SYSTEM_ACTOR)
 		self.assertEqual(done["state"], "Finalized")
 		row = frappe.db.get_value("Proceeding", created["proceeding"], ["finalized_at"], as_dict=True)
-		self.assertEqual(str(row.finalized_at), "2027-06-12 11:10:30")
+		self.assertEqual(str(row.finalized_at), W("2027-06-12 11:10:30"))
 		self.assertEqual(frappe.db.get_value("Proceeding Minutes Version", frozen["minutes_version"], "state"), "Finalized")
 		self.assertCode("PRC_ALREADY_FINALIZED", self.owner_event, created, "LateFact", "late-1")
 		self.assertCode("PRC_ALREADY_FINALIZED", minutes.supersede_minutes, **self.ref(created), reason="x", content="y", page_count=1, register_reference="R",
@@ -125,7 +126,7 @@ class TestSupersede(ProceedingsCase):
 		self.attest_all(created, v1, members=(MEMBER,))
 		self.assertCode("PRC_EVIDENCE_INCOMPLETE", minutes.supersede_minutes, **self.ref(created), reason="", content="v2", page_count=1, register_reference="R",
 			register_digest="d", event_ids=[], targets=self.targets(prefix="V2"), idempotency_key=self.key(), actor=CHAIR)
-		self.at("2027-06-12 11:08:45")
+		self.at(W("2027-06-12 11:08:45"))
 		v2_out = minutes.supersede_minutes(**self.ref(created), reason="Add the attendee’s repeat request and the chair’s response", content="Test minutes version 2",
 			page_count=1, register_reference="R", register_digest="d", event_ids=[], targets=self.targets(prefix="V2"), idempotency_key=self.key(), actor=CHAIR)
 		self.assertEqual(v2_out["version_number"], 2)
@@ -152,7 +153,7 @@ class TestSupplementAndExport(ProceedingsCase):
 		finalize.finalize_proceeding(**self.ref(created), idempotency_key=self.key(), actor=finalize.SYSTEM_ACTOR)
 		owner_id = frappe.db.get_value("Proceeding", created["proceeding"], "owner_id")
 		before = reads.export_proceeding(owner_type=OWNER_TYPE, owner_id=owner_id, user=CHAIR)
-		self.at("2027-06-12 11:15:00")
+		self.at(W("2027-06-12 11:15:00"))
 		key = self.key()
 		args = dict(original_version=1, kind="Attendance note", correct_information="Test Visitor left at 11:03 EAT", reason="Add the departure noted during the opening",
 			idempotency_key=key, actor=CHAIR)

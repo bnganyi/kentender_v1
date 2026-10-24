@@ -20,6 +20,7 @@ Called by the Playwright specs through `bench execute`; never by a user."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from contextlib import contextmanager
 from typing import Any
 from uuid import uuid4
@@ -63,18 +64,18 @@ REPLY = "The service address is on page 2, section 3 of Kenya service-centre det
 NOTE = "Ask the bidder to identify the service address already recorded in its submitted evidence."
 REASON = "The offered location meets the stated country requirement, but the supporting document is unclear."
 UNIT_PRICE = "160000.00"
-BOARD_DEADLINE = "2027-06-12 11:00:00"
+BOARD_DEADLINE = W("2027-06-12 11:00:00")
 
 # The boards' instants (EVL-CHG-001 v0.4 §11.1), on the opening world's own
 # 12 Jun 2027, 11:00 deadline.
 AT = {
-	"prepare": "2027-06-11 08:58:00", "appoint": "2027-06-11 09:00:00", "secretary": "2027-06-11 09:05:00",
-	"declare": ("2027-06-11 09:10:00", "2027-06-11 09:12:00", "2027-06-11 09:14:00"), "conflict": "2027-06-11 09:11:00",
-	"intake": "2027-06-12 11:11:10", "review": "2027-06-14 08:45:00", "start": "2027-06-14 09:00:00", "join": ("2027-06-14 09:02:00", "2027-06-14 09:03:00"),
-	"note": "2027-06-14 09:04:00", "authorise": "2027-06-14 09:05:00", "end": "2027-06-14 09:06:00", "send": "2027-06-14 09:10:00",
-	"reply": "2027-06-15 10:00:00", "deadline": "2027-06-15 17:00:00", "restart": "2027-06-16 09:00:00", "dispose": "2027-06-16 09:05:00",
-	"end2": "2027-06-16 09:06:00", "freeze": "2027-06-16 13:55:00", "sign": ("2027-06-16 14:05:00", "2027-06-16 14:06:00", "2027-06-16 14:07:00"),
-	"after": "2027-06-16 14:08:00", "pause": "2027-06-14 09:55:00", "paused": "2027-06-14 10:00:00",
+	"prepare": W("2027-06-11 08:58:00"), "appoint": W("2027-06-11 09:00:00"), "secretary": W("2027-06-11 09:05:00"),
+	"declare": (W("2027-06-11 09:10:00"), W("2027-06-11 09:12:00"), W("2027-06-11 09:14:00")), "conflict": W("2027-06-11 09:11:00"),
+	"intake": W("2027-06-12 11:11:10"), "review": W("2027-06-14 08:45:00"), "start": W("2027-06-14 09:00:00"), "join": (W("2027-06-14 09:02:00"), W("2027-06-14 09:03:00")),
+	"note": W("2027-06-14 09:04:00"), "authorise": W("2027-06-14 09:05:00"), "end": W("2027-06-14 09:06:00"), "send": W("2027-06-14 09:10:00"),
+	"reply": W("2027-06-15 10:00:00"), "deadline": W("2027-06-15 17:00:00"), "restart": W("2027-06-16 09:00:00"), "dispose": W("2027-06-16 09:05:00"),
+	"end2": W("2027-06-16 09:06:00"), "freeze": W("2027-06-16 13:55:00"), "sign": (W("2027-06-16 14:05:00"), W("2027-06-16 14:06:00"), W("2027-06-16 14:07:00")),
+	"after": W("2027-06-16 14:08:00"), "pause": W("2027-06-14 09:55:00"), "paused": W("2027-06-14 10:00:00"),
 }
 
 # Each stage is the stage it grows from and the boards it pictures.
@@ -479,7 +480,7 @@ class _Branches:
 	def stage_declare_first(self) -> None:
 		from kentender_procurement.bid_evaluation.services import appointment
 
-		self.at("2027-06-12 11:20:00")
+		self.at(W("2027-06-12 11:20:00"))
 		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, expected_version=self.version(),
 			idempotency_key=_key(), user=AO), "appoint after intake")
 
@@ -494,7 +495,7 @@ class _Branches:
 	def stage_member_left(self) -> None:
 		from kentender_procurement.bid_evaluation.services import discussion
 
-		self.at("2027-06-14 09:03:30")
+		self.at(W("2027-06-14 09:03:30"))
 		_ok(discussion.leave_discussion(tender=self.tender, idempotency_key=_key(), user=MEMBER_2), "leave")
 
 	def stage_notice_failed(self) -> None:
@@ -518,20 +519,20 @@ class _Branches:
 	def stage_replacement(self) -> None:
 		from kentender_procurement.bid_evaluation.services import clarification
 
-		self.at("2027-06-15 09:30:00")
+		self.at(W("2027-06-15 09:30:00"))
 		_ok(clarification.save_draft(tender=self.tender, clarification=self._request(), body=REPLY, idempotency_key=_key(), user=SUPPLIER), "save a draft")
-		self._session("2027-06-15 09:40:00")
-		self.at("2027-06-15 09:45:00")
+		self._session(W("2027-06-15 09:40:00"))
+		self.at(W("2027-06-15 09:45:00"))
 		original = self._request()
 		_ok(clarification.authorise(tender=self.tender, bid=self.bid(), requirement_key=self.requirement("Service location")["requirement_key"],
 			question="In the document titled Kenya service-centre details submitted with your bid, identify the page and section containing the Nairobi service address.",
-			reply_scope=SCOPE, reply_deadline=self.shifted("2027-06-16 17:00:00"), replaces=original, replacement_reason="Clarify the document reference.",
+			reply_scope=SCOPE, reply_deadline=self.shifted(W("2027-06-16 17:00:00")), replaces=original, replacement_reason="Clarify the document reference.",
 			idempotency_key=_key(), user=CHAIR), "authorise a replacement")
 
 	def stage_no_reply(self) -> None:
 		from kentender_procurement.bid_evaluation.services import clarification
 
-		self.at("2027-06-15 12:00:00")
+		self.at(W("2027-06-15 12:00:00"))
 		_ok(clarification.save_draft(tender=self.tender, clarification=self._request(), body=REPLY, idempotency_key=_key(), user=SUPPLIER), "save a draft")
 		self._session(AT["restart"])
 
@@ -549,35 +550,35 @@ class _Branches:
 
 		first = frappe.db.get_value("Evaluation Clarification", {"evaluation_case": self.case(), "replaced_by": ("is", "set")}, "name")
 		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end")
-		self.at("2027-06-15 09:46:00")
+		self.at(W("2027-06-15 09:46:00"))
 		_ok(clarification.withdraw(tender=self.tender, clarification=first, reason="Clarify the document reference.", idempotency_key=_key(), user=SECRETARY),
 			"withdraw")
-		self.at("2027-06-15 09:50:00")
+		self.at(W("2027-06-15 09:50:00"))
 		_ok(clarification.send(tender=self.tender, clarification=self._request(), idempotency_key=_key(), user=SECRETARY), "send the new question")
-		self.at("2027-06-15 09:55:00")
+		self.at(W("2027-06-15 09:55:00"))
 
 	def stage_late_reply(self) -> None:
 		from kentender_procurement.bid_evaluation.services import clarification
 
-		self.at("2027-06-15 17:05:00")
+		self.at(W("2027-06-15 17:05:00"))
 		_ok(clarification.submit_reply(tender=self.tender, clarification=self._request(), body=REPLY, idempotency_key=_key(), user=SUPPLIER), "late reply")
 		self._session(AT["restart"])
 
 	def stage_planned(self) -> None:
 		from kentender_procurement.bid_evaluation.services import diligence, discussion
 
-		self._session("2027-06-16 09:10:00")
-		self.at("2027-06-16 09:14:00")
+		self._session(W("2027-06-16 09:10:00"))
+		self.at(W("2027-06-16 09:14:00"))
 		_ok(diligence.record_plan(tender=self.tender, scope="Verify the two submitted comparable contracts",
 			basis="Due diligence under PPADA section 83; verify the two submitted comparable contracts", participants_=[CHAIR, MEMBER_2], lead=CHAIR,
 			idempotency_key=_key(), user=CHAIR), "record the verification plan")
-		self.at("2027-06-16 09:15:00")
+		self.at(W("2027-06-16 09:15:00"))
 		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end")
 
 	def stage_observed(self) -> None:
 		from kentender_procurement.bid_evaluation.services import diligence
 
-		for user, instant in ((MEMBER_2, "2027-06-16 10:00:00"), (CHAIR, "2027-06-16 10:30:00")):
+		for user, instant in ((MEMBER_2, W("2027-06-16 10:00:00")), (CHAIR, W("2027-06-16 10:30:00"))):
 			self.at(instant)
 			_ok(diligence.record_observation(tender=self.tender, findings_="Both customers confirmed the submitted contract details.", idempotency_key=_key(),
 				user=user), f"observe as {user}")
@@ -585,17 +586,17 @@ class _Branches:
 	def stage_dd_frozen(self) -> None:
 		from kentender_procurement.bid_evaluation.services import diligence
 
-		self.at("2027-06-16 10:50:00")
+		self.at(W("2027-06-16 10:50:00"))
 		_ok(diligence.send_for_signing(tender=self.tender, idempotency_key=_key(), user=CHAIR), "freeze the verification report")
-		self.at("2027-06-16 10:55:00")
+		self.at(W("2027-06-16 10:55:00"))
 		_ok(diligence.sign(tender=self.tender, idempotency_key=_key(), user=CHAIR), "sign as the lead")
 
 	def stage_dd_signed(self) -> None:
 		from kentender_procurement.bid_evaluation.services import diligence
 
-		self.at("2027-06-16 11:00:00")
+		self.at(W("2027-06-16 11:00:00"))
 		_ok(diligence.sign(tender=self.tender, idempotency_key=_key(), user=MEMBER_2), "sign as the participant")
-		self._session("2027-06-16 11:10:00")
+		self._session(W("2027-06-16 11:10:00"))
 
 	def _opening_correction(self, instant: str) -> None:
 		from kentender_procurement.bid_evaluation.services import correction
@@ -609,17 +610,17 @@ class _Branches:
 		correction.consume_supplements(self.tender)
 
 	def stage_supplement(self) -> None:
-		self._opening_correction("2027-06-16 12:55:00")
-		self.at("2027-06-16 13:00:00")
+		self._opening_correction(W("2027-06-16 12:55:00"))
+		self.at(W("2027-06-16 13:00:00"))
 
 	def stage_supplement_sent(self) -> None:
-		self._opening_correction("2027-06-17 09:55:00")
-		self.at("2027-06-17 10:00:00")
+		self._opening_correction(W("2027-06-17 09:55:00"))
+		self.at(W("2027-06-17 10:00:00"))
 
 	def stage_no_agreement(self) -> None:
 		from kentender_procurement.bid_evaluation.services import conclusion, discussion
 
-		self._session("2027-06-16 13:00:00")
+		self._session(W("2027-06-16 13:00:00"))
 		out = _ok(conclusion.record_case_conclusion(tender=self.tender, kind="No agreed recommendation",
 			reason="The committee could not agree whether the evidence supports the service location.", idempotency_key=_key(), user=CHAIR), "no agreement")
 		_ok(conclusion.record_disagreement(tender=self.tender, statement="I cannot establish that the submitted evidence supports the stated service location.",
@@ -631,12 +632,12 @@ class _Branches:
 
 		# the dated rule Tenders does not yet publish (FU-EVL-18), as the owner event it will be
 		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Dated rule", instruction_reference="MOH/EVAL-PERIOD/PW/2027", authority=AO,
-			effective_at=self.shifted("2027-07-12 11:00:00"), detail={"counting": "30 days from the completed opening", "timezone": "Site time (EAT)"}),
+			effective_at=self.shifted(W("2027-07-12 11:00:00")), detail={"counting": "30 days from the completed opening", "timezone": "Site time (EAT)"}),
 			"record the evaluation period")
-		self.at("2027-07-13 09:00:00")
+		self.at(W("2027-07-13 09:00:00"))
 
 	def stage_expired(self) -> None:
-		self.at("2027-10-12 09:00:00")
+		self.at(W("2027-10-12 09:00:00"))
 
 	def stage_delivery_failed(self) -> None:
 		from kentender_procurement.bid_evaluation.services import simulation
@@ -644,54 +645,54 @@ class _Branches:
 		simulation.set_controls(delivery_outcome="Failed")
 		self._sign(MEMBER, AT["sign"][1])
 		self._sign(MEMBER_2, AT["sign"][2])
-		self.at("2027-06-16 14:07:30")
+		self.at(W("2027-06-16 14:07:30"))
 
 	def stage_resigning(self) -> None:
 		from kentender_procurement.bid_evaluation.services import report, signing
 
-		self.at("2027-06-16 14:05:30")
+		self.at(W("2027-06-16 14:05:30"))
 		self.first_report = signing.signing_version(frappe.get_doc("Evaluation Case", self.case())).name
 		_ok(signing.revise(tender=self.tender, reason="Correct the service-address page reference.", idempotency_key=_key(), user=SECRETARY), "revise")
-		self.at("2027-06-16 14:20:00")
+		self.at(W("2027-06-16 14:20:00"))
 		draft = report.draft(frappe.get_doc("Evaluation Case", self.case()))
 		_ok(signing.send_for_signing(tender=self.tender, expected_version=draft.record_version, idempotency_key=_key(), user=SECRETARY), "send report 2")
 
 	def stage_paused_sign(self) -> None:
 		from kentender_procurement.bid_evaluation.services import tender_events
 
-		self.at("2027-06-16 14:05:20")
+		self.at(W("2027-06-16 14:05:20"))
 		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Suspension", instruction_reference="MOH/REVIEW/PW/2027-SIGN", authority=AO), "suspend")
-		self.at("2027-06-16 14:05:30")
+		self.at(W("2027-06-16 14:05:30"))
 
 	def stage_cancelled_sign(self) -> None:
 		from kentender_procurement.bid_evaluation.services import tender_events
 
-		self.at("2027-06-16 14:05:20")
+		self.at(W("2027-06-16 14:05:20"))
 		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Cancellation", instruction_reference="MOH/CANCEL/PW/2027-SIGN", authority=AO,
 			reason="Procurement proceedings terminated under the recorded decision."), "cancel")
-		self.at("2027-06-16 14:05:30")
+		self.at(W("2027-06-16 14:05:30"))
 
 	def stage_returned(self) -> None:
 		from kentender_procurement.bid_evaluation.services import correction
 
-		self.at("2027-06-16 14:30:00")
+		self.at(W("2027-06-16 14:30:00"))
 		_ok(correction.return_report(tender=self.tender, comment="Correct the service-address page reference from page 3 to page 2.", idempotency_key=_key(),
 			user=HOP), "return the report")
-		self.at("2027-06-16 15:00:00")
+		self.at(W("2027-06-16 15:00:00"))
 
 	def stage_awarded(self) -> None:
 		from kentender_procurement.bid_evaluation.services import tender_events
 
-		self.at("2027-06-17 09:00:00")
+		self.at(W("2027-06-17 09:00:00"))
 		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Award decision", instruction_reference="MOH/AWARD/PW/2027", authority=AO,
 			effective_at=self.instant), "record the award decision")
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 
 	def stage_decision_unknown(self) -> None:
 		from kentender_procurement.bid_evaluation.services import simulation
 
 		simulation.set_controls(downstream_status="Unknown")
-		self.at("2027-06-17 10:00:00")
+		self.at(W("2027-06-17 10:00:00"))
 
 	def stage_corrected(self) -> None:
 		from kentender_procurement.bid_evaluation.services import correction
@@ -702,7 +703,7 @@ class _Branches:
 	def stage_paused_prep(self) -> None:
 		from kentender_procurement.bid_evaluation.services import tender_events
 
-		self.at("2027-06-11 08:55:00")
+		self.at(W("2027-06-11 08:55:00"))
 		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Suspension", instruction_reference="MOH/REVIEW/PW/2027-PREP", authority=AO,
 			permitted_actions=["appointments", "declarations"]), "suspend with appointments permitted")
 		self.at(AT["prepare"])
@@ -710,7 +711,7 @@ class _Branches:
 	def stage_cancelled_prep(self) -> None:
 		from kentender_procurement.bid_evaluation.services import tender_events
 
-		self.at("2027-06-11 08:55:00")
+		self.at(W("2027-06-11 08:55:00"))
 		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Cancellation", instruction_reference="MOH/CANCEL/PW/2027-PREP", authority=AO,
 			reason="Procurement proceedings terminated under the recorded decision."), "cancel in preparation")
 		self.at(AT["prepare"])
@@ -916,7 +917,7 @@ def capture(*, users: list[str] | None = None) -> dict[str, Any]:
 		earlier = [h for h in (report or {}).get("history") or [] if h.get("name") != (report or {}).get("report")]
 		out[user] = {"data": data, "bid": attempt(reads.bid, bid=bid, user=user) if bid else None, "report": report,
 			"report_previous": attempt(reads.report_view, user=user, version=earlier[-1]["name"]) if earlier else None,
-			"record": attempt(reads.committee_record, user=user), "candidates": attempt(reads.candidates, user=user, purpose="secretary" if user == HOP else "committee"),
+			"record": attempt(reads.committee_record, user=user),
 			"work": reads.list_work(user=user)}
 	# the supplier's own requests, as the portal reads them
 	supplier = []

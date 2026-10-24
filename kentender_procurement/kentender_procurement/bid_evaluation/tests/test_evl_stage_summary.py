@@ -14,6 +14,7 @@ unavailable while the others stay usable."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from unittest import mock
 
@@ -141,7 +142,7 @@ class TestAfterDelivery(StageCase):
 
 		case = frappe.db.get_value("Award Case", {"tender": self.name}, "name")
 		frappe.db.set_value("Award Case", case, {"outcome": "Award", "notification_status": "Notices given"})
-		decided = types.SimpleNamespace(decided_by=AO, decided_at="2027-06-20 10:00:00", reason="Lowest evaluated responsive bid.")
+		decided = types.SimpleNamespace(decided_by=AO, decided_at=W("2027-06-20 10:00:00"), reason="Lowest evaluated responsive bid.")
 		with mock.patch.object(state, "committed_decision", return_value=decided):
 			view = self.award_for(HOD)
 		self.assertEqual(view["decision"]["outcome"], "Award")

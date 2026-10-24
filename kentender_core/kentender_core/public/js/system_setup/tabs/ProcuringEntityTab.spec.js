@@ -22,6 +22,7 @@ function site(overrides = {}) {
 			pe_code: "PE-MOH",
 			pe_type: "National Government Ministry",
 			ppra_registration: "PPRA/PE/2019/0114",
+			pe_address: "Afya House, Cathedral Road, Nairobi",
 			timezone: "Africa/Nairobi",
 			statutory_approval_route: "Cabinet Secretary",
 			entity_is_county: false,
@@ -155,6 +156,18 @@ describe("ProcuringEntityTab", () => {
 			statutory_approval_route: "County Executive Committee Member",
 			entity_is_county: 1,
 		});
+	});
+
+	it("the principal address the agreement prints is on the tab, follows the record and is sent with the update", async () => {
+		api.update.mockResolvedValue({ updated: true });
+		const wrapper = mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() });
+		const address = wrapper.find('[data-testid="kt-setup-pe-address"]');
+		expect(wrapper.text()).toContain("Principal address");
+		expect(address.element.value).toBe("Afya House, Cathedral Road, Nairobi");
+		await address.setValue("Afya House, Cathedral Road, P.O. Box 30016-00100, Nairobi");
+		await wrapper.find('[data-testid="kt-setup-pe-submit"]').trigger("click");
+		await flushPromises();
+		expect(api.update.mock.calls[0][0]).toMatchObject({ pe_address: "Afya House, Cathedral Road, P.O. Box 30016-00100, Nairobi" });
 	});
 
 	it("a county/type mismatch is shown as its own critical notice, not folded into the generic error", async () => {

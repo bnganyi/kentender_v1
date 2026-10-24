@@ -1,0 +1,109 @@
+{
+ "actions": {
+  "Confirm payment": {
+   "args": {
+    "payment": "ACC-PAY-2026-00098"
+   },
+   "command": "RecordFinanceSettlement",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D17",
+ "dialogs": {},
+ "ev": [
+  "Certification 1",
+  "Accounting invoice",
+  "Payment Entry ACC-PAY-2026-00098"
+ ],
+ "id": "D17-S",
+ "name": "Finance payment approval",
+ "next": {
+  "h": "Confirm that the payment settled.",
+  "k": "turn",
+  "s": "Responsible: Beatrice Kamau"
+ },
+ "p": "Confirm payment",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Amount",
+       "name": "amount",
+       "o": {},
+       "t": "ro",
+       "v": "KES 800,000"
+      },
+      {
+       "l": "Settlement date",
+       "name": "effective_date",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Bank reference",
+       "name": "evidence",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Settlement"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review payment",
+ "version": 28
+}

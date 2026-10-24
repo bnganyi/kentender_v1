@@ -501,6 +501,81 @@ export function awardDialogSkeleton(id, relPath = AWARD_BOARDS) {
 }
 
 /**
+ * Contract Management (CM-CHG-001 v0.8 §10, plan D16). One page, `CM Artboards.dc.html`,
+ * whose boards are not inline: four data files (`cm-data-1…4.js`) each push
+ * `{ o, f }` onto `window.CMP`, where `f(h)` builds that file's screens from the
+ * page's own helper object (`Component.H()`: `S` main board, `V` state variant,
+ * `D` dialog board, and the block builders). The page's `Component.build()` merges
+ * them, assigns the review groups and sorts. This kit runs the same code with stubs
+ * for the design runtime (`DCLogic`, `localStorage`, `window`), then renders one
+ * screen through the page's own template: `Component.view(screen)` is the
+ * template's row model, drawn by the same evaluator as Award's. A dialog board's
+ * `.dialog-backdrop`, drawn inside the sheet beside the page, is moved inside the
+ * `.kt-page`, where the live page renders its dialogs.
+ */
+export const CM_BOARDS = "docs/mvp-1-r1/21_contract_management/design/CM Artboards.dc.html";
+
+const cmKits = new Map();
+
+export function cmKit(relPath = CM_BOARDS) {
+	if (!cmKits.has(relPath)) {
+		const full = path.resolve(REPO_ROOT, relPath);
+		const html = fs.readFileSync(full, "utf8");
+		const src = /<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/.exec(html)[1];
+		const dir = path.dirname(full);
+		const dataFiles = Array.from(html.matchAll(/<script src="(cm-data-\d+\.js)"><\/script>/g)).map((m) => m[1]);
+		const win = { CMP: [], addEventListener() {}, removeEventListener() {} };
+		for (const file of dataFiles) new Function("window", fs.readFileSync(path.join(dir, file), "utf8"))(win);
+		class DCLogic {
+			constructor() { this.props = {}; this.state = {}; }
+			setState(patch) { this.state = { ...this.state, ...(typeof patch === "function" ? patch(this.state) : patch) }; }
+		}
+		const store = new Map();
+		const localStorage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) };
+		const run = new Function("DCLogic", "window", "localStorage", "setInterval", "clearInterval", `${src}\nreturn new Component();`);
+		const component = run(DCLogic, win, localStorage, () => 0, () => {});
+		component.build();
+		cmKits.set(relPath, { component, screens: component.screens, files: dataFiles });
+	}
+	return cmKits.get(relPath);
+}
+
+/** Every board id, in the design tool's review order. */
+export function cmBoardIds(relPath = CM_BOARDS) {
+	return cmKit(relPath).screens.map((s) => s.id);
+}
+
+export function cmScope(doc, id, relPath = CM_BOARDS) {
+	const kit = cmKit(relPath);
+	const screen = kit.screens.find((s) => s.id === id);
+	if (!screen) throw new Error(`CM board ${id} not found`);
+	const scope = { zoomVal: 1, rows: [kit.component.view(screen)], setMain: null };
+	const main = doc.querySelector("main");
+	if (!main) throw new Error("the CM template draws no <main>");
+	const holder = doc.createElement("div");
+	for (const n of renderTemplate(main, scope, doc)) holder.appendChild(n);
+	const page = holder.querySelector(".kt-page");
+	if (!page) throw new Error(`CM board ${id} draws no .kt-page`);
+	const dialog = holder.querySelector(".dialog-backdrop");
+	if (dialog) page.appendChild(dialog);
+	for (const el of page.querySelectorAll(".kt-next-step")) el.setAttribute("data-kt", "next-step");
+	return page;
+}
+
+/** One CM board's landmark skeleton (see `cmScope`). */
+export function cmSkeleton(id, relPath = CM_BOARDS) {
+	return skeletonOf(cmScope(documentFor(relPath), id, relPath));
+}
+
+/** One CM dialog board's skeleton: the dialog alone. */
+export function cmDialogSkeleton(id, relPath = CM_BOARDS) {
+	const page = cmScope(documentFor(relPath), id, relPath);
+	const dialog = page.querySelector(".dialog");
+	if (!dialog) throw new Error(`CM board ${id} draws no dialog`);
+	return skeletonOf(dialog);
+}
+
+/**
  * Analytics (ANL-CHG-001 v0.8 §10A): six files of plain markup (no template),
  * each board a `<div id="ANL-DES-21">` holding the screen as one `<main>`. The
  * board's `<main>` is the screen; the live page's `main.kt-ap-sheet` is its

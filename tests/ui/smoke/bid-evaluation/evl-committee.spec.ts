@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import { pickRecord } from "../../helpers/picker";
 import { PASSWORD, action, collectConsoleErrors, evaluationWorld, expectNextStep, expectScreen, gotoEvaluation, restoreEvlWorld } from "./evlWorld";
 
 /** EVL-CHG-001 v0.8 §3, §9.2, §9.3 (v0.4 boards; the department is read-only text, no reference is typed and the Head is secretary by office) — workspace and committee (boards D01-APPOINT, D02-A, D02-DELEGATE, D02-D, D02-CONFLICT,
@@ -35,9 +36,9 @@ test.describe("EVL committee and declaration", () => {
 		await expect(root.locator('[data-testid="evl-field-appointment_reference"]')).toHaveCount(0);
 		await expect(root.locator('[data-testid="evl-member-0-department"]')).toHaveCount(0);
 		await expect(root).toContainText("The appointment reference is created when you appoint the committee. The Head of Procurement Function is recorded as the evaluation secretary.");
-		await root.locator('[data-testid="evl-member-0-user"]').selectOption(p.chair);
-		await root.locator('[data-testid="evl-member-1-user"]').selectOption(p.member);
-		await root.locator('[data-testid="evl-member-2-user"]').selectOption(p.member_2);
+		await pickRecord(page, "#evl-member-0-user", p.chair);
+		await pickRecord(page, "#evl-member-1-user", p.member);
+		await pickRecord(page, "#evl-member-2-user", p.member_2);
 		await expect(root.locator('[data-testid="evl-members"] tbody tr').nth(0)).toContainText("Human Resources Management and Development");
 		await expect(root.locator('[data-testid="evl-members"] tbody tr').nth(1)).toContainText("ICT");
 		await expect(root.locator('[data-testid="evl-members"] tbody tr').nth(2)).toContainText("Finance");
@@ -63,7 +64,7 @@ test.describe("EVL committee and declaration", () => {
 		await expect(root).toContainText("Head of Procurement Function, by office");
 		await expect(root.locator('[data-testid="evl-field-appointment_reference"]')).toHaveCount(0);
 		await expect(root.locator('[data-testid="evl-field-department"]')).toHaveCount(0);
-		await root.locator('[data-testid="evl-field-secretary"]').selectOption(p.secretary);
+		await pickRecord(page, "#evl-secretary", p.secretary);
 		await expect(root).toContainText("This is your written appointment and a new reference is created. They will have no vote, finding or signature.");
 		await action(page, "Delegate secretary duties").click();
 		await expect(root).not.toHaveAttribute("data-screen", "delegate", { timeout: 30_000 });
@@ -107,7 +108,7 @@ test.describe("EVL committee and declaration", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("a declared conflict: the AO is refused an ineligible replacement, then replaces (D02-INELIGIBLE → D02-REPLACE)", async ({ page }) => {
+	test("a declared conflict: the picker lists a current member as unavailable, the AO cannot choose them, then replaces (D02-INELIGIBLE → D02-REPLACE)", async ({ page }) => {
 		const world = evaluationWorld("conflict");
 		const p = world.people;
 		const errors = collectConsoleErrors(page);
@@ -116,14 +117,21 @@ test.describe("EVL committee and declaration", () => {
 		await expectNextStep(page, "your_turn", /declared conflict\.$/);
 		await action(page, "Replace member").click();
 		await expectScreen(page, "replace");
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-incoming"]').selectOption(p.member);
 		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-field-appointment_reference"]')).toHaveCount(0);
 		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-reason"]').fill("Replace the member who declared a financial interest.");
-		await action(page, "Replace member").click();
-		await expectScreen(page, "replace");
-		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-error-incoming"]')).toHaveText("This person cannot serve on this evaluation committee.");
-		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-field-reason"]')).toHaveValue("Replace the member who declared a financial interest.");
-		await page.locator('[data-testid="evl-root"] [data-testid="evl-field-incoming"]').selectOption(p.replacement);
+		// someone already on the committee is listed, greyed, with the command's own reason; choosing them does nothing
+		const incoming = page.locator("#evl-incoming");
+		await incoming.click();
+		await incoming.fill(p.member);
+		const list = page.locator('[data-testid="kt-picker-list"]');
+		await expect(list).toHaveAttribute("aria-busy", "false", { timeout: 30_000 });
+		const unavailable = list.locator('[role="option"][aria-disabled="true"]').first();
+		await expect(unavailable).toContainText(/already on this committee|unresolved declared conflict/);
+		await unavailable.click({ force: true }); // Playwright will not click an aria-disabled row; a mouse can, and it must do nothing
+		await expect(incoming).toHaveValue(p.member);
+		await expect(page.locator('[data-testid="evl-root"] [data-testid="kt-picker-clear"]')).toHaveCount(0); // nothing was chosen
+		await incoming.fill("");
+		await pickRecord(page, "#evl-incoming", p.replacement);
 		await action(page, "Replace member").click();
 		await expect(page.locator('[data-testid="evl-root"]')).not.toHaveAttribute("data-screen", "replace", { timeout: 30_000 });
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);

@@ -47,8 +47,50 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		cutover slice names it (KT-STD-001 §7 default-to-omit)."""
 		self.assertEqual(
 			registry.roles_with_scope_type(registry.SCOPE_OU),
-			("Departmental Author", "Head of User Department"),
+			(
+				"Contract coordination",  # CM-CHG-001 v0.8 §6.2
+				"Contract preparation",  # CM-CHG-001 v0.8 §6.2
+				"Departmental Author",
+				"Head of User Department",
+				"Receiving",  # CM-CHG-001 v0.8 §6.2
+			),
 		)
+
+	def test_the_contract_management_responsibilities_use_existing_scope_types_only(self):
+		"""CM-CHG-001 v0.8 §6, §6.2, plan D11: three Organisation Unit, five Site-wide, no Contract scope type, each its own Frappe role."""
+		ou = ("Contract preparation", "Contract coordination", "Receiving")
+		site = ("Contract inspection", "Technical certification", "Entity contract signing", "Finance preparation", "Finance approval")
+		for name in ou:
+			self.assertEqual(registry.scope_type(name), registry.SCOPE_OU, name)
+		for name in site:
+			self.assertEqual(registry.scope_type(name), registry.SCOPE_SITE, name)
+		for name in ou + site:
+			self.assertEqual(registry.projected_frappe_roles(name), (name,), name)
+			self.assertEqual(registry.REGISTRY[name].owning_document, "CM-CHG-001 v0.10 §6")
+		self.assertEqual(registry.SCOPE_TYPES, ("Site-wide", "Organisation Unit", "Tender"))
+		self.assertEqual(registry.roles_with_sod_tag("payment_approval"), ("Finance approval",))
+		self.assertEqual(registry.roles_with_sod_tag("payment_preparation"), ("Finance preparation",))
+
+	def test_the_eight_contract_management_bindings_are_exactly_those_of_auth_4_4a(self):
+		"""AUTH-ADR-001 v1.16 §4.4A / AUTH-AC-059: the eight responsibilities, with their scopes, reuse the existing registry. Nothing is aliased, no Contract scope or user-year grant exists, and the Tender scope is
+		left to the Tender roles."""
+		bound = {"Contract preparation": registry.SCOPE_OU, "Contract coordination": registry.SCOPE_OU, "Receiving": registry.SCOPE_OU, "Contract inspection": registry.SCOPE_SITE,
+			"Technical certification": registry.SCOPE_SITE, "Entity contract signing": registry.SCOPE_SITE, "Finance preparation": registry.SCOPE_SITE, "Finance approval": registry.SCOPE_SITE}
+		for name, scope in bound.items():
+			self.assertEqual(registry.scope_type(name), scope, name)
+		tender_scoped = set(registry.roles_with_scope_type(registry.SCOPE_TENDER))
+		self.assertFalse(tender_scoped & set(bound), "none of the eight uses the Tender scope")
+		self.assertNotIn("Contract", registry.SCOPE_TYPES)
+
+	def test_budget_and_contract_management_capacities_stay_distinct(self):
+		"""AUTH-AC-060/061: Finance approval (Contract Management) confirms a funding basis; the Planning-only Finance Confirmation Officer does not hold it, and neither Budget Officer nor Budget Approver is a Contract
+		Management capacity. The independence of the Budget Approver from the preparer and the confirmers is a check on actual participation, tested where the entry is decided."""
+		self.assertNotEqual(registry.projected_frappe_roles("Finance Confirmation Officer"), registry.projected_frappe_roles("Finance approval"))
+		self.assertEqual(registry.roles_with_sod_tag("finance_confirmation"), ("Finance Confirmation Officer",))
+		for budget_role in ("Budget Officer", "Budget Approver"):
+			self.assertNotIn(budget_role, ("Finance preparation", "Finance approval"))
+			self.assertNotIn("Finance approval", registry.projected_frappe_roles(budget_role))
+			self.assertNotIn("Finance preparation", registry.projected_frappe_roles(budget_role))
 
 	def test_reference_data_manager_is_removed(self):
 		"""CFG-CHG-002 v0.6 §1.1 — no Reference Data Manager role exists."""

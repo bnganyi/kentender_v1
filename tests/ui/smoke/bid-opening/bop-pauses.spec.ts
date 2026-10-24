@@ -53,12 +53,15 @@ test.describe("BOP-DES-02 Open bids — pauses and cancellation", () => {
 		await gotoOpening(page, world.tender_reference);
 		await expectScreen(page, "open-bids");
 		await expectNextStep(page, "waiting", /to resolve the paused opening$/);
-		await expect(page.locator('[data-testid="bop-problem-status"]')).toHaveText("Not resolved");
+		await expect(page.locator('[data-testid="bop-problem-status"]')).toHaveText("Could not be recovered");
+		await expect(page.locator('[data-testid="bop-retry"]')).toHaveCount(0);
 		await login(page, AO, PASSWORD);
 		await gotoOpening(page, world.tender_reference);
 		await expectScreen(page, "open-bids");
-		await expectNextStep(page, "your_turn", "Decide how to proceed with the paused opening");
-		await expect(page.locator('[data-testid="bop-tender-decision"]')).toContainText("Cancellation after submissions close is not available in this version.");
+		// v0.16: the decision is Tenders' own; with no verified ground in this environment the Accounting Officer is told what stops it and where to go
+		await expectNextStep(page, "your_turn_blocked", "A tender decision is needed");
+		await expect(page.locator('[data-testid="bop-tender-decision"]')).toContainText("Opening could not be recovered. The Accounting Officer must review the next step.");
+		await expect(page.locator('[data-testid="bop-open-tender-decision"]')).toHaveText("Review the tender decision");
 	});
 
 	test("c11d: a bid that does not match is checked, never skipped", async ({ page }) => {

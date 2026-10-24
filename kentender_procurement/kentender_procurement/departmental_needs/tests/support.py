@@ -19,6 +19,7 @@ owner's option to retire it by moving these suites onto their own actors.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_core.services import responsibility_administration as administration
@@ -41,7 +42,7 @@ NDS_TEST_GRANT_NAMESPACES = (
 	"KENTENDER_NDS_PERMISSIONS_TEST",
 	"KENTENDER_NDS_LIFECYCLE_TEST",
 )
-TRANSITIONAL_UNTIL = "2026-11-30 23:59:59"
+TRANSITIONAL_UNTIL = W("2026-11-30 23:59:59")
 TRANSITIONAL_REFERENCE = (
 	"Test-only: NDS suites run at the real clock; PLN-CHG-001 v1.18 §13.1 dates the real Digital Health authority from 1 Dec 2026."
 )

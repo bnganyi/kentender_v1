@@ -1,0 +1,104 @@
+{
+ "actions": {
+  "View history": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View remedy": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_warranty_claim_fr",
+ "d": "D35",
+ "dialogs": {},
+ "ev": [],
+ "id": "D35-C",
+ "name": "Paid-unit warranty replacement",
+ "next": {
+  "h": "The remedy was verified and the claim closed on 15 July 2028.",
+  "k": "done",
+  "s": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_warranty_claim_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Original cash",
+       "KES 0"
+      ],
+      [
+       "Additional invoice entitlement",
+       "None"
+      ],
+      [
+       "Original unit",
+       "CMTB0A72C-0072"
+      ],
+      [
+       "Replacement",
+       "CMTB0A72C-0079"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Outcome"
+  }
+ ],
+ "s2": [
+  "View remedy",
+  "View history"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_warranty_claim_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "Follow up warranty replacement",
+ "version": 31
+}

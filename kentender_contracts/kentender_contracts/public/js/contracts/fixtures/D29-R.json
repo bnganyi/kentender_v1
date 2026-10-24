@@ -1,0 +1,152 @@
+{
+ "actions": {
+  "Sign certification": {
+   "args": {
+    "invoice": "CM-INV-670013"
+   },
+   "command": "SignContractCertification",
+   "do": "command"
+  },
+  "View advance clause": {
+   "dialog": "view-advance-clause",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_advance_review_",
+ "d": "D29",
+ "dialogs": {
+  "view-advance-clause": {
+   "b": [
+    {
+     "items": [
+      [
+       "Allowed",
+       "10% of KES 1,000,000"
+      ],
+      [
+       "Recovery",
+       "KES 10,000 for each unit accepted and invoiced"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "local": true,
+   "p": "",
+   "s2": [
+    "Close"
+   ],
+   "t": "Advance clause"
+  }
+ },
+ "ev": [
+  "Supplier invoice ADV-INV-1",
+  "Advance clause"
+ ],
+ "id": "D29-R",
+ "name": "Advance support",
+ "next": {
+  "h": "Review the invoice and sign the certification.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Sign certification",
+ "page": "record",
+ "ref": "CM-TEST-test_the_advance_review_",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Invoice",
+      "Gross",
+      "Advance recovery",
+      "Proposed cash",
+      "Advance remaining"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2,
+      3,
+      4
+     ],
+     "rows": [
+      [
+       "Accepted goods \u2014 8 laptop computer",
+       "KES 800,000",
+       "KES 80,000",
+       "KES 720,000",
+       "KES 20,000"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Prior cash advance",
+       "KES 100,000"
+      ],
+      [
+       "Later invoices",
+       "KES 20,000 of the advance is still to be recovered"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Recovery"
+  }
+ ],
+ "s2": [
+  "View advance clause"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_advance_review_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review invoice",
+ "version": 26
+}

@@ -2,7 +2,7 @@
      one reason on the white sheet below a 1px rule (`.kt-empty` + `.kt-spot`); the sizing is `.kt-access` in the
      generated kt_industry_tokens.css (Part 9). Every module reaches it through a copy of this file — a component
      cannot cross a bundle boundary (AGENTS.md §6.6) — and `kentender_core/tests/test_access_denied_copies.py` fails
-     when a copy drifts. Change all four together: core, strategy, budget, procurement.
+     when a copy drifts. Change all five together: core, strategy, budget, procurement, contracts.
      It draws the state only: put it inside the page's `.kt-page` sheet, under the page rail. -->
 <template>
 	<div class="kt-empty kt-access" role="alert" :data-testid="testid">

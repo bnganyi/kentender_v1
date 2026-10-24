@@ -43,6 +43,8 @@ its receipt is returned untouched."""
 
 from __future__ import annotations
 
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import fiscal as F, world as W, world0 as W0  # noqa: F401
 from contextlib import contextmanager
 from typing import Any
 from uuid import uuid4
@@ -62,19 +64,20 @@ CHARLES = "charles.mutiso@moh.example.test"
 # (Procurement Planner) is that officer in the demonstration world; no new persona is created for it.
 MERCY = "mercy.kilonzo@moh.example.test"
 CLOCK = {
-	"fill": "2027-05-20 10:10:00",
-	"acknowledge": "2027-06-01 12:10:00",
-	"intake": "2027-06-10 10:00:00",
-	"complete": "2027-06-10 13:50:00",
-	"submit": "2027-06-10 14:31:58",
-	"close": "2027-06-12 11:00:00",
+	"fill": W("2027-05-20 10:10:00"),
+	"acknowledge": W("2027-06-01 12:10:00"),
+	"intake": W("2027-06-10 10:00:00"),
+	"complete": W("2027-06-10 13:50:00"),
+	"submit": W("2027-06-10 14:31:58"),
+	"close": W("2027-06-12 11:00:00"),
 }
 ACCEPT_AFTER_SECONDS = 3  # received 14:31:58, accepted 14:32:01 (§10.1)
-GOODS = {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": "2027-06-24"}
+GOODS = {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": calendar.delivery("2027-06-24")}
 WARRANTY = {"minimum_warranty_months": 36, "maximum_support_response_hours": 4}
 PRICE = {"unit_price": "160000", "tax_amount": "6400000"}
 SECURITY = {"security_form": "Demand Bank Guarantee", "issuer": "KCB Bank Kenya", "guarantee_reference": "KCB/TG/2027/8841"}
-CERTIFICATE = {"subject_name": "Mary Wanjiku", "valid_from": "2027-01-01 00:00:00", "valid_to": "2027-12-31 23:59:59"}
+#: The signing certificate is valid from before the closed year's bids (`W0`, SEED-002 v0.8 §A7) and through the executed year's.
+CERTIFICATE = {"subject_name": "Mary Wanjiku", "valid_from": W0("2027-01-01 00:00:00"), "valid_to": W("2027-12-31 23:59:59")}
 
 
 def _profile(licence: str, director: str, year: int) -> dict[str, Any]:
@@ -96,16 +99,16 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 		"signatory": "faith.atieno@jirani.example", "signatory_name": "Faith Atieno",
 		"representative": "kevin.kiprono@jirani.example", "representative_name": "Kevin Kiprono", "representative_title": "Tenders Officer",
 		"profile": ("TL-2027-1187", "Faith Atieno", 2011),
-		"goods": {"offered_make_model": "Vertex Book 14 G3", "offered_delivery_date": "2027-06-28"},
+		"goods": {"offered_make_model": "Vertex Book 14 G3", "offered_delivery_date": calendar.delivery("2027-06-28")},
 		"warranty": {"minimum_warranty_months": 36, "maximum_support_response_hours": 6},
 		"price": {"unit_price": "168000", "tax_amount": "6720000"},  # 250 × 168,000 + 6,720,000 = KES 48,720,000
 		"security": {"security_form": "Demand Bank Guarantee", "issuer": "Equity Bank Kenya", "guarantee_reference": "EQ/BG/2027/3317"},
 		"overrides": {}, "security_amount": "",
 		"clock": {
 			# two-year seed world: registered before the executed portfolio's first bids (was 1 Jun 2027)
-			"account": {"register": "2027-03-02 09:00:00", "verify": "2027-03-02 09:10:00", "representative": "2027-03-02 09:20:00"},
-			"start": "2027-06-02 09:15:00", "fill": "2027-06-03 11:00:00", "intake": "2027-06-11 09:30:00", "complete": "2027-06-11 10:05:00",
-			"submit": "2027-06-11 10:20:00",
+			"account": {"register": W0("2027-03-02 09:00:00"), "verify": W0("2027-03-02 09:10:00"), "representative": W0("2027-03-02 09:20:00")},
+			"start": W("2027-06-02 09:15:00"), "fill": W("2027-06-03 11:00:00"), "intake": W("2027-06-11 09:30:00"), "complete": W("2027-06-11 10:05:00"),
+			"submit": W("2027-06-11 10:20:00"),
 		},
 	},
 	{
@@ -118,16 +121,16 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 		"signatory": "salim.omar@pwanitech.example", "signatory_name": "Salim Omar",
 		"representative": "lucy.wairimu@pwanitech.example", "representative_name": "Lucy Wairimu", "representative_title": "Sales Executive",
 		"profile": ("TL-2027-2245", "Salim Omar", 2018),
-		"goods": {"offered_make_model": "LiteBook 14S", "offered_delivery_date": "2027-06-22"},
+		"goods": {"offered_make_model": "LiteBook 14S", "offered_delivery_date": calendar.delivery("2027-06-22")},
 		"warranty": {"minimum_warranty_months": 36, "maximum_support_response_hours": 8},
 		"price": {"unit_price": "150000", "tax_amount": "6000000"},  # 250 × 150,000 + 6,000,000 = KES 43,500,000
 		"security": {"security_form": "Demand Bank Guarantee", "issuer": "Co-operative Bank of Kenya", "guarantee_reference": "COOP/TG/2027/0562"},
 		"overrides": {"memory": 8},  # 8 GB against the required 16 GB
 		"security_amount": "",
 		"clock": {
-			"account": {"register": "2027-03-03 10:00:00", "verify": "2027-03-03 10:10:00", "representative": "2027-03-03 10:20:00"},
-			"start": "2027-06-03 10:00:00", "fill": "2027-06-04 10:30:00", "intake": "2027-06-11 15:00:00", "complete": "2027-06-11 15:30:00",
-			"submit": "2027-06-11 16:45:00",
+			"account": {"register": W0("2027-03-03 10:00:00"), "verify": W0("2027-03-03 10:10:00"), "representative": W0("2027-03-03 10:20:00")},
+			"start": W("2027-06-03 10:00:00"), "fill": W("2027-06-04 10:30:00"), "intake": W("2027-06-11 15:00:00"), "complete": W("2027-06-11 15:30:00"),
+			"submit": W("2027-06-11 16:45:00"),
 		},
 	},
 	{
@@ -140,15 +143,15 @@ BIDDERS: tuple[dict[str, Any], ...] = (
 		"signatory": "joseph.kimutai@mlimacomputers.example", "signatory_name": "Joseph Kimutai",
 		"representative": "agnes.moraa@mlimacomputers.example", "representative_name": "Agnes Moraa", "representative_title": "Tenders Coordinator",
 		"profile": ("TL-2027-3310", "Joseph Kimutai", 2016),
-		"goods": {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": "2027-06-30"},
+		"goods": {"offered_make_model": "ApexBook Pro 14", "offered_delivery_date": calendar.delivery("2027-06-30")},
 		"warranty": {"minimum_warranty_months": 36, "maximum_support_response_hours": 4},
 		"price": {"unit_price": "162000", "tax_amount": "6480000"},  # 250 × 162,000 + 6,480,000 = KES 46,980,000
 		"security": {"security_form": "Demand Bank Guarantee", "issuer": "NCBA Bank Kenya", "guarantee_reference": "NCBA/BG/2027/7710"},
 		"overrides": {}, "security_amount": "",
 		"clock": {
-			"account": {"register": "2027-03-04 14:00:00", "verify": "2027-03-04 14:10:00", "representative": "2027-03-04 14:20:00"},
-			"start": "2027-06-04 14:00:00", "fill": "2027-06-07 10:00:00", "intake": "2027-06-12 09:15:00", "complete": "2027-06-12 09:40:00",
-			"submit": "2027-06-12 10:05:00",
+			"account": {"register": W0("2027-03-04 14:00:00"), "verify": W0("2027-03-04 14:10:00"), "representative": W0("2027-03-04 14:20:00")},
+			"start": W("2027-06-04 14:00:00"), "fill": W("2027-06-07 10:00:00"), "intake": W("2027-06-12 09:15:00"), "complete": W("2027-06-12 09:40:00"),
+			"submit": W("2027-06-12 10:05:00"),
 		},
 	},
 )
@@ -581,8 +584,8 @@ def validate_bid_submission_seed() -> list[dict[str, Any]]:
 	version = frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "status", "receipt"], as_dict=True) if ws.current_submission_version else None
 	check(bool(version) and int(version.version_number) == 1 and version.status == "Submitted", "Submitted bid Version 1 is current")
 	receipt = frappe.db.get_value("Bid Receipt", {"receipt_reference": version.receipt}, ["received_at", "accepted_at", "submitted_by"], as_dict=True) if version else None
-	check(bool(receipt) and cstr(receipt.received_at) == "2027-06-10 14:31:58", "received by the tender-box service at 10 Jun 2027, 14:31:58 EAT")
-	check(bool(receipt) and cstr(receipt.accepted_at) == "2027-06-10 14:32:01", "accepted into the tender box at 10 Jun 2027, 14:32:01 EAT")
+	check(bool(receipt) and cstr(receipt.received_at) == W("2027-06-10 14:31:58"), "received by the tender-box service at 10 Jun 2027, 14:31:58 EAT")
+	check(bool(receipt) and cstr(receipt.accepted_at) == W("2027-06-10 14:32:01"), "accepted into the tender box at 10 Jun 2027, 14:32:01 EAT")
 	check(bool(receipt) and receipt.submitted_by == MARY, "Mary Wanjiku submitted it")
 	acknowledgement = frappe.db.get_value("Bid Draft Change", {"bid_workspace": bid, "actor": DAVID, "changed_at": CLOCK["acknowledge"]}, "name")
 	check(bool(acknowledgement), "David changed the Draft at 1 Jun 2027, 12:10 EAT (the addendum acknowledgement)")

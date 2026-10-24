@@ -16,7 +16,7 @@ import frappe
 
 from kentender_core.services import next_step as ns
 from kentender_procurement.bid_opening.services import (
-	appointment, arrangements, guards, incidents, my_work_provider, next_steps, not_held, presence, reads, simulation,
+	appointment, arrangements, guards, incidents, my_work_provider, next_steps, not_held, picker_sources, presence, reads, simulation,
 )
 from kentender_procurement.bid_opening.tests.support import AO, AUDITOR, CHAIR, INDEPENDENT, MEMBER, OUTSIDER, SUPPORT, OpeningCase
 from kentender_procurement.bid_submission.tests.support import DAVID, key
@@ -102,13 +102,69 @@ class TestCaseAndCommittee(OpeningCase):
 		self.assertEqual(links(AO), [("bid-opening", "Bid opening", ["tenders", self.reference, "opening"])])
 		self.assertEqual(links(AUDITOR), [("bid-opening", "Bid opening", ["tenders", self.reference, "opening"])])
 
+	def picked(self, role: str = "Member", taken: tuple[str, ...] = (), actor: str = AO) -> dict[str, dict]:
+		"""What the record picker lists for this role on this Tender, by user."""
+		rows = picker_sources.committee_members(query="", context={"tender": self.name, "role": role, "taken": list(taken)}, actor=actor, limit=20)
+		return {r["id"]: r for r in rows}
+
 	def test_the_accounting_officer_sees_who_can_be_appointed(self):
 		self.prepare_case()
-		candidates = {c["user"]: c for c in reads.get_opening(tender=self.name, user=AO)["candidates"]}
-		self.assertEqual((candidates[INDEPENDENT]["designation"], candidates[INDEPENDENT]["involved"]), ("Budget Approver", False))
-		self.assertTrue(candidates[MEMBER]["involved"])  # prepared this Tender
-		self.assertNotIn("Administrator", candidates)
-		self.assertEqual(reads.get_opening(tender=self.name, user=CHAIR)["candidates"], [])
+		rows = self.picked("Member")
+		self.assertIn("Budget Approver", rows[INDEPENDENT]["detail"])
+		self.assertIsNone(rows[INDEPENDENT]["disabled_reason"])
+		self.assertIsNone(rows[MEMBER]["disabled_reason"])  # prepared this Tender: fine as an ordinary member
+		self.assertNotIn("Administrator", rows)
+		independent = self.picked("Independent member")
+		self.assertEqual(independent[MEMBER]["disabled_reason"], appointment.INVOLVED_TEXT)  # prepared this Tender: not independent of it
+		self.assertIsNone(independent[INDEPENDENT]["disabled_reason"])
+		self.assertEqual(self.picked("Member", taken=(CHAIR,))[CHAIR]["disabled_reason"], appointment.DUPLICATE_TEXT)
+		with self.assertRaises(frappe.DoesNotExistError):
+			self.picked(actor=CHAIR)  # only the Accounting Officer names the committee
+
+	def test_every_row_says_whether_that_person_could_be_the_independent_member(self):
+		"""With a role per person in the Add members dialog, no single role decides the list: each row carries the answer as a fact."""
+		self.prepare_case()
+		as_member, as_independent = self.picked("Member"), self.picked("Independent member")
+		self.assertEqual(set(as_member), set(as_independent))
+		for user, row in as_member.items():
+			if row["disabled_reason"]:
+				continue  # barred from any role: the row's own reason says so
+			self.assertEqual(row["extra"]["independent_blocker"] or None, as_independent[user]["disabled_reason"], user)
+		self.assertEqual(as_member[MEMBER]["extra"]["independent_blocker"], appointment.INVOLVED_TEXT)  # prepared this Tender
+		self.assertEqual(as_member[INDEPENDENT]["extra"]["independent_blocker"], "")
+
+	def test_the_picker_is_registered_and_answers_through_core(self):
+		from kentender_core.services import record_picker
+
+		self.prepare_case()
+		self.assertEqual(record_picker.check_sources(), [])
+		frappe.set_user(AO)
+		try:
+			everyone = record_picker.search("bid_opening.committee_member", context={"tender": self.name, "role": "Independent member"})
+			self.assertEqual((len(everyone["rows"]), everyone["total"] > 20), (20, True))  # one page, not the whole list
+			result = record_picker.search("bid_opening.committee_member", query=MEMBER, context={"tender": self.name, "role": "Independent member"})
+		finally:
+			frappe.set_user("Administrator")
+		by_id = {r["id"]: r for r in result["rows"]}
+		self.assertEqual(by_id[MEMBER]["disabled_reason"], appointment.INVOLVED_TEXT)
+		self.assertEqual(result["labels"]["plural"], "people")
+		self.assertEqual(set(by_id[MEMBER]), {"id", "label", "detail", "disabled_reason", "section", "extra"})
+
+	def test_the_picker_and_the_command_agree_about_every_person(self):
+		"""The list is only a pick list; this proves it says what AppointOpeningCommittee will say."""
+		self.prepare_case()
+		for role in ("Member", "Independent member"):
+			rows = self.picked(role)
+			free = [u for u, r in self.picked("Member").items() if not r["disabled_reason"] and u not in (CHAIR, INDEPENDENT)] or [u for u in self.picked("Member") if u != INDEPENDENT]
+			for user, row in rows.items():
+				others = [u for u in free if u != user]
+				roster = [{"user": others[0], "committee_role": "Chair and recorder"}, {"user": others[1], "committee_role": "Member"}, {"user": user, "committee_role": role}]
+				result = appointment.validate(self.name, roster)
+				said = ((result or {}).get("errors") or {}).get(user)
+				self.assertEqual(said, row["disabled_reason"], f"{user} as {role}: the command said {said!r}, the picker {row['disabled_reason']!r}")
+		# already on the committee being drafted
+		twice = appointment.validate(self.name, [{"user": CHAIR, "committee_role": "Chair and recorder"}, {"user": CHAIR, "committee_role": "Member"}])
+		self.assertEqual(twice["errors"][CHAIR], appointment.DUPLICATE_TEXT)
 
 	def test_only_the_accounting_officer_appoints_or_publishes(self):
 		self.prepare_case()
@@ -375,7 +431,7 @@ def pre_start_views(case: OpeningCase) -> dict:
 
 def expected_views() -> dict:
 	chair_name = frappe.db.get_value("User", CHAIR, "full_name")
-	keys = ["arrangements", "attendees", "cancellation", "candidates", "ceremony", "committee", "decision", "incidents", "journey", "next_step", "opening", "record", "start_guard", "technical_status", "viewer"]
+	keys = ["arrangements", "attendees", "cancellation", "ceremony", "committee", "decision", "incidents", "journey", "next_step", "opening", "record", "start_guard", "technical_status", "viewer"]
 	opening_keys = ["box_received", "closed", "deadline", "deadline_label", "opening_id", "record_version", "state", "status", "tender", "tender_reference", "title"]
 	answer = lambda kind, label, headline, sentence="", holder=None, action="": {"kind": kind, "label": label, "headline": headline, "sentence": sentence,  # noqa: E731
 		"stage": "open", "holder": holder, "since": None, "blockers": [], "fixes": [], "primary_action": action}

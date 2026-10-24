@@ -33,6 +33,7 @@ Do **not** rerun hundreds of tests after each small edit. When a broad run fails
 - For complex screens, build Vue 3 mounted inside a real Frappe Desk Page (validated standard — see `AGENTS.md` §6). Routine CRUD/administration uses standard Frappe Form/List/Report/Workflow APIs; module landing uses a standard Workspace. Do not add `frappe-ui` without explicit approval.
 - Route record identifiers in URL path segments, preserve context across direct load, forward navigation, refresh, and browser back/forward. Every Vue-in-Desk page controller is one `kentender_core.desk_page.register(...)` call (`AGENTS.md` §6.1) — the app stays mounted across navigations; read the route only via the app's `useRouteState()` adapter; show a skeleton only for a screen with nothing to show yet and revalidate in place otherwise; bind controlled inputs to the caller's own selection, never the server echo (`AGENTS.md` §6.4). Do not add Industry pages to `kentender_core.cl_surface_registry.js` (§6.5).
 - A table that can grow is paged with the shared pager (`kentender_core.industry.mountPager`, `AGENTS.md` §6.11): never build a pager or a bespoke row-count line, and reset the page to 1 only on the reader's own filter actions.
+- Choosing one person or one record from a list that can grow uses the shared record picker (`kentender_core.industry.mountRecordPicker`, `AGENTS.md` §6.12): never build a dropdown, typed list or search box for it, never send the whole list to the browser, and make the source's `disabled_reason` the command's own refusal with a parity test. A fixed vocabulary stays a plain select; `test_record_picker_guard` fails on a new dropdown over a people or unit list.
 - After server-side state changes, refresh or reconcile the visible page state. Verify both first paint and at least one interactive re-render.
 - Never mark work complete from a passing narrow test alone. Match the full acceptance criteria and report exactly what was and was not run.
 
@@ -47,6 +48,7 @@ Primary dependency direction:
 Side applications consume published interfaces:
 
 - `kentender_suppliers`: supplier identity and qualification;
+- `kentender_contracts`: Contract Management (agreement, delivery and acceptance, invoices and payment follow-up, close-out); depends only on `kentender_core` and ERPNext and must run without the tendering apps, reaching Award, Budget and supplier accounts through published hooks and guarded adapters;
 - `kentender_governance`: approvals and delegation;
 - `kentender_compliance`: regulatory and audit-rule overlays;
 - `kentender_integrations`: external-system adapters, not business-rule ownership;
@@ -131,7 +133,7 @@ make validate-links
 make migrate SITE=<site>
 make clear SITE=<site>
 make doctor
-make seed-canonical SITE=<site> [CURRENT=award] [NEXT=annual_plan] [REBUILD=True]    # clear non-canonical rows, reseed the two-year world read as at 18 Jun 2027 10:00 and validate: CURRENT moves FY 2026/27, carried out (annual_plan/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award), NEXT moves FY 2027/28, being prepared (none/budget/needs/departmental_plans/annual_plan); default the full world; a lower stage rebuilds by itself; REBUILD=True drops and rebuilds the canonical module rows — SEED-002 (approved 8 October 2026; it retired SEED-001 and SEED-OPS-001): docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_3.md
+make seed-canonical SITE=<site> [CURRENT=contracts|award|…] [NEXT=] [ANCHOR=real|story] [REBUILD=True]    # clear non-canonical rows, then reseed the three-year world around the real date and validate: ANCHOR=real (the default) stores the anchor first (the latest Friday 10:00 not later than the run's start; no simulated instant is later than the real clock), Year 0 is the closed year (always built), CURRENT moves Year 1 (carried out: annual_plan/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award/contracts; `contracts`, the default on an anchored world with Contract Management installed, carries the closed year's three awards through Contract Management: one paid, one in delivery, one waiting for its agreement), NEXT moves Year 2 (being prepared: none/budget/needs/departmental_plans/annual_plan; by default as far as the anchor allows); ANCHOR=story is the v0.7 world read as at 18 Jun 2027 10:00; REBUILD=True drops and rebuilds the canonical module rows and takes a new anchor — SEED-002 (approved 8 October 2026; v0.9 records the real-date anchor): docs/mvp-1-r1/20_seed_data/KenTender_SEED-002_Canonical_Seed_World_v0_9.md
 make seed-canonical-dry-run SITE=<site>             # what seed-canonical would remove, deletes nothing
 make seed-canonical-validate SITE=<site>
 make seed-kentender-mvp-v1 SITE=<site>              # legacy KENTENDER_MVP_V1 pack (multi-PE era); prefer seed-canonical

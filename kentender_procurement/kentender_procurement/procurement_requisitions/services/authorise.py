@@ -42,6 +42,15 @@ def recheck(root, version, package_version) -> tuple[dict[str, Any], list[Any]]:
 	"""§7.2 — every gate, again, on the immutable submitted Version and the
 	current owner facts. Returns the projection and the nine checks."""
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
+	# REQ-CHG-001 v1.20 §9.1D — a source whose Tender was cancelled is held until its recovery completes: say which of the two states it is
+	# in, before any generic "not eligible" and before any funding is checked. Other sources are not affected.
+	wanted = {cstr(line.plan_item_line_id) for line in version.drawdown_lines}
+	held = [h for h in projection.get("recovery_holds") or [] if cstr(h.get("allocation_id")) in wanted]
+	if held:
+		fail(
+			"REQ_CANCELLATION_RECOVERY_INVALID" if any(h.get("status") == "Needs attention" for h in held) else "REQ_CANCELLATION_RECOVERY_PENDING",
+			detail={"plan_item_id": root.plan_item_id, "allocation_ids": sorted(cstr(h.get("allocation_id")) for h in held), "reason": next((cstr(h.get("reason")) for h in held if cstr(h.get("reason"))), "")},
+		)
 	checks = compatibility.require_compatible(projection)
 	if cstr(projection.get("plan_item_version_id")) != cstr(root.plan_item_version_id):
 		fail("REQ_PLAN_INELIGIBLE", "The approved baseline was replaced. Return the requisition or request a Planning correction.")

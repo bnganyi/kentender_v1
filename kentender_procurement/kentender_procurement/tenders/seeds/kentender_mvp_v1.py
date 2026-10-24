@@ -39,6 +39,7 @@ Idempotent: a rerun that finds the canonical Tender already at
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from contextlib import contextmanager
 from typing import Any
 from uuid import uuid4
@@ -68,10 +69,10 @@ PUBLICATION_EVIDENCE = {
 }
 #: §10.1 addendum confirmations: (reference, URL, evidence, available at, attested step).
 ADDENDUM_EVIDENCE = {
-	"STATE_PORTAL": ("PPIP-MOH-2027-033-A1", "https://portal.example.test/tenders/PPIP-MOH-2027-033/addenda/1", "PPIP-MOH-2027-033-A1.pdf", "2027-05-31 08:50:00", "addendum_confirm_1"),
-	"MINISTRY_WEBSITE": ("WEB-MOH-2027-033-A1", "https://health.example.test/tenders/TND-MOH-2027-033/addenda/1", "WEB-MOH-2027-033-A1.pdf", "2027-05-31 08:50:00", "addendum_confirm_2"),
-	"NOTICE_BOARD": ("NB-MOH-2027-033-A1", "", "NB-MOH-2027-033-A1.jpg", "2027-05-31 08:55:00", "addendum_confirm_3"),
-	"NATIONAL_NEWSPAPERS": ("NP-MOH-2027-033-A1", "", "NP-MOH-2027-033-A1.pdf", "2027-05-31 09:00:00", "addendum_confirm_4"),
+	"STATE_PORTAL": ("PPIP-MOH-2027-033-A1", "https://portal.example.test/tenders/PPIP-MOH-2027-033/addenda/1", "PPIP-MOH-2027-033-A1.pdf", W("2027-05-31 08:50:00"), "addendum_confirm_1"),
+	"MINISTRY_WEBSITE": ("WEB-MOH-2027-033-A1", "https://health.example.test/tenders/TND-MOH-2027-033/addenda/1", "WEB-MOH-2027-033-A1.pdf", W("2027-05-31 08:50:00"), "addendum_confirm_2"),
+	"NOTICE_BOARD": ("NB-MOH-2027-033-A1", "", "NB-MOH-2027-033-A1.jpg", W("2027-05-31 08:55:00"), "addendum_confirm_3"),
+	"NATIONAL_NEWSPAPERS": ("NP-MOH-2027-033-A1", "", "NP-MOH-2027-033-A1.pdf", W("2027-05-31 09:00:00"), "addendum_confirm_4"),
 }
 # The candidate registers through Bid Submission's Start bid (TPR FU-25): the
 # arrangement identity is minted there, so only the facts are fixed here.
@@ -83,31 +84,31 @@ RETURN_COMMENT = "Confirm whether manufacturer authorisation is necessary and up
 # §13.3's own instants, stored as the naive site-local (EAT) values the
 # services themselves store and the read models render back unchanged.
 CLOCK = {
-	"start": "2027-03-20 09:00:00",
-	"submit_v1": "2027-03-20 11:40:00",
-	"return": "2027-03-25 14:00:00",
-	"resubmit_v2": "2027-04-15 09:15:00",
-	"approve": "2027-04-20 10:00:00",
-	"authorise": "2027-05-15 07:55:00",
-	"confirm_1": "2027-05-15 08:03:00",
-	"confirm_2": "2027-05-15 08:04:00",
-	"confirm_3": "2027-05-15 08:06:00",
-	"confirm_4": "2027-05-15 08:07:00",
-	"candidate": "2027-05-19 09:20:00",
-	"clarification_received": "2027-05-26 09:00:00",
-	"clarification_answered": "2027-05-26 11:00:00",
-	"clarification_delivered": "2027-05-26 11:01:00",
-	"addendum_draft": "2027-05-31 08:15:00",
-	"addendum_submit": "2027-05-31 08:25:00",
-	"addendum_issue": "2027-05-31 08:30:00",
-	"addendum_confirm_1": "2027-05-31 09:03:00",
-	"addendum_confirm_2": "2027-05-31 09:04:00",
-	"addendum_confirm_3": "2027-05-31 09:06:00",
-	"addendum_confirm_4": "2027-05-31 09:07:00",
-	"addendum_delivered": "2027-05-31 09:08:00",
-	"close": "2027-06-12 11:00:00",
+	"start": W("2027-03-20 09:00:00"),
+	"submit_v1": W("2027-03-20 11:40:00"),
+	"return": W("2027-03-25 14:00:00"),
+	"resubmit_v2": W("2027-04-15 09:15:00"),
+	"approve": W("2027-04-20 10:00:00"),
+	"authorise": W("2027-05-15 07:55:00"),
+	"confirm_1": W("2027-05-15 08:03:00"),
+	"confirm_2": W("2027-05-15 08:04:00"),
+	"confirm_3": W("2027-05-15 08:06:00"),
+	"confirm_4": W("2027-05-15 08:07:00"),
+	"candidate": W("2027-05-19 09:20:00"),
+	"clarification_received": W("2027-05-26 09:00:00"),
+	"clarification_answered": W("2027-05-26 11:00:00"),
+	"clarification_delivered": W("2027-05-26 11:01:00"),
+	"addendum_draft": W("2027-05-31 08:15:00"),
+	"addendum_submit": W("2027-05-31 08:25:00"),
+	"addendum_issue": W("2027-05-31 08:30:00"),
+	"addendum_confirm_1": W("2027-05-31 09:03:00"),
+	"addendum_confirm_2": W("2027-05-31 09:04:00"),
+	"addendum_confirm_3": W("2027-05-31 09:06:00"),
+	"addendum_confirm_4": W("2027-05-31 09:07:00"),
+	"addendum_delivered": W("2027-05-31 09:08:00"),
+	"close": W("2027-06-12 11:00:00"),
 }
-AVAILABLE_AT = "2027-05-15 08:00:00"
+AVAILABLE_AT = W("2027-05-15 08:00:00")
 
 ADDENDUM_VALUES = {
 	"change_class": "Administrative clarification",
@@ -116,7 +117,7 @@ ADDENDUM_VALUES = {
 	"revised_value": "Ministry of Health Headquarters, Afya House, 3rd Floor Procurement Stores, Nairobi",
 	"reason": "The published address omitted the internal delivery point",
 	"materiality_statement": "Same site; no change to scope, quantity, value or evaluation basis.",
-	"revised_submission_deadline": "2027-06-12 11:00:00",
+	"revised_submission_deadline": W("2027-06-12 11:00:00"),
 }
 
 
@@ -156,8 +157,8 @@ def _clock(step: str) -> None:
 
 def officer_values(**overrides: Any) -> dict[str, Any]:
 	values = {
-		"tender_title": "Supply and delivery of business laptops", "issue_date": "2027-05-15", "clarification_deadline": "2027-05-27 17:00:00",
-		"submission_deadline": "2027-06-05 11:00:00", "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
+		"tender_title": "Supply and delivery of business laptops", "issue_date": W("2027-05-15"), "clarification_deadline": W("2027-05-27 17:00:00"),
+		"submission_deadline": W("2027-06-05 11:00:00"), "tender_validity_days": 120, "tender_security_amount": 500000.00, "tender_security_method": "Bidder uploads an electronic instrument", "tender_security_original": "Required", "pre_tender_meeting": False,
 		"manufacturer_authorisation_required": True, "datasheets_required": True, "past_experience_required": True, "minimum_comparable_contracts": 2,
 		"experience_period_years": 5, "after_sales_evidence_required": True, "after_sales_evidence": "Kenya service-centre details and escalation contacts",
 		"inspection_location": DELIVERY_LOCATION, "payment_timing_days": "30", "performance_security_required": True, "performance_security_percent": 10,
@@ -732,10 +733,10 @@ def validate_tenders_seed() -> list[dict[str, Any]]:
 	check(len(confirmations) == 4, f"all four publication channels are Confirmed (got {len(confirmations)})")
 	addendum = frappe.db.get_value("Tender Addendum", {"tender": tender.name}, ["name", "status", "revised_submission_deadline"], as_dict=True)
 	check(bool(addendum) and addendum.status == "Issued", "the addendum is Issued")
-	check(bool(addendum) and cstr(addendum.revised_submission_deadline) == "2027-06-12 11:00:00", "the addendum's revised submission deadline is 12 Jun 2027, 11:00 EAT")
+	check(bool(addendum) and cstr(addendum.revised_submission_deadline) == W("2027-06-12 11:00:00"), "the addendum's revised submission deadline is 12 Jun 2027, 11:00 EAT")
 	addendum_confirmations = frappe.get_all("Tender Channel Confirmation", filters={"subject_type": "Addendum", "subject_id": addendum.name if addendum else "", "status": "Confirmed"}, pluck="name")
 	check(len(addendum_confirmations) == 4, f"all four addendum channels are Confirmed (got {len(addendum_confirmations)})")
-	check(bool(addendum) and cstr(frappe.db.get_value("Tender Addendum", addendum.name, "issued_at")) == "2027-05-31 09:00:00", "the addendum is effective at 31 May 2027, 09:00 EAT (latest availability)")
+	check(bool(addendum) and cstr(frappe.db.get_value("Tender Addendum", addendum.name, "issued_at")) == W("2027-05-31 09:00:00"), "the addendum is effective at 31 May 2027, 09:00 EAT (latest availability)")
 	definitions = frappe.get_all("Tender Bid Definition", filters={"tender": tender.name}, fields=["status", "definition_version"], order_by="definition_version asc")
 	check([d["status"] for d in definitions] == ["Superseded", "Effective"], f"the original definition is Superseded and the addendum's successor is Effective (got {[d['status'] for d in definitions]})")
 	from kentender_procurement.tenders.services import candidate_gateway

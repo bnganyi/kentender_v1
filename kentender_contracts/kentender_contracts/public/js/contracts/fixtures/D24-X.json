@@ -1,0 +1,135 @@
+{
+ "actions": {
+  "Revise appointment recommendation": {
+   "do": "route",
+   "route": [
+    "CM-TEST-APT",
+    "agreement",
+    "recommend"
+   ]
+  },
+  "View declaration": {
+   "do": "route",
+   "route": [
+    "CM-TEST-APT",
+    "agreement",
+    "appointment"
+   ]
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-APT",
+ "d": "D24",
+ "dialogs": {},
+ "ev": [
+  "Appointment CM-TEST-APT/APP/1",
+  "Personal declaration 1"
+ ],
+ "id": "D24-X",
+ "name": "Declare interest",
+ "next": {
+  "fixes": [
+   "Revise appointment recommendation",
+   "View declaration"
+  ],
+  "h": "Peter Mugo must be replaced before the affected inspection can proceed.",
+  "k": "blk",
+  "s": "Responsible for the fix: Charles Mutiso",
+  "s2": ""
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-APT",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract",
+       "CM-TEST-APT"
+      ],
+      [
+       "Title",
+       "IT equipment delivery"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Contract"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Member",
+       "Peter Mugo"
+      ],
+      [
+       "Declaration",
+       "I have a conflict of interest"
+      ],
+      [
+       "Description",
+       "A close family member works for the supplier."
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Declaration"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-APT",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-APT",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-APT",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-APT",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-APT",
+    "history"
+   ]
+  }
+ ],
+ "title": "Declare interest",
+ "version": 10
+}

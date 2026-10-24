@@ -1,0 +1,91 @@
+{
+ "actions": {},
+ "audiences": [
+  "technical"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_technical_reade",
+ "d": "D09",
+ "dialogs": {},
+ "ev": [],
+ "id": "D09",
+ "name": "Payment follow-up",
+ "next": null,
+ "page": "record",
+ "ref": "CM-TEST-test_the_technical_reade",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Invoice",
+       "KES 800,000"
+      ],
+      [
+       "Certification",
+       "Signed"
+      ],
+      [
+       "Accounting entry",
+       "Not posted"
+      ],
+      [
+       "Payment",
+       "None yet"
+      ],
+      [
+       "Settlement",
+       "Not confirmed"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": ""
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_technical_reade",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_technical_reade",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_technical_reade",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_technical_reade",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_technical_reade",
+    "history"
+   ]
+  }
+ ],
+ "title": "Invoice and payment",
+ "version": 19
+}

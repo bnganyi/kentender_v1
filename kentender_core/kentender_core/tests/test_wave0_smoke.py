@@ -26,6 +26,7 @@ KENTENDER_APPS = (
 	"kentender_assets",
 	"kentender_integrations",
 	"kentender_transparency",
+	"kentender_contracts",  # installed on the dev site on 17 October 2026 (CM8-411)
 )
 
 _SMOKE_PREFIX = "KT-SMOKE"
@@ -90,6 +91,7 @@ class TestWave0Smoke(IntegrationTestCase):
 				"doctype": "Procuring Entity",
 				"entity_code": _PE_CODE,
 				"entity_name": "Wave 0 smoke Procuring Entity",
+				"reporting_currency": "KES",  # mandatory on a Procuring Entity since the currency rules; the smoke test predates it
 			}
 		)
 		pe.insert()

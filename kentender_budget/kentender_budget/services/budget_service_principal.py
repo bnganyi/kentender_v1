@@ -6,7 +6,7 @@ which service principal it is (AUD-XC-002, AUD-BUD-012).
 
 The money-moving Budget functions (`check_funding`, `reserve_funding`,
 `release_reservation`, `convert_reservation`, `adjust_commitment`,
-`revalidate_reservations`) are in-process service calls made by a named
+`close_commitment`, `revalidate_reservations`) are in-process service calls made by a named
 downstream service, never web endpoints. Budget authenticates the *principal*
 the calling service passes, not the session's role: every function takes a
 `ServiceCaller` and checks it against the fixed allow-list of
@@ -27,6 +27,14 @@ Owner decision 6 Oct 2026:
   commitment. (No Contract Management module exists yet; the principal is a
   registered capability exercised by tests.)
 - Planning, Tenders, Evaluation and Award can do none of it.
+
+Owner approval 17 Oct 2026 (BUD-CHG-001 v1.17 §8.9, a narrow amendment of the same decision): Procurement Requisitions may also release, as one set, the
+exact unused reservations of a Tender whose whole-Tender cancellation recovery it has verified (`release_cancelled_tender_reservations`), and read Budget's account of them first. It still moves
+no commitment, cannot release a converted or partly released reservation, and the grant gives no general Budget access.
+
+Owner decision 16 Oct 2026 (a narrow amendment of the 6 Oct decision): Contract Management may also ask Budget to revalidate the exact reservations its own contract's
+award names, and nothing wider. Budget does the revalidating (it decides each status); the grant gives no general Budget access and no power to change funds, and
+`revalidate_reservations` refuses a Contract Management caller for any reservation the contract's award does not name.
 """
 
 from __future__ import annotations
@@ -49,11 +57,16 @@ ACTION_RESERVE = "reserve_funding"
 ACTION_RELEASE = "release_reservation"
 ACTION_CONVERT = "convert_reservation"
 ACTION_ADJUST = "adjust_commitment"
+ACTION_CLOSE = "close_commitment"
 ACTION_REVALIDATE = "revalidate_reservations"
+# BUD-CHG-001 v1.17 §8.9 / §9.5: Requisitions releases the exact unused reservations of a Tender whose cancellation recovery it has verified, as one set, and reads Budget's own account of them first. Nothing else.
+ACTION_RELEASE_CANCELLED = "release_cancelled_tender_reservations"
+# BUD-CHG-001 v1.16 §8.6: Contract Management raises, refreshes and withdraws the funding request of its own contract. It creates no reservation, commitment or appropriation by itself.
+ACTION_FUNDING_REQUEST = "contract_funding_request"
 
 ALLOWED_ACTIONS: dict[str, frozenset[str]] = {
-	PRINCIPAL_REQUISITIONS: frozenset({ACTION_CHECK, ACTION_RESERVE, ACTION_RELEASE}),
-	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST}),
+	PRINCIPAL_REQUISITIONS: frozenset({ACTION_CHECK, ACTION_RESERVE, ACTION_RELEASE, ACTION_RELEASE_CANCELLED}),
+	PRINCIPAL_CONTRACT: frozenset({ACTION_CONVERT, ACTION_RELEASE, ACTION_ADJUST, ACTION_CLOSE, ACTION_REVALIDATE, ACTION_FUNDING_REQUEST}),
 	PRINCIPAL_BUDGET: frozenset({ACTION_REVALIDATE}),
 	PRINCIPAL_PLANNING: frozenset(),
 	PRINCIPAL_TENDERS: frozenset(),

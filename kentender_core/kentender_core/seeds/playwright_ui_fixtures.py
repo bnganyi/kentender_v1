@@ -43,6 +43,7 @@ by the Python suite (atomic entity + root). Owner decision D17, 24 Sep 2026.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 
 import frappe
@@ -153,8 +154,8 @@ def reset_config_rules(*, commit: bool = True) -> dict[str, Any]:
 	reservation = _seed_save_reference_version(
 		reference_set=reservation_set,
 		payload={"obligation_code": "ANNUAL-RESERVATION-TARGET", "measure_stage": "PlanningAllocation"},
-		effective_from="2027-07-01",
-		effective_until="2028-06-30",
+		effective_from=F("2027-07-01"),
+		effective_until=F("2028-06-30"),
 		fixture_namespace=FIXTURE_NAMESPACE,
 	)
 

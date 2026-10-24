@@ -12,6 +12,8 @@ receipt nor any record holds the bid's content."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import re
 
@@ -32,7 +34,7 @@ from kentender_procurement.bid_submission.services import (
 from kentender_procurement.bid_submission.test_services import tender_box, trust
 from kentender_procurement.bid_submission.tests.support import AFYA, DAVID, GRACE, MARY, PETER, BidCase, fill_everything, key, submission_on
 
-SUBMIT_AT = "2027-05-30 14:30:00"
+SUBMIT_AT = W("2027-05-30 14:30:00")
 COUNTED = ("Bid Submission Attempt", "Bid Submission Version", "Tender Box Envelope", "Bid Receipt")
 
 
@@ -42,7 +44,7 @@ class SubmissionCase(BidCase):
 		submission_on(self)
 		self.bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
 		fill_everything(self.bid)
-		self.certificate = trust.issue_certificate(user=MARY, organisation=AFYA, subject_name="Mary Wanjiku", valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+		self.certificate = trust.issue_certificate(user=MARY, organisation=AFYA, subject_name="Mary Wanjiku", valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
 		self.at(SUBMIT_AT)
 
 	def version(self):
@@ -73,7 +75,7 @@ class SubmissionCase(BidCase):
 	def answer(self, pick, value):
 		"""David changes one requirements answer (before the signing instant)."""
 		field = next(f for g in reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)["groups"] for f in g["fields"] if pick(f))
-		self.at("2027-05-30 14:00:00")
+		self.at(W("2027-05-30 14:00:00"))
 		self.assertTrue(save.save_bid_task(bid_reference=self.bid, task="requirements", values={field["handle"]: value}, expected_record_version=self.version(), idempotency_key=key(), user=DAVID)["ok"])
 		self.at(SUBMIT_AT)
 
@@ -81,7 +83,7 @@ class SubmissionCase(BidCase):
 class TestSubmitBid(SubmissionCase):
 	def test_mary_signs_and_submits_and_the_tender_box_acceptance_makes_the_receipt(self):
 		screen = submission.get_submit_bid(bid_reference=self.bid, user=MARY)
-		self.assertEqual((screen["can_submit"], screen["current_time"], screen["signatory"]["certificate"]), (True, "30 May 2027, 14:30 EAT", "Ready"))
+		self.assertEqual((screen["can_submit"], screen["current_time"], screen["signatory"]["certificate"]), (True, f"{ad.dt_eat('2027-05-30 14:30:00')}", "Ready"))
 		self.assertIn("The bid will not be opened or evaluated now.", screen["consequence"])
 		self.assertEqual(screen["confirmation_label"], "I confirm that the information, declarations and evidence in this bid are correct and that I am authorised to submit it for Afya Digital Supplies Limited.")
 		simulation.set_controls(accept_after_seconds=3)
@@ -90,7 +92,7 @@ class TestSubmitBid(SubmissionCase):
 		self.assertRegex(result["receipt_reference"], r"^RCPT-MOH-\d{4}-\d{3}-001$")
 		ws = frappe.get_doc("Bid Workspace", self.bid)
 		version = frappe.get_doc("Bid Submission Version", ws.current_submission_version)
-		self.assertEqual((ws.status, version.status, version.version_number, str(version.received_at), str(version.accepted_at)), ("Submitted", "Submitted", 1, "2027-05-30 14:30:00", "2027-05-30 14:30:03"))
+		self.assertEqual((ws.status, version.status, version.version_number, str(version.received_at), str(version.accepted_at)), ("Submitted", "Submitted", 1, W("2027-05-30 14:30:00"), W("2027-05-30 14:30:03")))
 		self.assertEqual((version.definition_digest, version.organisation_snapshot, version.signed_by), (ws.definition_digest, ws.organisation_snapshot, MARY))
 		self.assertEqual(frappe.db.get_value("Tender Box Envelope", version.tender_box_envelope, "box_state"), "Sealed")
 		# the box holds exactly the signed package; the database only its digest
@@ -101,7 +103,7 @@ class TestSubmitBid(SubmissionCase):
 			facts = receipts.get_bid_receipt(receipt_reference=result["receipt_reference"], user=reader)
 			self.assertEqual(
 				(facts["bidder"], facts["submitted_version"], facts["submitted_by"], facts["received_at"], facts["accepted_at"], facts["status"]),
-				("Afya Digital Supplies Limited", "Submitted bid Version 1", "Mary Wanjiku", "30 May 2027, 14:30:00 EAT", "30 May 2027, 14:30:03 EAT", "Submitted"),
+				("Afya Digital Supplies Limited", "Submitted bid Version 1", "Mary Wanjiku", f"{ad.dt_eat('2027-05-30 14:30:00', seconds=True)}", f"{ad.dt_eat('2027-05-30 14:30:03', seconds=True)}", "Submitted"),
 			)
 		self.assertEqual(facts["notice"], "This receipt confirms submission only. It is not an opening, evaluation or award result.")
 		text = json.dumps(facts)
@@ -156,7 +158,7 @@ class TestWhoAndWhen(SubmissionCase):
 
 	def test_a_signature_must_be_the_signatorys_own_for_this_exact_package(self):
 		self.accounts.assign(GRACE, AFYA, "Authorised Signatory", job_title="Director")
-		trust.issue_certificate(user=GRACE, organisation=AFYA, subject_name="Grace Njeri", valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+		trust.issue_certificate(user=GRACE, organisation=AFYA, subject_name="Grace Njeri", valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
 		grace = self.signed(user=GRACE, organisation=AFYA)
 		self.assertEqual(self.code(self.submit, grace), "BDS_SIGNATURE_INVALID")  # another person's
 		for typed in ("Mary Wanjiku", "on", "true", ""):

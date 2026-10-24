@@ -25,6 +25,7 @@ matrix is written to
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import os
 
 import frappe
@@ -171,7 +172,7 @@ class TestDepartmentalNeedsDeadEndMatrix(DepartmentalNeedsCommandCase):
 		frappe.set_user(AUTHOR)
 		saved = lifecycle.update_need(
 			need=need, expected_version=opened["record_version"], idempotency_key=self.key(),
-			**self.content(required_by_date="2027-09-15"),
+			**self.content(required_by_date=F("2027-09-15")),
 		)
 		lifecycle.submit_need(need=need, expected_version=saved["record_version"], idempotency_key=self.key())
 		failures += self.check("Accepted — update submitted", need, turn=("Head of User Department",))

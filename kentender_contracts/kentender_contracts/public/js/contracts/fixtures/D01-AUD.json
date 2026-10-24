@@ -1,0 +1,116 @@
+{
+ "actions": {},
+ "at": "2 Jul 2027, 09:00 EAT",
+ "back": "Back to contracts",
+ "cols": [
+  "Contract",
+  "Supplier",
+  "Status",
+  "Next action",
+  "Responsible person",
+  ""
+ ],
+ "d": "D01",
+ "dialogs": {},
+ "empty": "No contracts are available.",
+ "emptyAct": "",
+ "ev": [],
+ "filters": [
+  {
+   "l": "Search contracts",
+   "name": "search",
+   "o": {},
+   "t": "tx",
+   "v": ""
+  },
+  {
+   "l": "Status",
+   "name": "status",
+   "o": {},
+   "opts": [
+    "All statuses",
+    "Preparing",
+    "Awaiting signatures",
+    "Active",
+    "Closed",
+    "Did not proceed",
+    "Terminated"
+   ],
+   "t": "sel",
+   "v": "All statuses"
+  },
+  {
+   "l": "Source",
+   "name": "source",
+   "o": {},
+   "opts": [
+    "All sources",
+    "KenTender award",
+    "External record"
+   ],
+   "t": "sel",
+   "v": "All sources"
+  },
+  {
+   "context": {},
+   "l": "Responsible person",
+   "name": "responsible",
+   "noun": "person",
+   "o": {
+    "allLabel": "All people"
+   },
+   "source": "contracts.register_person",
+   "t": "pick",
+   "v": "",
+   "valueLabel": ""
+  },
+  {
+   "context": {},
+   "l": "Managing unit",
+   "name": "unit",
+   "noun": "unit",
+   "o": {
+    "allLabel": "All units"
+   },
+   "source": "contracts.register_unit",
+   "t": "pick",
+   "v": "",
+   "valueLabel": ""
+  }
+ ],
+ "headP": "",
+ "id": "D01",
+ "p": "",
+ "page": "list",
+ "paging": {
+  "page": 1,
+  "page_size": 10,
+  "pages": 1,
+  "total": 1
+ },
+ "ref": "",
+ "regions": [],
+ "rowRoutes": [
+  [
+   "CM-TEST-BOARDS"
+  ]
+ ],
+ "rows": [
+  [
+   "@CM-TEST-BOARDS",
+   "Afya Digital Supplies Limited",
+   "!Preparing",
+   "Review the contract and send it for signature.",
+   "hopfsp",
+   "@Open contract"
+  ]
+ ],
+ "s2": [],
+ "sub": "",
+ "title": "Contracts",
+ "view": 1,
+ "views": [
+  "My work",
+  "All contracts"
+ ]
+}

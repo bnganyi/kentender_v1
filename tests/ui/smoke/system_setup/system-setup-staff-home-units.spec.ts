@@ -1,6 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 import { collectPageErrors } from "../../helpers/designFidelity";
+import { pickRecord } from "../../helpers/picker";
 import { resetResponsibilities, restoreSite, type ResponsibilitiesWorld } from "./helpers";
 
 /**
@@ -49,10 +50,8 @@ test.describe.serial("System setup — Staff home units", () => {
 		await expect(dialog.locator(".dialog-title")).toHaveText("Set home unit");
 		await expect(dialog).toContainText("This records where the person works. It does not grant any responsibility or access.");
 		await expect(dialog.locator('[data-testid="kt-home-unit-clear"]')).toHaveCount(0);
-		const options = await dialog.locator('[data-testid="kt-home-unit-select"] option').allTextContents();
-		const label = options.find((o) => o.endsWith(world.unit_name));
-		expect(label, `a unit named ${world.unit_name} among ${options.join(" | ")}`).toBeTruthy();
-		await dialog.locator('[data-testid="kt-home-unit-select"]').selectOption({ label });
+		const label = await pickRecord(page, "#kt-home-unit-select", world.unit); // by its code: several units share a name
+		expect(label.endsWith(world.unit_name), `a unit named ${world.unit_name}, chose ${label}`).toBe(true);
 		await dialog.locator('[data-testid="kt-home-unit-save"]').click();
 		await expect(dialog).toHaveCount(0, SERVER);
 		await expect(page.locator(`[data-testid="kt-home-unit-${world.user}"]`)).toHaveText(world.unit_name);

@@ -12,10 +12,14 @@ published contracts."""
 from __future__ import annotations
 
 import ast
+from datetime import datetime
 import os
 import unittest
 
 import frappe
+
+from kentender_core.seeds import calendar
+from kentender_core.seeds.calendar import world as W
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.procurement_planning.seeds import kentender_mvp_v1 as seed
@@ -93,10 +97,17 @@ class TestSeedContract(IntegrationTestCase):
 		# FY 2027/28's Plan keeps the PLN-CHG-001 instants; FY 2026/27's (the
 		# executed year, `self.baseline`) is the same journey 364 days earlier,
 		# so each event keeps its weekday (two-year seed world, D8).
+		def shown(story: str) -> str:
+			moment = datetime.strptime(W(story), "%Y-%m-%d %H:%M:%S")
+			return f"{moment.day} {moment:%b %Y}, {moment:%H:%M} EAT"
+
 		expected = {
-			self.baseline["plan_reference"]: ("9 Dec 2025, 10:00 EAT", "10 Dec 2025, 11:00 EAT", "11 Dec 2025, 15:00 EAT"),
-			"PLN-MOH-2027-001": ("8 Dec 2026, 10:00 EAT", "9 Dec 2026, 11:00 EAT", "10 Dec 2026, 15:00 EAT"),
+			self.baseline["plan_reference"]: (shown("2025-12-09 10:00:00"), shown("2025-12-10 11:00:00"), shown("2025-12-11 15:00:00")),
 		}
+		if frappe.db.get_value("Annual Plan", {"fiscal_year": calendar.YEAR2.fiscal_year}, "active_version"):
+			# only a world whose prepared year goes as far as its Annual Plan has one to read
+			year_two = frappe.db.get_value("Annual Plan", {"fiscal_year": calendar.YEAR2.fiscal_year}, "plan_reference")
+			expected[year_two] = (shown("2026-12-08 10:00:00"), shown("2026-12-09 11:00:00"), shown("2026-12-10 15:00:00"))
 		for reference, (adopted, approved, published) in expected.items():
 			plan = plan_read.get_annual_plan(plan_reference=reference, user=seed.PLANNER)
 			card = plan["active_view"]["governance_card"]

@@ -5,9 +5,10 @@ approval blockers, as structured failing rule ids with actionable text.
 A readiness failure names the actual missing or invalid value (§9
 `STRATEGY_NOT_READY`, §11.6 "show only real actionable readiness failures").
 The page never leads with a green checklist; it shows `failures` when there
-are any. Approval additionally requires the version to be able to become
-effective immediately (§5.1): a future `effective_from` is a blocker with
-its own banner, not a scheduled activation."""
+are any. A later `effective_from` is not a blocker (STR-CHG-001 v1.11): the
+version is approved like any other and takes effect on its start date, with no
+scheduled activation. The decision page shows it as information (`starts_later`).
+Approval is still refused once the version's applicability has ended."""
 
 from __future__ import annotations
 
@@ -20,7 +21,6 @@ RULE_OBJECTIVE = "HIERARCHY_OBJECTIVE"
 RULE_INDICATOR = "CONTENT_INDICATOR"
 RULE_TARGET = "CONTENT_TARGET"
 RULE_EFFECTIVE_FROM_MISSING = "EFFECTIVE_FROM_MISSING"
-RULE_EFFECTIVE_FROM_FUTURE = "EFFECTIVE_DATE_FUTURE"
 RULE_EFFECTIVE_TO_EXPIRED = "EFFECTIVE_DATE_EXPIRED"
 
 NOT_READY_MESSAGE = "Complete the highlighted items before submitting or approving."
@@ -113,28 +113,26 @@ get_plan_readiness = get_version_readiness
 
 
 def get_version_approval_blockers(version) -> dict:
-	"""§5.1/§11.6 — approval is permitted only when the version can become
-	effective immediately. Returns the blocker facts the decision page
-	renders (banner copy is composed here so every surface says the same)."""
+	"""§5.1/§11.6 — the blocker facts the decision page renders (banner copy is
+	composed here so every surface says the same). v1.11: a start date after
+	today does not block approval; it is returned as `starts_later` so the page
+	can say when the version takes effect."""
 	if isinstance(version, str):
 		version = frappe.get_doc("Strategic Plan Version", version)
 	failures: list[dict] = []
-	future = None
+	starts_later = None
 	if not version.effective_from:
 		failures.append({"rule": RULE_EFFECTIVE_FROM_MISSING, "message": _("Set the date this version applies from.")})
 	elif frappe.utils.getdate(version.effective_from) > today():
 		start = _date_label(version.effective_from)
-		future = {
+		starts_later = {
 			"effective_from": str(version.effective_from),
 			"effective_from_label": start,
-			"headline": _(
-				"This version cannot be approved yet. It starts on {0}. Approval makes the version current immediately, so it cannot be approved before that date."
-			).format(start),
+			"headline": _("This version starts on {0}.").format(start),
 			"guidance": _(
-				"Return it if the date needs correction. If the date is intentional, it can remain awaiting approval. An authorised Approver must approve it when it is applicable. It will not activate automatically."
+				"Approving it now keeps the current version in use until the day before. Nothing changes on the start date itself."
 			),
 		}
-		failures.append({"rule": RULE_EFFECTIVE_FROM_FUTURE, "message": future["headline"]})
 	if version.effective_to and frappe.utils.getdate(version.effective_to) < today():
 		# STR §12.4 — expired applicability leaves approval uncommitted: approving
 		# would retire the working plan for one that is already over.
@@ -146,7 +144,7 @@ def get_version_approval_blockers(version) -> dict:
 				).format(_date_label(version.effective_to)),
 			}
 		)
-	return {"blocked": bool(failures), "future_effective": future, "failures": failures}
+	return {"blocked": bool(failures), "starts_later": starts_later, "failures": failures}
 
 
 def _throw_not_ready(failures: list[dict]) -> None:
@@ -164,8 +162,9 @@ def assert_version_ready_for_submit(plan_version_id: str) -> None:
 
 
 def assert_version_ready_for_approval(version) -> None:
-	"""STR-BR-015 — approval repeats the submission checks and adds the
-	immediate-effect requirement (§5.1). No scheduled activation exists."""
+	"""STR-BR-015 — approval repeats the submission checks and refuses a version whose
+	applicability has ended (STR-BR-023). A later start date is allowed (v1.11);
+	no scheduled activation exists."""
 	if isinstance(version, str):
 		version = frappe.get_doc("Strategic Plan Version", version)
 	readiness = get_version_readiness(version.name)

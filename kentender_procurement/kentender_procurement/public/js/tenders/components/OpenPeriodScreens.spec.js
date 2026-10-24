@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import { addendumData, cancelData, clarificationData } from "./fixtures.js";
+import { addendumData, cancelData, clarificationData, postCloseCancelData, recoverySection } from "./fixtures.js";
 import AddendumScreen from "./AddendumScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
@@ -97,7 +97,7 @@ describe("CancelScreen — TPR-DES-12", () => {
 	it("AO decision: warning, summary, ground/reason, consequences; the reason is checked inline", async () => {
 		const w = mount(CancelScreen, { props: { data: cancelData("RECOMMEND"), pending: false, error: "" }, attachTo: document.body });
 		await nextTick();
-		expect(w.find('[data-testid="tnd-cancel-warning"]').text()).toContain("Cancellation is final for this Tender.");
+		expect(w.find('[data-testid="tnd-cancel-warning"]').text()).toContain("The tender will end. KenTender will restore its unused planning allowance and release its unused budget reservation");
 		expect(w.find('[data-testid="tnd-recommendation"]').text()).toContain("Charles Mutiso, Head of Procurement Function · 4 Jun 2027, 13:30 EAT");
 		expect(w.find('[data-testid="tnd-consequences"]').text()).toContain("PPRA report due 18 Jun 2027.");
 		await w.find('[data-testid="tnd-cancel-open-dialog"]').trigger("click");
@@ -127,6 +127,84 @@ describe("CancelScreen — TPR-DES-12", () => {
 		expect(holder.emitted("record-evidence")[0][0].obligation_id).toBe("PPRA_REPORT");
 		const reader = mount(CancelScreen, { props: { data: cancelData("CANCELLED-READER"), pending: false, error: "" } });
 		expect(reader.findAll('[data-testid="tnd-obligations"] button')).toHaveLength(0);
+	});
+});
+
+describe("CancelScreen — the post-close decision (TPR-CHG-001 v0.24 §10.13 POSTCLOSE, §10.19)", () => {
+	it("allowed: the Award status with its evidence, the verified ground, the finality and separate funding words, then the ordinary decision", async () => {
+		const w = mount(CancelScreen, { props: { data: postCloseCancelData("POSTCLOSE-ALLOWED"), pending: false, error: "" }, attachTo: document.body });
+		expect(w.find('[data-testid="tnd-postclose-title"]').text()).toBe("Cancel this Tender");
+		expect(w.find('[data-testid="tnd-award-status"]').text()).toBe("Award notification status: Not issued");
+		expect(w.find('[data-testid="tnd-award-evidence"]').text()).toContain("Award Tender Authority TND-MOH-2027-034");
+		expect(w.find('[data-testid="tnd-blockers"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-cancel-warning"]').text()).toContain("Cancellation is final for this tender. A replacement purchase requires a new requisition.");
+		expect(w.find('[data-testid="tnd-postclose-recovery"]').text()).toContain("An unsuccessful opening alone releases nothing.");
+		expect([...w.findAll('[data-testid="tnd-cancel-ground"] option')].map((o) => o.text())).toEqual(["Inadequate budgetary provision"]);
+		await w.find('[data-testid="tnd-cancel-reason"]').setValue("The confirmed budget available for this procurement is insufficient to proceed.");
+		await w.find('[data-testid="tnd-cancel-open-dialog"]').trigger("click");
+		expect(w.emitted("cancel")[0][0].ground).toBe("INADEQUATE_BUDGET");
+		w.unmount();
+	});
+
+	it("blocked: every blocker with its holder; no ground form, no Cancel Tender", () => {
+		const w = mount(CancelScreen, { props: { data: postCloseCancelData("POSTCLOSE-BLOCKED"), pending: false, error: "" }, attachTo: document.body });
+		expect(w.find('[data-testid="tnd-postclose-title"]').text()).toBe("Cancellation cannot be decided here");
+		expect(w.find('[data-testid="tnd-blockers-heading"]').text()).toBe("A tender decision is needed");
+		const rows = w.findAll('[data-testid="tnd-blocker"]');
+		expect(rows.map((r) => r.attributes("data-code"))).toEqual(["TND_AWARD_STATUS_UNAVAILABLE", "TND_CANCEL_GROUND_UNVERIFIED"]);
+		expect(rows[0].text()).toContain("Held by Award service owner");
+		expect(rows[1].text()).toContain("Head of Procurement Function coordinates the documented review");
+		expect(w.find('[data-testid="tnd-award-status"]').text()).toBe("Award notification status: Unknown");
+		expect(w.find('[data-testid="tnd-opening-context"]').text()).toContain("Opening could not be recovered. The Accounting Officer must review the next step.");
+		expect(w.find('[data-testid="tnd-cancel-reason"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-cancel-open-dialog"]').exists()).toBe(false);
+		w.unmount();
+	});
+
+	it("cancelled: the opening record's closure is its own status, apart from notices and funding", () => {
+		const pending = mount(CancelScreen, { props: { data: postCloseCancelData("POSTCLOSE-CANCELLED"), pending: false, error: "" } });
+		expect(pending.find('[data-testid="tnd-cancelled-from"]').text()).toBe("Submission period ended");
+		expect(pending.find('[data-testid="tnd-delivery-bid-opening"]').text()).toContain("Cancellation recorded. The opening record is being updated.");
+		expect(pending.find('[data-testid="tnd-obligations"]').exists()).toBe(true);
+		const closed = mount(CancelScreen, { props: { data: postCloseCancelData("POSTCLOSE-CLOSED"), pending: false, error: "" } });
+		expect(closed.find('[data-testid="tnd-delivery-bid-opening"]').text()).toContain("The opening record shows this tender was cancelled.");
+		expect(closed.find('[data-testid="tnd-delivery-bid-opening"]').attributes("data-status")).toBe("Delivered");
+	});
+});
+
+describe("CancelScreen — the unused allowance and funding (TPR-CHG-001 v0.21 §10.18)", () => {
+	const shown = async (status) => {
+		const w = mount(CancelScreen, { props: { data: { ...cancelData("CANCELLED-READER"), resource_recovery: status ? recoverySection(status) : null }, pending: false, error: "" } });
+		await nextTick();
+		return w;
+	};
+	it("Pending: the state in plain words, no restored column and no next step", async () => {
+		const w = await shown("Pending");
+		expect(w.find('[data-testid="tnd-resource-recovery"] h2').text()).toBe("Unused allowance and funding");
+		expect(w.find('[data-testid="tnd-resource-recovery-label"]').text()).toBe("Restoring unused allowance and funding");
+		expect(w.find('[data-testid="tnd-resource-recovery-explanation"]').text()).toContain("cannot be used until restoration is complete");
+		expect(w.find('[data-testid="tnd-resource-recovery-next"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-resource-recovery-rows"] thead').text()).not.toContain("restored");
+		w.unmount();
+	});
+	it("Completed: the exact amounts restored and released, and the ordinary route to a fresh requisition", async () => {
+		const w = await shown("Completed");
+		expect(w.find('[data-testid="tnd-resource-recovery-label"]').text()).toBe("Unused allowance and funding restored");
+		expect(w.find('[data-testid="tnd-resource-recovery-rows"] tbody').text()).toContain("60 Each · KES 6,000,000.00");
+		expect(w.find('[data-testid="tnd-resource-recovery-next-link"]').attributes("href")).toBe("/app/procurement-requisitions/new/PPI-MOH-2027-001");
+		w.unmount();
+	});
+	it("Needs attention: the owner's real reason, the identifiers only under Technical details", async () => {
+		const w = await shown("Needs attention");
+		expect(w.find('[data-testid="tnd-resource-recovery-reason"]').text()).toContain("converted");
+		expect(w.find('[data-testid="tnd-resource-recovery-next"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-resource-recovery"]').text().replace(w.find('[data-testid="tnd-resource-recovery-technical"]').text(), "")).not.toContain("CRR-00001");
+		w.unmount();
+	});
+	it("nothing is shown when the reader has no section", async () => {
+		const w = await shown(null);
+		expect(w.find('[data-testid="tnd-resource-recovery"]').exists()).toBe(false);
+		w.unmount();
 	});
 });
 

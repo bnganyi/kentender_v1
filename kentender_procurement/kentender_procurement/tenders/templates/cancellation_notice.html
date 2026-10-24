@@ -31,7 +31,11 @@
 <p>{{ cancellation.reason }}</p>
 
 <h2>3. Effect</h2>
+{% if cancellation.post_close %}
+<p>The submission period had ended when the proceedings were cancelled. No further opening, evaluation or award will take place under this reference, and no Tender submitted through {{ platform.name }} will be evaluated. Any replacement procurement will be advertised under a new reference through the required channels.</p>
+{% else %}
 <p>No Tender will be received, opened or evaluated under this reference. Tenders already submitted electronically through {{ platform.name }} will not be opened. Any replacement procurement will be advertised under a new reference through the required channels.</p>
+{% endif %}
 
 <div class="signature-block">
   <p>Issued on behalf of {{ procuring_entity.name }} by:</p>

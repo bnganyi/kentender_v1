@@ -9,7 +9,7 @@ record gets; stage, cycle and holds are checked on the server."""
 from __future__ import annotations
 
 import frappe
-from frappe.utils import cint
+from frappe.utils import cint, cstr
 
 from kentender_procurement.award.services import checks, issues, people, state
 from kentender_procurement.award.services.records import loads
@@ -142,6 +142,15 @@ def funding(doc, g: Guards | None = None) -> Guards:
 		g.add("AWD_STATUS_UNAVAILABLE", check="funding", reason="Budget could not confirm the funding for this award.")
 	elif f["restricted"]:
 		g.add("AWD_ON_HOLD", check="funding", reason="The funding Budget now holds for this tender is less than the evaluated amount.", shortfall=f["detail"]["shortfall"])
+	else:
+		from kentender_procurement.award.services import funding_allocation
+
+		try:
+			funding_allocation.compute(doc)  # AWD-CHG-001 v0.7 §7.1: the awarded price must be traceable to its funding sources before a positive decision
+		except funding_allocation.FundingIssue as exc:
+			g.add("AWD_ON_HOLD", check="funding_allocation", reason=exc.reason)
+		except funding_allocation.FundingUnavailable as exc:
+			g.add("AWD_STATUS_UNAVAILABLE", check="funding_allocation", reason=cstr(exc) or "Funding details are unavailable. The system will retry.")
 	return g
 
 

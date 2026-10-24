@@ -11,6 +11,7 @@ derives none of it. Reads create nothing."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -48,7 +49,7 @@ class TestReadyWorkspace(SubmissionCase):
 		self.assertEqual((signs["progress"]["next"], signs["tasks"][4]["next"], signs["tasks"][4]["action"]), (("Review and submit"), True, {"label": "Review bid", "primary": True, "href": f"/tenders/{self.reference}/bid/review"}))
 		self.assertEqual(view["tasks"][1]["action"]["href"], f"/tenders/{self.reference}/bid/company")
 		self.assertTrue(all(t["updated_label"] for t in view["tasks"][1:4]), view["tasks"])
-		self.assertRegex(view["saved_text"], r"^Saved \d{1,2} \w{3} 2027, \d{2}:\d{2} EAT by David Ouma\.$")
+		self.assertRegex(view["saved_text"], r"^Saved \d{1,2} \w{3} \d{4}, \d{2}:\d{2} EAT by David Ouma\.$")
 		self.assertEqual(self.view(user=MARY)["header"]["action"]["label"], "Review bid")
 
 	def test_a_closed_gate_names_itself_above_the_tasks_and_keeps_the_saved_bid(self):
@@ -124,7 +125,7 @@ class TestNoticesAndAddendum(AddendumCase):
 	def test_an_effective_addendum_is_listed_unacknowledged_until_the_bid_moves(self):
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
-		self.at("2027-06-01 12:05:00")
+		self.at(W("2027-06-01 12:05:00"))
 		view = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)
 		row = next(n for n in view["notices"] if n["key"] == reference)
 		self.assertEqual((row["status"], row["tone"], row["action"]["label"]), ("Not acknowledged", "attention", "Review addendum"))
@@ -138,7 +139,7 @@ class TestNoticesAndAddendum(AddendumCase):
 		# notice is a Delivery problem (never "Not delivered")
 		real = tenders_gateway.published_tender
 		statuses = ("Failed", "Sent", "Queued", "Delivered")
-		answers = [{"key": f"ANS-{s}", "answered_at": "2027-05-28 10:00:00", "question": "Question text", "answer": "Answer text"} for s in statuses]
+		answers = [{"key": f"ANS-{s}", "answered_at": W("2027-05-28 10:00:00"), "question": "Question text", "answer": "Answer text"} for s in statuses]
 
 		def published(reference, *, at):
 			return {**(real(reference, at=at) or {}), "answers": answers}

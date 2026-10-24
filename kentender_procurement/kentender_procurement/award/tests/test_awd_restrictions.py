@@ -6,6 +6,8 @@ tracker AWD4-802)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import eligibility, issues, restrictions, state, tender_events
@@ -19,11 +21,11 @@ class TestRestrictions(AwardCase):
 		super().setUp()
 		self.deliver()
 		self.awarded()
-		self.at("2027-06-20 11:00:00")
+		self.at(W("2027-06-20 11:00:00"))
 
 	def _order(self, basis="Authoritative order"):
 		return self.run_as(HOP, restrictions.record_external, award=self.case().name, basis=basis, source="Review Board suspension notice",
-			received_at="2027-06-20 11:00:00", evidence="PPARB/2027/33" if basis == "Authoritative order" else "", reason="Suspension received.")["issue"]
+			received_at=W("2027-06-20 11:00:00"), evidence="PPARB/2027/33" if basis == "Authoritative order" else "", reason="Suspension received.")["issue"]
 
 	def test_order_hold(self):
 		issue = self._order()
@@ -41,7 +43,7 @@ class TestRestrictions(AwardCase):
 
 	def test_order_needs_evidence(self):
 		with self.assertRaises(InputError):
-			self.run_as(HOP, restrictions.record_external, award=self.case().name, basis="Authoritative order", source="Board", received_at="2027-06-20 11:00:00",
+			self.run_as(HOP, restrictions.record_external, award=self.case().name, basis="Authoritative order", source="Board", received_at=W("2027-06-20 11:00:00"),
 				reason="x", evidence="")
 
 	def test_precautionary_hold_is_distinct_and_clears_only_itself(self):
@@ -62,13 +64,13 @@ class TestRestrictions(AwardCase):
 
 	def test_no_timer_clears_a_hold(self):
 		self._order()
-		self.at("2027-09-01 09:00:00")
+		self.at(W("2027-09-01 09:00:00"))
 		eligibility.refresh_case(self.case().name)
 		self.assertEqual(len(issues.open_issues(self.case(), issue_type="Review/order")), 1)
 
 	# -- an order Tenders sent is ended only by Tenders' release (AUD-AWD-003) ----------------
 	def _tenders_order(self):
-		syn.add_event(self.case().tender, {"event_key": "EVT-SUSP-1", "kind": "Suspension", "authority": "Review Board", "effective_at": "2027-06-20 10:00:00",
+		syn.add_event(self.case().tender, {"event_key": "EVT-SUSP-1", "kind": "Suspension", "authority": "Review Board", "effective_at": W("2027-06-20 10:00:00"),
 			"source_reference": "PPARB/2027/77", "reason": "The Board suspended the procurement."})
 		tender_events.consume_case(self.case().name)
 		(row,) = issues.open_issues(self.case(), issue_type="Review/order")

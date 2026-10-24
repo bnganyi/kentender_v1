@@ -52,6 +52,9 @@ kt_my_work_providers = [
 # HOME-CHG-001 v0.6 §7 — Budget's feed to the Home page (core collects, never imports this app).
 kt_home_providers = ["kentender_budget.services.home_provider.entries"]
 
+# Budget answers the contract funding seam: it converts a formed agreement's reservation lineage into commitments (CM-CHG-001 v0.8 section 5.14; the one gateway that mints the Contract Management principal).
+kt_contract_funding_provider = ["kentender_budget.services.contract_funding_provider.service"]
+
 # ANL-CHG-001 v0.8 §7.1 — Budget's funding position for Procurement Analytics (core collects, never imports this app).
 kt_analytics_providers = ["kentender_budget.services.analytics_provider"]
 
@@ -113,3 +116,8 @@ scheduler_events = globals().get("scheduler_events") or {}
 scheduler_events.setdefault("hourly", []).append(
 	"kentender_budget.services.budget_revision_request_contracts.retry_pending_outcomes"
 )
+
+
+# BUD-CHG-001 v1.16 section 8.6: Budget answers the contract funding request seam (kentender_core.services.contract_funding_request_contract) and keeps its outcomes flowing to Contract Management.
+kt_contract_funding_request_owner = ["kentender_budget.services.contract_funding_request_owner.service"]
+scheduler_events.setdefault("hourly", []).append("kentender_budget.services.budget_contract_funding.retry_pending_outcomes")

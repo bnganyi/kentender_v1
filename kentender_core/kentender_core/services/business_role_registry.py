@@ -281,6 +281,17 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		sod_tags=("evaluation_support",),
 		technical_holder=True,
 	),
+	# --- Contract Management (CM-CHG-001 v0.10 §6, §6.2; AUTH-ADR-001 v1.16 §4.4A; plan D11) --------
+	# Existing scope types only: there is no Contract scope type, and an appointment or a signatory mandate is a Contract
+	# Management subject binding checked in addition to the registered responsibility, never an AUTH scope.
+	_entry("Contract preparation", SCOPE_OU, "CM-CHG-001 v0.10 §6", sod_tags=("contract_preparation",)),
+	_entry("Contract coordination", SCOPE_OU, "CM-CHG-001 v0.10 §6", sod_tags=("contract_coordination",)),
+	_entry("Receiving", SCOPE_OU, "CM-CHG-001 v0.10 §6", sod_tags=("contract_receiving",)),
+	_entry("Contract inspection", SCOPE_SITE, "CM-CHG-001 v0.10 §6", sod_tags=("contract_inspection",)),
+	_entry("Technical certification", SCOPE_SITE, "CM-CHG-001 v0.10 §6", sod_tags=("technical_certification",)),
+	_entry("Entity contract signing", SCOPE_SITE, "CM-CHG-001 v0.10 §6", sod_tags=("entity_contract_signature",)),
+	_entry("Finance preparation", SCOPE_SITE, "CM-CHG-001 v0.10 §6", sod_tags=("payment_preparation",)),
+	_entry("Finance approval", SCOPE_SITE, "CM-CHG-001 v0.10 §6", sod_tags=("payment_approval",)),
 )
 
 REGISTRY: dict[str, BusinessRole] = {entry.business_role: entry for entry in _ENTRIES}

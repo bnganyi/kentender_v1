@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { world as storyToWorld } from "../../helpers/anchor";
 import { collectPortalConsoleErrors, expectNoFrappeDialog, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
 import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 
@@ -65,7 +66,7 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 		// the offered goods, then Save and continue
 		const goods = page.locator("#bds-region-goods");
 		await goods.locator("input.input:not([type=date])").first().fill("ApexBook Pro 14");
-		await goods.locator("input[type=date]").fill("2027-09-15");
+		await goods.locator("input[type=date]").fill(storyToWorld("2027-09-15")); // an offered delivery date inside the Tender's latest delivery date, wherever the anchor puts it
 		await page.getByTestId("bds-requirements-save").click();
 		await expect(page).toHaveURL(new RegExp(`/tenders/${world.tender_reference}/bid/price$`));
 

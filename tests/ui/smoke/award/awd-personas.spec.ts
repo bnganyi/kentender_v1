@@ -10,7 +10,7 @@ import { DANIEL, EVIDENCE, NAOMI, as, closeSession, collectConsoleErrors, expect
  * technical view only — no report, supplier, price, opinion or decision.
  */
 
-const AWARD = "AWD-MOH-2027-002";
+const AWARD = "AWD-MOH-2026-002";
 
 test.describe.configure({ mode: "serial", timeout: 300_000 });
 

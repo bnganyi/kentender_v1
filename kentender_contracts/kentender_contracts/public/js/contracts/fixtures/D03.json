@@ -1,0 +1,158 @@
+{
+ "actions": {
+  "Sign contract": {
+   "args": {
+    "party": "Supplier"
+   },
+   "command": "SignContractVersion",
+   "do": "command"
+  },
+  "View agreement": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement",
+    "1"
+   ]
+  },
+  "View agreement 1": {
+   "do": "route",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement",
+    "1"
+   ]
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D03",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D03",
+ "name": "Supplier signature",
+ "next": {
+  "h": "Review the agreement before signing.",
+  "k": "turn",
+  "s": "Responsible: Mary Wanjiku"
+ },
+ "p": "Sign contract",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Contract value",
+       "KES 1,000,000"
+      ],
+      [
+       "Delivery",
+       "20 July 2027"
+      ],
+      [
+       "Warranty",
+       "12 months"
+      ],
+      [
+       "Security",
+       "Not required by the issued terms"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Summary"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Items",
+       "10 Laptop computer at KES 100,000 each"
+      ],
+      [
+       "Contract value",
+       "KES 1,000,000, tax included"
+      ],
+      [
+       "Delivery due",
+       "20 July 2027"
+      ],
+      [
+       "Warranty",
+       "12 months from each unit\u2019s acceptance"
+      ],
+      [
+       "Performance security",
+       "Not required by the issued terms"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      "View agreement 1"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Agreement summary"
+  }
+ ],
+ "s2": [],
+ "st": "Awaiting signatures",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Sign contract",
+ "version": 3
+}

@@ -17,6 +17,7 @@ since this bench has no test rollback."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import uuid
 from typing import Any
 
@@ -36,7 +37,7 @@ GRACE = "bdst.grace@example.test"
 NOBODY = "bdst.nobody@example.test"
 PEOPLE = {DAVID: "David Ouma", MARY: "Mary Wanjiku", PETER: "Peter Mwangi", GRACE: "Grace Njeri", NOBODY: "No Account Person"}
 AFYA, KISIWA, JUA = "ORG-BDST-AFYA", "ORG-BDST-KISIWA", "ORG-BDST-JUA"
-START_AT = "2027-05-19 09:20:00"
+START_AT = W("2027-05-19 09:20:00")
 
 
 def key() -> str:
@@ -65,7 +66,7 @@ class FakeAccounts:
 	def assign(self, user: str, org: str, responsibility: str, *, job_title: str = "", ready: bool = True) -> str:
 		assignment_id = f"ASG-{org}-{user.split('@')[0]}"
 		self.assignments[assignment_id] = {
-			"assignment_id": assignment_id, "organisation_id": org, "user": user, "responsibility": responsibility, "job_title": job_title, "effective_from": "2027-05-18",
+			"assignment_id": assignment_id, "organisation_id": org, "user": user, "responsibility": responsibility, "job_title": job_title, "effective_from": W("2027-05-18"),
 			"effective_to": "", "authority_evidence_id": "", "active": True, "signatory_ready": ready and responsibility == "Authorised Signatory",
 		}
 		return assignment_id
@@ -137,7 +138,7 @@ def fixture_accounts() -> FakeAccounts:
 	for org, owner in ((AFYA, "Mary Wanjiku"), (KISIWA, "Grace Njeri"), (JUA, "John Kamau")):
 		accounts.set_profile(org, {
 			"business_structure": "Registered company", "company_type": "Private company", "nominal_capital": "5000000.00", "issued_capital": "2500000.00", "directors": [{"name": owner, "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "100.00"}],
-			"partners": [], "trade_licence_number": f"TL-{org[-5:]}", "trade_licence_expiry": "2027-12-31", "maximum_business_value": "80000000.00", "state_owned": "No", "year_of_registration": 2014,
+			"partners": [], "trade_licence_number": f"TL-{org[-5:]}", "trade_licence_expiry": F("2027-12-31"), "maximum_business_value": "80000000.00", "state_owned": "No", "year_of_registration": 2014,
 		})
 	return accounts
 

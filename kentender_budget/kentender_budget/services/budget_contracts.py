@@ -247,20 +247,15 @@ def _line_position_exact(budget_line_name: str, budget_line_version, *, for_upda
 		scale=scale,
 	)
 
-	if for_update:
-		all_reservations = [r[0] for r in frappe.db.sql("select name from `tabFunding Reservation` where budget_line = %s for update", (budget_line_name,))]
-	else:
-		all_reservations = frappe.get_all("Funding Reservation", filters={"budget_line": budget_line_name}, pluck="name")
-	committed = money_stored(0, scale=scale)
-	if all_reservations:
-		committed = money_stored(
-			frappe.db.sql(
-				"select cast(coalesce(sum(current_amount), 0) as char) from `tabProcurement Commitment` "
-				"where reservation in %s and status = 'Active'" + suffix,
-				(all_reservations,),
-			)[0][0],
-			scale=scale,
-		)
+	# BUD-CHG-001 v1.16 4.6 — a commitment carries the Budget Line it is charged to, so a conversion and an existing-contract entry count alike. `for update` locks the rows being summed.
+	committed = money_stored(
+		frappe.db.sql(
+			"select cast(coalesce(sum(current_amount), 0) as char) from `tabProcurement Commitment` "
+			"where budget_line = %s and status in ('Active', 'Closed')" + suffix,
+			(budget_line_name,),
+		)[0][0],
+		scale=scale,
+	)
 
 	return {"approved": approved, "reserved": reserved, "committed": committed, "available": approved - reserved - committed}
 
@@ -458,6 +453,7 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 	line_version = _line_version_for(version_name, line.name) if version_name else None
 	position = _line_position(line.name, line_version)
 	reservations = _line_active_reservations(line.name)
+	_annotate_recoveries(reservations)
 	converted_total = sum(r["converted"] for r in reservations)
 	currency = line_version.currency if line_version else (budget.currency or "")
 	explanation = ""
@@ -486,10 +482,46 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 			"status": owning_version.status,
 		},
 		"reservations": reservations,
+		# BUD v1.16 §11.22 — the commitments charged to this line, of either origin; a Closed one offers **Correct commitment** to the Budget Officer only
+		"commitments": _line_commitments(line.name),
+		# BUD-CHG-001 v1.17 §11.23 — the reservations released because their Tender was cancelled (the recovery's own record in Budget)
+		"cancellation_releases": _line_cancellation_releases(line.name),
 		# BUD v1.11 §11 line detail — one quiet line while Planning's request
 		# for this line is Open; no action on this page.
 		"revision_request_note": _revision_request_note(line.name),
 	}
+
+
+def _annotate_recoveries(reservations: list[dict[str, Any]]) -> None:
+	"""A held reservation whose Tender was cancelled carries the recovery's status and reason, from the Requisitions reader (Budget sits upstream
+	of it and asks through the core seam). With no reader nothing is added: the reservation is shown as it is, which is the truth."""
+	from kentender_core.services import cancellation_recovery_contract as seam
+
+	found = seam.recoveries_of_reservations([r["id"] for r in reservations])
+	for row in reservations:
+		if row["id"] in found:
+			row["recovery"] = found[row["id"]]
+
+
+def _line_cancellation_releases(budget_line: str) -> list[dict[str, Any]]:
+	rows = frappe.get_all(
+		"Reservation Cancellation Release", filters={"budget_line": budget_line},
+		fields=["name", "reservation", "requisition_reference", "amount", "currency", "closed_context", "released_at"], order_by="released_at desc",
+	)
+	return [
+		{
+			"release": r.name, "reservation": r.reservation, "reservation_code": frappe.db.get_value("Funding Reservation", r.reservation, "generated_reference") or r.reservation,
+			"requisition_reference": r.requisition_reference or "", "amount": flt(r.amount), "currency": r.currency, "closure": r.closed_context or "",
+			"released_at_label": _display_datetime(r.released_at) if r.released_at else "—",
+		}
+		for r in rows
+	]
+
+
+def _line_commitments(budget_line: str) -> list[dict[str, Any]]:
+	from kentender_budget.services import budget_commitment_corrections as corrections
+
+	return corrections.line_commitments(budget_line, frappe.session.user)
 
 
 def _revision_request_note(budget_line: str) -> str:
@@ -808,6 +840,10 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 	from kentender_budget.services.budget_revision_request_contracts import open_requests_for_workspace
 
 	result["revision_requests"] = open_requests_for_workspace(budget_name, frappe.session.user)
+	# BUD v1.16 §11.22 — the funding work (a contract to fund, an entry to review) joins the same work list: title, contract reference, who has the turn, and Open. No KPI cards.
+	from kentender_budget.services.budget_contract_funding import workspace_rows
+
+	result["funding_work"] = workspace_rows(budget.fiscal_year, frappe.session.user)
 	result["available_actions"].append("view_budget")
 	if result["can_create_revision"]:
 		result["available_actions"].append("update_allocation")

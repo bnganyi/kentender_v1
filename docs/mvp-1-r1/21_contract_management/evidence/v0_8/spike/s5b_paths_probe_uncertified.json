@@ -1,0 +1,114 @@
+{
+ "environment": {
+  "frappe": "16.12.0",
+  "erpnext": "16.10.1",
+  "site": "kentender-test.local",
+  "date": "2026-10-14"
+ },
+ "steps": [
+  {
+   "step": "S5b.probe.direct_entry",
+   "ok": true,
+   "result": {
+    "stage_reached": "posted",
+    "payment_entry": "ACC-PAY-2026-00008"
+   },
+   "invoice": "ACC-PINV-2026-00013",
+   "native_hold": false
+  },
+  {
+   "step": "S5b.probe.direct_entry.events",
+   "events": [
+    "Payment Entry:before_submit",
+    "Payment Entry:on_submit",
+    "Payment Entry:validate"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Paid",
+    "outstanding_amount": 0.0,
+    "on_hold": 0
+   }
+  },
+  {
+   "step": "S5b.probe.api_entry",
+   "ok": true,
+   "result": {
+    "stage_reached": "posted",
+    "payment_entry": "ACC-PAY-2026-00009"
+   },
+   "invoice": "ACC-PINV-2026-00014",
+   "native_hold": false
+  },
+  {
+   "step": "S5b.probe.api_entry.events",
+   "events": [
+    "Payment Entry:before_submit",
+    "Payment Entry:on_submit",
+    "Payment Entry:validate"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Paid",
+    "outstanding_amount": 0.0,
+    "on_hold": 0
+   }
+  },
+  {
+   "step": "S5b.probe.journal_entry",
+   "ok": true,
+   "result": {
+    "stage_reached": "posted",
+    "journal_entry": "ACC-JV-2026-00002",
+    "invoice_outstanding": 0.0
+   },
+   "invoice": "ACC-PINV-2026-00015",
+   "native_hold": false
+  },
+  {
+   "step": "S5b.probe.journal_entry.events",
+   "events": [
+    "Journal Entry:before_submit",
+    "Journal Entry:on_submit",
+    "Journal Entry:validate"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Paid",
+    "outstanding_amount": 0.0,
+    "on_hold": 0
+   }
+  },
+  {
+   "step": "S5b.probe.reconcile_advance",
+   "ok": true,
+   "result": {
+    "stage_reached": "reconciled",
+    "advance": "ACC-PAY-2026-00010",
+    "counts": {
+     "invoices_listed": 4,
+     "payments_listed": 5,
+     "invoice_found": 1,
+     "payment_found": 1,
+     "allocation_rows": 1
+    },
+    "invoice_outstanding": 0.0
+   },
+   "invoice": "ACC-PINV-2026-00016",
+   "native_hold": false
+  },
+  {
+   "step": "S5b.probe.reconcile_advance.events",
+   "events": [
+    "Payment Entry:before_update_after_submit",
+    "Payment Entry:on_update_after_submit"
+   ],
+   "posted": true,
+   "invoice": {
+    "status": "Paid",
+    "outstanding_amount": 0.0,
+    "on_hold": 0
+   }
+  }
+ ]
+}

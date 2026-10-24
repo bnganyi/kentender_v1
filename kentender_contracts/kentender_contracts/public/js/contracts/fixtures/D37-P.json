@@ -1,0 +1,175 @@
+{
+ "actions": {
+  "Record claim outcome": {
+   "dialog": "outcome",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_security_claim_fr",
+ "d": "D37",
+ "dialogs": {
+  "outcome": {
+   "args": {
+    "claim": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Issuer reference",
+       "name": "issuer_reference",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Date",
+       "name": "outcome_on",
+       "o": {},
+       "t": "dt",
+       "v": ""
+      },
+      {
+       "l": "Evidence",
+       "name": "evidence",
+       "o": {},
+       "t": "file",
+       "v": ""
+      },
+      {
+       "l": "Actual proceeds",
+       "name": "proceeds",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "RecordSecurityClaimOutcome",
+   "p": "Save outcome",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Record claim outcome"
+  }
+ },
+ "ev": [
+  "Default notice and delivery proof"
+ ],
+ "id": "D37-P",
+ "name": "Security claim",
+ "next": {
+  "h": "Test Bank must respond to the approved claim; communication delivered 12 Aug 2027.",
+  "k": "wait",
+  "s": "hopfsp; assigned 12 Aug 2027, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_security_claim_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Instrument",
+       "TEST-SG-01 (verified)"
+      ],
+      [
+       "Amount",
+       "KES 100,000"
+      ],
+      [
+       "Expiry",
+       "31 Aug 2027"
+      ],
+      [
+       "Custodian",
+       "Charles Mutiso"
+      ],
+      [
+       "Claim basis",
+       "10% of the contract sum, in the form of a bank guarantee"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Instrument"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Amount",
+       "KES 40,000"
+      ],
+      [
+       "Communication",
+       "Delivered 12 August 2027"
+      ],
+      [
+       "Outcome",
+       "Not recorded"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Approved claim"
+  }
+ ],
+ "s2": [
+  "Record claim outcome"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Security TEST-SG-01",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_security_claim_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_security_claim_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_security_claim_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_security_claim_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_security_claim_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review security claim",
+ "version": 14
+}

@@ -10,6 +10,7 @@ checked, idempotent and audited by field name only (personal data)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 
 import frappe
@@ -20,7 +21,7 @@ from kentender_suppliers.supplier_accounts.tests.support import DAVID, GRACE, MA
 
 COMPANY = {
 	"business_structure": "Registered company", "company_type": "Private company", "nominal_capital": "5000000.00", "issued_capital": "2500000.00",
-	"trade_licence_number": "TL-2027-0451", "trade_licence_expiry": "2027-12-31", "maximum_business_value": "80000000.00",
+	"trade_licence_number": "TL-2027-0451", "trade_licence_expiry": W("2027-12-31"), "maximum_business_value": "80000000.00",
 	"state_owned": "No", "year_of_registration": 2014,
 	"directors": [
 		{"name": "Mary Wanjiku", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "60"},

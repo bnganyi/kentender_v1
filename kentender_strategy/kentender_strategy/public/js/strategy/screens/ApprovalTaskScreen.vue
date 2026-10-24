@@ -242,12 +242,12 @@ async function submitApprove() {
 					</div>
 				</div>
 
-				<!-- §11.6 future-effective variant — on every tab, approval disabled, Return available. -->
-				<div v-if="isSubmitted && blockers.future_effective" class="kt-notice is-warning" style="margin: 0 20.4px 20.4px" data-testid="str-future-effective">
+				<!-- §11.6 v1.11 starts-later variant — information on every tab; approval stays available. -->
+				<div v-if="isSubmitted && blockers.starts_later" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-future-effective">
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
 					<div class="kt-notice-body">
-						<strong>{{ blockers.future_effective.headline }}</strong>
-						{{ blockers.future_effective.guidance }}
+						<strong>{{ blockers.starts_later.headline }}</strong>
+						{{ blockers.starts_later.guidance }}
 					</div>
 				</div>
 				<div v-if="isSubmitted && readinessFailures.length" class="kt-notice is-critical" style="margin: 0 20.4px 20.4px" data-testid="str-readiness-failures">

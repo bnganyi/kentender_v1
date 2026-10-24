@@ -1,0 +1,219 @@
+{
+ "actions": {
+  "Approve accounting invoice": {
+   "args": {
+    "invoice": "CM-INV-990594",
+    "kind": "invoice"
+   },
+   "command": "ApproveNativeFinanceRecord",
+   "do": "command"
+  },
+  "Return invoice for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "finance"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D33",
+ "dialogs": {
+  "return": {
+   "args": {
+    "invoice": "CM-INV-990594",
+    "kind": "invoice"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnNativeFinanceForCorrection",
+   "p": "Return invoice",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return invoice for correction"
+  }
+ },
+ "ev": [
+  "Supplier invoice AFYA-1-R1",
+  "Certification 1",
+  "Receipt 1"
+ ],
+ "id": "D33-A",
+ "name": "Finance invoice preparation",
+ "next": {
+  "h": "Review the accounting invoice.",
+  "k": "turn",
+  "s": "Responsible: Beatrice Kamau"
+ },
+ "p": "Approve accounting invoice",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Source claim",
+       "AFYA-1-R1"
+      ],
+      [
+       "Certification",
+       "Signed"
+      ],
+      [
+       "Company",
+       "KenTender"
+      ],
+      [
+       "Supplier",
+       "Afya Digital Supplies Limited"
+      ],
+      [
+       "Currency",
+       "KES"
+      ],
+      [
+       "Invoice date",
+       "15 October 2026"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Source"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Quantity",
+      "Rate",
+      "Total"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2,
+      3
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "8",
+       "KES 100,000",
+       "KES 800,000"
+      ]
+     ]
+    }
+   ],
+   "t": "Accepted items"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Posting date",
+       "15 October 2026"
+      ],
+      [
+       "Payable account",
+       "2110 - Creditors - K"
+      ],
+      [
+       "Accounting treatment",
+       "2211 - Asset Received But Not Billed - K"
+      ],
+      [
+       "Tax treatment",
+       "Tax included in the price"
+      ],
+      [
+       "Cost centre",
+       "Main - K"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Accounting details"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Finance maker",
+       "Josphat Mwangi"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Prepared by"
+  }
+ ],
+ "s2": [
+  "Return invoice for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Invoices",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review accounting invoice",
+ "version": 24
+}

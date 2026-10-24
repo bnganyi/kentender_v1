@@ -1,0 +1,165 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-ADJ-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A contractual adjustment worked out from the operative rule (a delay deduction): the inputs, the calculation, the causation, the supplier's response and the decision. A supported adjustment, never an editable figure or a ledger write.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "adjustment_no",
+  "kind",
+  "state",
+  "calculation_json",
+  "causation",
+  "supplier_response",
+  "decision_json",
+  "amount",
+  "invoice",
+  "prepared_by",
+  "prepared_at",
+  "decided_by",
+  "decided_at",
+  "supersedes",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "adjustment_no",
+   "label": "Adjustment no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Delay"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Prepared\nSubmitted\nApproved\nDeclined\nReturned\nApplied\nSuperseded"
+  },
+  {
+   "fieldname": "calculation_json",
+   "label": "Calculation json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "causation",
+   "label": "Causation",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_response",
+   "label": "Supplier response",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_json",
+   "label": "Decision json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "label": "Amount",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice",
+   "label": "Invoice",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Invoice"
+  },
+  {
+   "fieldname": "prepared_by",
+   "label": "Prepared by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "label": "Prepared at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supersedes",
+   "label": "Supersedes",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Adjustment",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

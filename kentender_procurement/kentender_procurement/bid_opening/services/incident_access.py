@@ -33,16 +33,34 @@ SUPPORT, CHAIR, ACCOUNTING_OFFICER, AUDITOR, READER = "Opening access support", 
 TRAIL_READERS = (ACCOUNTING_OFFICER, AUDITOR)
 
 
-def capacity(case: str, user: str) -> str:
-	"""The one capacity in which `user` may read this opening's incident details, or ''."""
+#: The capacity each purpose names (the Auditor's is "Audit the opening"); a person who holds several is read in the one the purpose names.
+PURPOSE_CAPACITY = {"Investigate the problem": SUPPORT, "Record the resolution": SUPPORT, "Check the problem as a committee member": CHAIR,
+	"Account for the opening": ACCOUNTING_OFFICER, "Audit the opening": AUDITOR}
+
+
+def capacities(case: str, user: str) -> list[str]:
+	"""Every capacity in which `user` may read this opening's incident details. Each business responsibility is checked on its own: Administrator or System
+	Manager status adds none, and a technical role takes none away (BOP-CHG-001 v0.16 §6; TRUST-OPS-001 v0.2 §5)."""
+	held: list[str] = []
 	if user in notify.holders():
-		return SUPPORT
+		held.append(SUPPORT)
 	member = appointment.chair(case)
 	if member and member["member_user"] == user:
-		return CHAIR
+		held.append(CHAIR)
 	if people.holds(user, people.ACCOUNTING_OFFICER):
-		return ACCOUNTING_OFFICER
-	return ""
+		held.append(ACCOUNTING_OFFICER)
+	if people.holds(user, people.AUDITOR):
+		held.append(AUDITOR)
+	return held
+
+
+def capacity(case: str, user: str, purpose: str = "") -> str:
+	"""The capacity in which `user` reads (the one `purpose` names when they hold it, otherwise the first they hold), or ''."""
+	held = capacities(case, user)
+	if not held:
+		return ""
+	wanted = PURPOSE_CAPACITY.get(purpose)
+	return wanted if wanted in held else held[0]
 
 
 def record(*, case: str, incident_id: str, action: str, purpose: str, actor: str, role: str, outcome: str, request_key: str = "") -> Any:
@@ -62,7 +80,7 @@ def get_details(*, tender: str, incident: str, purpose: str, idempotency_key: st
 		row = frappe.get_doc(incidents.INCIDENT, {"opening_case": case, "incident_id": incident}) if case and frappe.db.exists(incidents.INCIDENT, {"opening_case": case, "incident_id": incident}) else None
 		if row is None:
 			raise frappe.DoesNotExistError("Not found")
-		role = capacity(case, user)
+		role = capacity(case, user, purpose)
 		if not role:
 			# the refusal is evidence: it is recorded, returned as data (so the command commits it), then masked below
 			record(case=case, incident_id=row.incident_id, action=VIEW, purpose=purpose, actor=user, role="", outcome="Refused", request_key=idempotency_key)
@@ -73,6 +91,12 @@ def get_details(*, tender: str, incident: str, purpose: str, idempotency_key: st
 			"notification_state": row.notification_state, "notification_attempts": int(row.notification_attempts or 0), "last_notified_label": labels.when_seconds(row.last_notified_at) if row.last_notified_at else "",
 			"resolution_note": cstr(row.resolution_note), "resolved_label": labels.when_seconds(row.resolved_at) if row.resolved_at else "",
 			"resolved_by": people.full_name(row.resolved_by) if row.resolved_by else "",
+			# BOP-CHG-001 v0.16 §5.2: the append-only findings (reason, opaque evidence references, revisions), never any bid content
+			"current_finding": cstr(row.current_finding), "incident_revision": int(row.incident_revision or 0), "closure": cstr(row.closure),
+			"service_followup": cstr(row.service_followup), "closed_label": labels.when_seconds(row.closed_at) if row.closed_at else "",
+			"findings": [{"finding_no": f["finding_no"], "finding": f["finding"], "reason": cstr(f["reason"]), "evidence_refs": cstr(f["evidence_refs"]),
+				"recorded_by": people.full_name(f["recorded_by"]), "recorded_label": labels.when_seconds(f["recorded_at"]), "incident_revision": f["incident_revision"],
+				"opening_revision": f["opening_revision"], "last_committed_event": cstr(f["last_committed_event"])} for f in incidents.findings(row.incident_id)],
 		}
 		if role == SUPPORT:
 			details["envelope"] = cstr(row.envelope_id)  # the opaque identifier: only the support holder who works the problem sees it

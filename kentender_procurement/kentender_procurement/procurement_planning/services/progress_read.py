@@ -33,6 +33,7 @@ import frappe
 from frappe.utils import cstr, flt
 
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
+from kentender_procurement.procurement_planning.services import recovery_read
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
 
 #: §10.15 — what the Planner is being asked for, and what it is doing to their
@@ -130,6 +131,8 @@ def _purchase_row(item) -> dict[str, Any]:
 		"proceedings": proceedings,
 		"hold": _hold_for(lock),
 		"scope_locked": bool(lock["locked"]),
+		# PLN-CHG-001 v1.32 §10.19 — the unused allowance after a tender was cancelled, from Planning's own records
+		"recoveries": recovery_read.sections_for_item(cstr(item.plan_item_id), start_route=lambda: recovery_read.start_route_for(cstr(item.plan_item_id))),
 		"route": ["procurement-plan-item", cstr(item.plan_item_id)],
 	}
 

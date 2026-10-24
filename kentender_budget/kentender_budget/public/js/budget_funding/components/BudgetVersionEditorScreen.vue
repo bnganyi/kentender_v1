@@ -6,13 +6,13 @@ import { useRouteState } from "../../budget_shared/composables/useRouteState.js"
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, formatSignedKes, mintKey } from "../../budget_shared/data/formatKes.js";
 import AccessDenied from "../../budget_shared/components/AccessDenied.vue";
+import RecordPickerHost from "../../record_picker_shared/RecordPickerHost.vue";
 import {
 	getBudgetVersionDraft,
 	saveBudgetVersionDraft,
 	getBudgetVersionLinesEditor,
 	saveBudgetLinesDraft,
 	submitBudgetVersion,
-	listOrganisationUnits,
 	listFundingSources,
 	getBudgetVersionHistory,
 } from "../data/budgetApi.js";
@@ -37,7 +37,6 @@ const linesEditor = ref(null);
 // else to look: a version that has never been Active has no Detail route at
 // all (get_budget_detail resolves an Active Version, not a Draft).
 const history = ref(null);
-const orgUnits = ref([]);
 const fundingSources = ref([]);
 const loading = ref(true);
 const refreshing = ref(false);
@@ -161,7 +160,6 @@ async function loadDraft(opts) {
 		const userEditing = !!draft.value && detailsDirty.value;
 		draft.value = data;
 		if (changed && !userEditing) hydrateForm();
-		if (!orgUnits.value.length) orgUnits.value = (await listOrganisationUnits()).rows || [];
 		if (!fundingSources.value.length) fundingSources.value = (await listFundingSources()).rows || [];
 		// A direct load landing on the lines or history tab must still fetch it.
 		if (tab.value === "lines" && !(opts && opts.lines === false)) await loadLines();
@@ -440,6 +438,13 @@ const previewTotals = computed(() => {
 	return { approved, entered, match: Math.abs(diff) < 0.005, still: diff >= 0.005 ? diff : 0, over: diff <= -0.005 ? -diff : 0, movedOut, movedIn };
 });
 
+// A line's "Available to" is the shared picker with an "All departments" row (""): bound to the row's own value, never to a server echo.
+function onOwnerPicked(row, picked) {
+	row.owner_org_unit = picked ? picked.id : "";
+	row.owner_org_unit_label = picked && picked.id ? picked.label : __("All departments");
+	markLinesDirty();
+}
+
 function markLinesDirty() {
 	linesDirty.value = true;
 }
@@ -656,10 +661,19 @@ function restoreLine(o) {
 											<a v-if="canEdit && row.can_omit" href="#" style="font-size: 11px" data-testid="bud-editor-omit-link" @click.prevent="!busy && omitLine(row)">{{ __("Omit from this update") }}</a>
 										</td>
 										<td>
-											<select v-if="canEdit && !row.identity_locked" v-model="row.owner_org_unit" class="input" :disabled="busy" :aria-label="__('Available to')" @change="markLinesDirty">
-												<option value="">{{ __("All departments") }}</option>
-												<option v-for="o in orgUnits" :key="o.id" :value="o.id">{{ o.label }}</option>
-											</select>
+											<RecordPickerHost
+												v-if="canEdit && !row.identity_locked"
+												:model-value="row.owner_org_unit"
+												:input-id="`bud-line-owner-${i}`"
+												source="core.reference_unit"
+												noun="unit"
+												plural="units"
+												:placeholder="__('Search departments')"
+												:all-label="__('All departments')"
+												:value-label="row.owner_org_unit_label || ''"
+												:disabled="busy"
+												@change="(picked) => onOwnerPicked(row, picked)"
+											/>
 											<span v-else>{{ row.owner_org_unit_label || __("All departments") }}</span>
 										</td>
 										<td>

@@ -109,6 +109,51 @@ class TestReferenceSets(RegulatoryReferenceTestCase):
 		self.assertEqual(read["reference_kind"], "Reservation rules")
 
 
+class TestMaintenanceByATechnicalOperatorIsAudited(RegulatoryReferenceTestCase):
+	"""CFG-CHG-002 §3.1 CFG11-EX-001: Administrator and System Manager maintain System setup, which includes the rules the Tender publication
+	read points at ("Publication not configured" -> configure). The Project Owner kept that for technical operators on 18 Oct 2026 on one
+	condition: full auditability. Every maintenance command writes an Audit Event naming the person who made it."""
+
+	EMAIL = "kt.techop.regref@test.local"
+
+	@classmethod
+	def setUpClass(cls):
+		super().setUpClass()
+		if not frappe.db.exists("User", cls.EMAIL):
+			user = frappe.get_doc({"doctype": "User", "email": cls.EMAIL, "first_name": "Techop", "enabled": 1, "send_welcome_email": 0}).insert(ignore_permissions=True)
+			user.add_roles("System Manager")
+		frappe.db.commit()
+		cls.addClassCleanup(cls._drop_user)
+
+	@classmethod
+	def _drop_user(cls):
+		frappe.set_user("Administrator")
+		if frappe.db.exists("User", cls.EMAIL):
+			frappe.delete_doc("User", cls.EMAIL, force=1, ignore_permissions=True)
+		frappe.db.commit()
+
+	def tearDown(self):
+		frappe.set_user("Administrator")
+
+	def _events(self, document_type: str, document_name: str) -> dict[str, str]:
+		return {
+			row.action: row.performed_by
+			for row in frappe.get_all("Audit Event", filters={"document_type": document_type, "document_name": document_name}, fields=["action", "performed_by"])
+		}
+
+	def test_creating_renaming_and_saving_a_rule_each_name_the_technical_operator(self):
+		frappe.set_user(self.EMAIL)
+		created = self._create("KT-TEST-AUDITED-SET")
+		register.rename_regulatory_reference(reference_set=created["reference_set"], display_name="Audited rule")
+		saved = self._save_reservation_version(created["reference_set"])
+		frappe.set_user("Administrator")
+		on_set = self._events("Regulatory Reference Set", created["reference_set"])
+		self.assertEqual(on_set.get("create_regulatory_reference"), self.EMAIL)
+		self.assertEqual(on_set.get("rename_regulatory_reference"), self.EMAIL)
+		on_version = self._events("Regulatory Reference", saved["reference"])
+		self.assertEqual(on_version.get("save_regulatory_reference_version"), self.EMAIL)
+
+
 class TestVersionsAndSupersession(RegulatoryReferenceTestCase):
 	def test_a_new_version_supersedes_the_overlapping_one_and_is_never_edited_in_place(self):
 		out = self._create("KT-TEST-SUPERSEDE")

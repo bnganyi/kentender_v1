@@ -5,9 +5,11 @@
 | Document ID | STD-TPL-IMP-001 |
 | Version | 1.1 |
 | Date | 26 September 2026 |
-| Status | **Proposed for approval** — v1.0 was proposed on 25 September 2026 and never approved; Project Owner approval of v1.1 is required |
-| Approved on | Not yet approved |
-| Approval record | None for v1.1. None for v1.0, which was never approved. On 25 September 2026 the Project Owner answered "Authorised" to "Approve the two documents, or authorise building against them as proposed."; that authorised building against v1.0 as proposed and is not an approval. |
+| Status | **Approved** — 26 September 2026 (v1.1), as recorded in the Baseline Register (KT-DOC-CTRL-001); confirmed by the Project Owner on 18 October 2026 |
+| v1.1 status (proposed read, retained) | **Proposed for approval** — v1.0 was proposed on 25 September 2026 and never approved; Project Owner approval of v1.1 is required |
+| Approved on | 26 September 2026 (v1.1), the date recorded in the Baseline Register (KT-DOC-CTRL-001); the Project Owner confirmed the approval on 18 October 2026 |
+| v1.1 approved on (proposed read, retained) | Not yet approved |
+| Approval record | The Baseline Register (KT-DOC-CTRL-001) records v1.1 as an approved requirement with approval date 26 September 2026. No verbatim record of the Project Owner's instruction of 26 September 2026 is held in this file, and none is supplied here. Project Owner, 18 October 2026, verbatim: “1. All are approved. Harmonize”, answering decision 1 of docs/mvp-1-r1/98_work_progress/SYSTEM_CHECK_2026-10-18.md (“Which of these three documents did you approve?”: STD-TPL-IMP-001 v1.1, LAW-REG-001 v1.2 and KT-RCA-001 v1.3). This confirms that v1.1 is approved. Approval establishes the requirement only: it does not establish implementation, installation, testing, legal clearance or production readiness. (v1.1 proposed read: None for v1.1.) None for v1.0, which was never approved. Retained history: On 25 September 2026 the Project Owner answered "Authorised" to "Approve the two documents, or authorise building against them as proposed."; that authorised building against v1.0 as proposed and is not an approval. |
 | Owner decision applied | OD5, Project Owner, 26 September 2026: "I don't want this complicated admin overhead regarding approvals and commissioning of templates. It is unnecessary, adds no value and is vexing. Allow development work to contine without this friction. Template release is purely an on and off switch on an affected site. Update this decision as a follow up to reflect in affected documents if necessary" |
 | Owner instruction for this revision | Project Owner, 26 September 2026: "Close the open issues" |
 | Requirements authority | STD-TPL-001 v0.10 proposed. Owner decision OD5 overrides its exact-manifest approval, `Candidate` and availability provisions; §21 lists the corrections STD-TPL-001 needs |
@@ -368,6 +370,10 @@ Do not build the UI first against invented placeholder data. The projections and
 ## 19. Approval effect
 
 ### 19.1 v1.1 approval effect
+
+**v1.1 approval effect (approved; the Baseline Register records 26 September 2026, confirmed by the Project Owner on 18 October 2026).** v1.1 is approved by the Project Owner. The Baseline Register (KT-DOC-CTRL-001) records the approval on 26 September 2026, and the Project Owner confirmed it on 18 October 2026 (verbatim: “1. All are approved. Harmonize”). v1.1 is the implementation authority for the installed STD template runtime, and it retires v1.0, which was never approved, and v0.2 from active use. It applies owner decision OD5: an intact installed release is `Available` and switched On unless a deployment switches it Off, and neither installation nor use requires an exact-manifest owner decision. It does not approve release 1.1 content. STD-TPL-001 v0.10 and the other documents named in §21 still need the corrections listed there. Approval establishes the requirement only: it does not establish implementation, installation, testing, legal clearance or production readiness.
+
+**v1.1 proposed read (retained as drafting history).** The paragraph below was the approval effect while v1.1 was Proposed. Its “Approval makes” wording is superseded by the declarative approval effect above and by the approval record in the control table.
 
 Approval makes v1.1 the implementation authority for the installed STD template runtime and retires v1.0, which was never approved, and v0.2 from active use. It applies owner decision OD5: an intact installed release is `Available` and switched On unless a deployment switches it Off, and neither installation nor use requires an exact-manifest owner decision. It does not approve release 1.1 content. STD-TPL-001 v0.10 and the other documents named in §21 still need the corrections listed there.
 

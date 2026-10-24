@@ -1,0 +1,270 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-14 09:00:00.000000",
+ "description": "§4 Contract case: one per source contract identity; the lifecycle fact (§5.1). Holds are conditions, never stages.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_id",
+  "source_kind",
+  "source_reference",
+  "supplier_organisation",
+  "lifecycle",
+  "record_version",
+  "fixture_namespace",
+  "title",
+  "supplier_name",
+  "managing_unit",
+  "currency",
+  "contract_value",
+  "tender_reference",
+  "award_reference",
+  "legal_profile",
+  "responsible_user",
+  "current_agreement",
+  "received_at",
+  "operative_date",
+  "closed_at",
+  "source_json",
+  "delivery_state",
+  "invoice_state",
+  "obligation_state",
+  "outcome_reason",
+  "origin_key",
+  "source_system",
+  "intake_revision",
+  "funding_route",
+  "funding_authority_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_id",
+   "label": "Contract ID",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_kind",
+   "label": "Source kind",
+   "fieldtype": "Select",
+   "options": "KenTender award\nExternal record",
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_reference",
+   "label": "Source reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_organisation",
+   "label": "Supplier organisation",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle",
+   "label": "Lifecycle",
+   "fieldtype": "Select",
+   "options": "Preparing\nAwaiting signatures\nActive\nClosed\nDid not proceed\nTerminated",
+   "default": "Preparing",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "default": "1",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "title",
+   "label": "Title",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supplier_name",
+   "label": "Supplier name",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "managing_unit",
+   "label": "Managing unit",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Organisation Unit"
+  },
+  {
+   "fieldname": "currency",
+   "label": "Currency",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Currency"
+  },
+  {
+   "fieldname": "contract_value",
+   "label": "Contract value",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "label": "Tender reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "award_reference",
+   "label": "Award reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "legal_profile",
+   "label": "Legal profile",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "responsible_user",
+   "label": "Responsible user",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_agreement",
+   "label": "Current agreement",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "operative_date",
+   "label": "Operative date",
+   "fieldtype": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "label": "Closed at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_json",
+   "label": "Source json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivery_state",
+   "label": "Delivery state",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_state",
+   "label": "Invoice state",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "obligation_state",
+   "label": "Obligation state",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outcome_reason",
+   "label": "Outcome reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "origin_key",
+   "fieldtype": "Data",
+   "label": "Origin Key",
+   "read_only": 1,
+   "no_copy": 1,
+   "description": "Stable unique key of an existing contract: site, origin system, external contract identity.",
+   "search_index": 1
+  },
+  {
+   "fieldname": "source_system",
+   "fieldtype": "Data",
+   "label": "Source System",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "intake_revision",
+   "fieldtype": "Int",
+   "label": "Intake Revision",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "funding_route",
+   "label": "Funding route",
+   "fieldtype": "Select",
+   "options": "\nKenTender Budget\nOutside KenTender Budget",
+   "read_only": 1,
+   "description": "How an independently registered contract is funded (CM-CHG-001 v0.10 section 20.4). Empty until the head of procurement records it."
+  },
+  {
+   "fieldname": "funding_authority_json",
+   "label": "Funding authority evidence",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-16 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:contract_id"
+}

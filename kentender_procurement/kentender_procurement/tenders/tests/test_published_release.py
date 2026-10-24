@@ -10,6 +10,7 @@ in memory for the test only — the installed release row is never written."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import types
 from unittest import mock
 
@@ -41,10 +42,10 @@ class PublishedReleaseCase(OpenPeriodCase):
 		self.addCleanup(patcher.stop)
 
 	def awaiting_issue(self) -> str:
-		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
-		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": "2027-06-12 11:00:00"})
+		frappe.flags.kt_tenders_clock = W("2027-05-31 08:30:00")
+		name = self._addendum(values={**self.FIXTURE_ADDENDUM, "revised_submission_deadline": W("2027-06-12 11:00:00")})
 		addenda.submit_addendum_for_issue(tender=self.name, addendum=name, expected_record_version=self._root().record_version, idempotency_key=fx.key(), user=fx.OFFICER)
-		frappe.flags.kt_tenders_clock = "2027-05-31 09:00:00"
+		frappe.flags.kt_tenders_clock = W("2027-05-31 09:00:00")
 		return name
 
 	def issue(self, name: str):

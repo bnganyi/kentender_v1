@@ -49,6 +49,7 @@ MODULES = {
 	# Operator's support issues, and a Supplier Account support officer's suspended accounts.
 	"support": "Support issues",
 	"suppliers": "Supplier accounts",
+	"contracts": "Contracts",
 }
 
 

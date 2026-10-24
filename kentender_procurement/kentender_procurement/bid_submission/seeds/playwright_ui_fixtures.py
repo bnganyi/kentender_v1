@@ -14,6 +14,7 @@ Called by the Playwright specs through `bench execute`; never by a user."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 from uuid import uuid4
 
@@ -33,7 +34,7 @@ OFFICER = tender_pw.OFFICER
 DAVID = bds_canonical.DAVID
 BROWSER_ACTORS = (RECORDER, HEAD, OFFICER, tender_pw.AUDITOR, tender_pw.BOTH)
 INSTRUMENT = {"instrument_type": "Demand Bank Guarantee", "issuer": "KCB Bank Kenya", "instrument_reference": "KCB/TG/2099/4417"}
-ANSWERED_AT = "2027-05-19 10:00:00"
+ANSWERED_AT = W("2027-05-19 10:00:00")
 
 
 def _key() -> str:
@@ -210,11 +211,11 @@ def _start(tender: str, supplier: str) -> str:
 
 	facts = SUPPLIERS[supplier]
 	reference = frappe.db.get_value("Tender", tender, "tender_reference")
-	arrangement = seed_candidate(tender_reference=reference, at="2027-05-19 09:20:00", supplier={**facts, "namespace": NAMESPACE})
+	arrangement = seed_candidate(tender_reference=reference, at=W("2027-05-19 09:20:00"), supplier={**facts, "namespace": NAMESPACE})
 	return frappe.db.get_value("Bid Workspace", {"bidder_arrangement": arrangement}, "name")
 
 
-OVERVIEW_AT = "2027-05-20 10:05:00"  # §10.1: before the clarification deadline and the addendum
+OVERVIEW_AT = W("2027-05-20 10:05:00")  # §10.1: before the clarification deadline and the addendum
 
 
 def set_instant(instant: str) -> None:
@@ -297,12 +298,12 @@ MY_BIDS_STATES = ("empty", "started", "addendum", "ready", "submitted", "withdra
 # BDS-DES-11 worlds: a Ready bid whose physical original Charles has recorded;
 # then either its datasheet's only file is rejected, or the addendum changes
 # the Tender and David's next change moves the Draft to it.
-REVIEW_STEPS = {"intake": "2027-05-20 10:20:00", "reject": "2027-05-20 10:25:00", "refresh": "2027-06-01 12:10:00"}
-REVIEW_ADDENDUM_AT = "2027-06-01 12:15:00"
+REVIEW_STEPS = {"intake": W("2027-05-20 10:20:00"), "reject": W("2027-05-20 10:25:00"), "refresh": W("2027-06-01 12:10:00")}
+REVIEW_ADDENDUM_AT = W("2027-06-01 12:15:00")
 EICAR = b"\n% X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\n"
-ADDENDUM_AT = "2027-06-01 12:05:00"  # BDS-DES-07: after the addendum is effective, before acknowledgement
-MY_BIDS_STEPS = {"fill": "2027-05-20 10:10:00", "submit": "2027-05-20 10:30:00", "withdraw": "2027-05-20 10:45:00"}
-MY_BIDS_AT = "2027-05-20 11:00:00"
+ADDENDUM_AT = W("2027-06-01 12:05:00")  # BDS-DES-07: after the addendum is effective, before acknowledgement
+MY_BIDS_STEPS = {"fill": W("2027-05-20 10:10:00"), "submit": W("2027-05-20 10:30:00"), "withdraw": W("2027-05-20 10:45:00")}
+MY_BIDS_AT = W("2027-05-20 11:00:00")
 WITHDRAWAL_REASON = "Our pricing changed; we will submit a corrected bid."
 
 
@@ -319,7 +320,7 @@ def _submit(bid: str, signatory: str) -> str:
 	from kentender_procurement.bid_submission.test_services import trust
 
 	organisation = frappe.db.get_value("Bid Workspace", bid, "lead_organisation")
-	trust.issue_certificate(user=signatory, organisation=organisation, subject_name=frappe.db.get_value("User", signatory, "full_name"), valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+	trust.issue_certificate(user=signatory, organisation=organisation, subject_name=frappe.db.get_value("User", signatory, "full_name"), valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
 	with availability.enabled_for_test_world():
 		simulation.reset_controls()
 		version = lambda: frappe.db.get_value("Bid Workspace", bid, "record_version")  # noqa: E731
@@ -349,7 +350,7 @@ def _record_original(bid: str) -> str:
 		security_duty.assign_intake_officer(tender_reference=reference, officer=RECORDER, user=HEAD)
 	recorded = security_intake.record_physical_tender_security_receipt(
 		tender_reference=reference, instrument_type=security["security_type"], issuer=security["issuer"], instrument_reference=security["reference"],
-		amount=security["amount"], currency=security["currency"], received_at="2027-05-20 10:00:00", notes="", confirmed=True, idempotency_key=_key(), user=RECORDER,
+		amount=security["amount"], currency=security["currency"], received_at=W("2027-05-20 10:00:00"), notes="", confirmed=True, idempotency_key=_key(), user=RECORDER,
 	)
 	if not recorded.get("ok"):
 		frappe.throw(f"The physical original could not be recorded: {recorded}")
@@ -391,7 +392,7 @@ def _certificate(bid: str) -> str:
 	signatory = SUPPLIERS["afya"]["registrant"]
 	return trust.issue_certificate(
 		user=signatory, organisation=frappe.db.get_value("Bid Workspace", bid, "lead_organisation"), subject_name=frappe.db.get_value("User", signatory, "full_name"),
-		valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59",
+		valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"),
 	)
 
 
@@ -486,7 +487,7 @@ def world_security(*, bid_reference: str) -> dict[str, Any]:
 	return {k: security.get(k) for k in ("security_type", "issuer", "reference", "amount", "currency")}
 
 
-def close_world(*, tender_reference: str, at: str = "2027-06-12 11:00:00") -> dict[str, Any]:
+def close_world(*, tender_reference: str, at: str = W("2027-06-12 11:00:00")) -> dict[str, Any]:
 	"""Tenders ends the submission period at the deadline and Bid Submission
 	closes the box and hands it to Bid Opening; the pages then read just after."""
 	from kentender_procurement.bid_submission.seeds import kentender_mvp_v1 as lifecycle

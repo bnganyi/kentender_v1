@@ -1,0 +1,153 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "Save draft": {
+   "args": {
+    "submit": false
+   },
+   "command": "PrepareContractClosureCorrection",
+   "do": "command"
+  },
+  "Submit correction": {
+   "args": {
+    "submit": true
+   },
+   "command": "PrepareContractClosureCorrection",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_correction_from_t",
+ "d": "D38",
+ "dialogs": {},
+ "ev": [
+  "Closure 1",
+  "Completion certificate 1"
+ ],
+ "id": "D38-P",
+ "name": "Close-out correction",
+ "next": {
+  "h": "Explain the completion error.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Submit correction",
+ "page": "record",
+ "ref": "CM-TEST-test_a_correction_from_t",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Closure",
+       "Closure 1, 28 Jul 2028"
+      ],
+      [
+       "Affected output",
+       "Completion certificate 1"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Original closure"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Completion fact that was wrong",
+       "name": "fact",
+       "o": {},
+       "opts": [
+        "Certificate delivery",
+        "Final acceptance",
+        "Other completion fact"
+       ],
+       "t": "sel",
+       "v": "Certificate delivery"
+      },
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Evidence",
+       "name": "evidence",
+       "o": {},
+       "t": "file",
+       "v": ""
+      },
+      {
+       "l": "Proposed disposition",
+       "name": "",
+       "o": {},
+       "t": "ro",
+       "v": "Reopen for completion"
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Correction"
+  }
+ ],
+ "s2": [
+  "Save draft",
+  "Cancel"
+ ],
+ "st": "Closed",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Closure 1, 28 Jul 2028",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_correction_from_t",
+    "history"
+   ]
+  }
+ ],
+ "title": "Request close-out correction",
+ "version": 21
+}

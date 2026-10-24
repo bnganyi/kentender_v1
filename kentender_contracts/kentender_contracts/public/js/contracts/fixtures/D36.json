@@ -1,0 +1,197 @@
+{
+ "actions": {
+  "Submit adjustment for decision": {
+   "dialog": "submit",
+   "do": "dialog"
+  },
+  "View clause": {
+   "do": "tab",
+   "tab": "Agreement"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delay_adjustment_",
+ "d": "D36",
+ "dialogs": {
+  "submit": {
+   "args": {},
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Causation",
+       "name": "causation",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Clause the rate comes from",
+       "name": "clause",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      },
+      {
+       "l": "Supplier's challenge",
+       "name": "supplier_response",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Recommendation",
+       "name": "recommendation",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "PrepareContractAdjustment",
+   "p": "Submit",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Submit adjustment for decision"
+  }
+ },
+ "ev": [
+  "Delivery 25 Jul 2027",
+  "Clause",
+  "Supplier response 1"
+ ],
+ "id": "D36",
+ "name": "Contractual delay adjustment",
+ "next": {
+  "h": "Review the proposed adjustment.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Submit adjustment for decision",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delay_adjustment_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Due date",
+       "20 Jul 2027"
+      ],
+      [
+       "Delivered",
+       "25 Jul 2027"
+      ],
+      [
+       "Days late",
+       "5 calendar days (21\u201325 Jul inclusive)"
+      ],
+      [
+       "Eligible principal",
+       "KES 1,000,000"
+      ],
+      [
+       "Rate",
+       "0.1% per day"
+      ],
+      [
+       "Cap",
+       "10% (KES 100,000)"
+      ],
+      [
+       "Effective extension",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      [
+       "Calculation",
+       "KES 1,000 per day \u00d7 5"
+      ],
+      [
+       "Proposed adjustment",
+       "KES 5,000"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Calculation"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Causation",
+       "To be recorded when you submit"
+      ],
+      [
+       "Supplier challenge",
+       "To be recorded when you submit"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Causation and response"
+  }
+ ],
+ "s2": [
+  "-Return for correction",
+  "View clause"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "All units accepted 25 Jul 2027",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review delivery delay",
+ "version": 17
+}

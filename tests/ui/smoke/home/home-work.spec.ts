@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+import { asAt, home, longDateTime, world } from "../../helpers/anchor";
 import { AMINA, BRIAN, CHARLES, NAOMI, PETER, flat, putWorldClock, openHomeFromMenu, region, root, rows } from "./helpers";
 
 /**
@@ -19,7 +20,7 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 		const errors = await openHomeFromMenu(page, CHARLES);
 		await expect(title(page)).toHaveText("Good morning, Charles");
 		await expect(page.locator('[data-testid="kt-home-responsibilities"]')).toHaveText("Head of Procurement Function, site-wide");
-		await expect(page.locator('[data-testid="kt-home-updated"]')).toContainText("Updated 18 June 2027, 10:00 EAT");
+		await expect(page.locator('[data-testid="kt-home-updated"]')).toContainText(`Updated ${longDateTime(asAt())}`);
 		expect(await summary(page)).toEqual([
 			"My work 9 actions for you",
 			"Waiting on others 2 items you're waiting on",
@@ -32,8 +33,8 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 		await openHomeFromMenu(page, CHARLES);
 		const list = rows(page, "my-work");
 		await expect(list).toHaveCount(5);
-		expect(await flat(list.nth(0))).toBe("Supply of medical-grade tablets Tenders TND-MOH-2026-005 Respond to clarification Received 16 days ago (2 June, 10:00) Continue");
-		expect(await flat(list.nth(4))).toBe("Supply of medical-grade tablets Bid opening TND-MOH-2026-005 Join opening Received 3 days ago (15 June, 10:00) Continue");
+		expect(await flat(list.nth(0))).toBe(`Supply of medical-grade tablets Tenders TND-MOH-2026-005 Respond to clarification ${home.entered("Received", world("2027-06-02 10:00:00"))} Continue`);
+		expect(await flat(list.nth(4))).toBe(`Supply of medical-grade tablets Bid opening TND-MOH-2026-005 Join opening ${home.entered("Received", world("2027-06-15 10:00:00"))} Continue`);
 		const buttons = region(page, "my-work").locator('[data-testid="kt-home-continue"]');
 		expect(await buttons.evaluateAll((els) => els.map((e) => e.classList.contains("btn-primary")))).toEqual([true, false, false, false, false]);
 		await expect(region(page, "my-work")).not.toContainText("Your turn");
@@ -58,15 +59,15 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 	test("Coming up shows the chair's Start opening with a relative badge and the exact time", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
 		await expect(rows(page, "coming-up")).toHaveCount(1);
-		expect(await flat(rows(page, "coming-up").first())).toBe("Supply of medical-grade tablets Bid opening TND-MOH-2026-005 Start opening In 7 days 25 June, 11:00 View record");
+		expect(await flat(rows(page, "coming-up").first())).toBe(`Supply of medical-grade tablets Bid opening TND-MOH-2026-005 Start opening ${home.comingUp(world("2027-06-25 11:00:00")).join(" ")} View record`);
 	});
 
 	test("Waiting on others names who holds each item and since when", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
 		const list = rows(page, "waiting");
 		await expect(list).toHaveCount(2);
-		expect(await flat(list.nth(0))).toBe("Supply of UPS units Waiting for Amina Hassan to decide publication Waiting 2 days (since 16 June, 15:30)");
-		expect(await flat(list.nth(1))).toBe("Supply of laboratory desktop computers Waiting for Amina Hassan to decide the award Waiting 1 day (since 17 June, 16:00)");
+		expect(await flat(list.nth(0))).toBe(`Supply of UPS units Waiting for Amina Hassan to decide publication ${home.waiting(world("2027-06-16 15:30:00"))}`);
+		expect(await flat(list.nth(1))).toBe(`Supply of laboratory desktop computers Waiting for Amina Hassan to decide the award ${home.waiting(world("2027-06-17 16:00:00"))}`);
 	});
 
 	test("Records you oversee counts outstanding matters, pages, and never shows a bid detail before delivery", async ({ page }) => {
@@ -86,8 +87,8 @@ test.describe("Charles, Head of Procurement Function (slice A)", () => {
 
 	test("Recently completed actions read as the actor's own action with its exact time", async ({ page }) => {
 		await openHomeFromMenu(page, CHARLES);
-		await expect(region(page, "completed")).toContainText("You signed the professional opinion on 17 June 2027, 16:00 EAT.");
-		await expect(region(page, "completed")).toContainText("You approved this Tender package on 16 June 2027, 15:30 EAT. It is awaiting publication authorisation by Amina Hassan.");
+		await expect(region(page, "completed")).toContainText(`You signed the professional opinion on ${longDateTime(world("2027-06-17 16:00:00"))}.`);
+		await expect(region(page, "completed")).toContainText(`You approved this Tender package on ${longDateTime(world("2027-06-16 15:30:00"))}. It is awaiting publication authorisation by Amina Hassan.`);
 		await expect(page.locator('#completed [data-testid="kt-home-showing"]')).toHaveText("Showing 5 of 19");
 	});
 
@@ -107,16 +108,16 @@ test.describe("Amina, Accounting Officer (slice A)", () => {
 		expect((await summary(page))[0]).toBe("My work 4 actions for you");
 		const list = rows(page, "my-work");
 		await expect(list).toHaveCount(4);
-		expect(await flat(list.nth(0))).toBe("Supply of network switches Evaluation TND-MOH-2026-010 Appoint the evaluation committee Received 5 days ago (13 June, 08:58) Continue");
-		expect(await flat(list.nth(1))).toBe("Supply of field laptops Tenders TND-MOH-2026-006 Consider cancellation Received 2 days ago (16 June, 14:00) Continue");
-		expect(await flat(list.nth(2))).toBe("Supply of UPS units Tenders TND-MOH-2026-011 Authorise publication Received 2 days ago (16 June, 15:30) Continue");
-		expect(await flat(list.nth(3))).toBe("Supply of laboratory desktop computers Award TND-MOH-2026-004 Decide award Received yesterday (17 June, 16:00) Continue");
+		expect(await flat(list.nth(0))).toBe(`Supply of network switches Evaluation TND-MOH-2026-010 Appoint the evaluation committee ${home.entered("Received", world("2027-06-13 08:58:00"))} Continue`);
+		expect(await flat(list.nth(1))).toBe(`Supply of field laptops Tenders TND-MOH-2026-006 Consider cancellation ${home.entered("Received", world("2027-06-16 14:00:00"))} Continue`);
+		expect(await flat(list.nth(2))).toBe(`Supply of UPS units Tenders TND-MOH-2026-011 Authorise publication ${home.entered("Received", world("2027-06-16 15:30:00"))} Continue`);
+		expect(await flat(list.nth(3))).toBe(`Supply of laboratory desktop computers Award TND-MOH-2026-004 Decide award ${home.entered("Received", world("2027-06-17 16:00:00"))} Continue`);
 		await expect(region(page, "my-work").locator('[data-testid="kt-home-show-more"]')).toHaveCount(0);
 	});
 
 	test("an owner deadline that has passed reads Overdue since, and nothing is overdue from age alone", async ({ page }) => {
 		await openHomeFromMenu(page, AMINA);
-		expect(await flat(rows(page, "waiting").first())).toBe("Supply of desktop computers Waiting for cancellation compliance evidence from Brian Wafula Waiting 3 days (since 15 June, 12:00) Overdue since 15 June");
+		expect(await flat(rows(page, "waiting").first())).toBe(`Supply of desktop computers Waiting for cancellation compliance evidence from Brian Wafula ${home.waiting(world("2027-06-15 12:00:00"))} ${home.overdueSince(world("2027-06-15 12:00:00"))}`);
 		await expect(region(page, "my-work")).not.toContainText("Overdue"); // old work (5 days) is not overdue: no owner deadline
 	});
 
@@ -132,7 +133,7 @@ test.describe("Brian, Procurement Officer (slice A)", () => {
 		await openHomeFromMenu(page, BRIAN);
 		await expect(title(page)).toHaveText("Good morning, Brian");
 		expect(await summary(page)).toEqual(["My work 9 actions for you", "Waiting on others 1 item you're waiting on"]);
-		expect(await flat(rows(page, "my-work").first())).toBe("Supply of desktop computers Tenders TND-MOH-2026-012 Record cancellation notices and PPRA report Received 3 days ago (15 June, 12:00) Overdue since 15 June Continue");
+		expect(await flat(rows(page, "my-work").first())).toBe(`Supply of desktop computers Tenders TND-MOH-2026-012 Record cancellation notices and PPRA report ${home.entered("Received", world("2027-06-15 12:00:00"))} ${home.overdueSince(world("2027-06-15 12:00:00"))} Continue`);
 		await expect(region(page, "waiting")).toContainText("Waiting for Amina Hassan to consider cancellation");
 		await expect(region(page, "oversee")).toHaveCount(0);
 	});
@@ -143,8 +144,8 @@ test.describe("Peter and Naomi (slice B: Needs, Requisitions and oversight)", ()
 		await openHomeFromMenu(page, PETER);
 		await expect(title(page)).toHaveText("Good morning, Peter");
 		await expect(page.locator('[data-testid="kt-home-responsibilities"]')).toContainText("Head of User Department, Human Resources Management and Development");
-		expect(await flat(rows(page, "my-work").first())).toBe("Digital health workforce certification programme Needs NDS-MOH-2027-0002 Decide whether this requirement is available to Procurement Planning Submitted 206 days ago (24 November 2026, 12:20) Continue");
-		expect(await flat(region(page, "waiting"))).toContain("Clinic desktop computers Waiting for Charles Mutiso to authorise the requisition Waiting 2 days (since 16 June, 11:00)");
+		expect(await flat(rows(page, "my-work").first())).toBe(`Digital health workforce certification programme Needs NDS-MOH-2027-0002 Decide whether this requirement is available to Procurement Planning ${home.entered("Submitted", world("2026-11-24 12:20:00"))} Continue`);
+		expect(await flat(region(page, "waiting"))).toContain(`Clinic desktop computers Waiting for Charles Mutiso to authorise the requisition ${home.waiting(world("2027-06-16 11:00:00"))}`);
 		expect((await summary(page))[2]).toBe("Records you oversee 6 records with outstanding matters");
 		await expect(region(page, "oversee")).not.toContainText("awaiting correction by"); // a department head sees the neutral line: no holder name
 		await expect(region(page, "oversee")).toContainText("Returned for correction");

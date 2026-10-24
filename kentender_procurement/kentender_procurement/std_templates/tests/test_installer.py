@@ -8,6 +8,7 @@ evidence only)."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 import os
 import zipfile
@@ -241,7 +242,7 @@ class TestEvidenceOnly(InstallerCase):
 		decision = {
 			"schema_version": 1, "release_id": info["release_id"], "template_key": manifest["template_key"], "template_release": manifest["template_release"],
 			"bundle_digest": manifest["bundle_digest"], "manifest_digest": info["manifest_digest"], "decision": "APPROVE EXACT MANIFEST",
-			"decided_by": "test release owner", "decided_at": "2026-09-26", "decision_record": "Later decision.",
+			"decided_by": "test release owner", "decided_at": W("2026-09-26"), "decision_record": "Later decision.",
 		}
 		(root / bundle.OWNER_DECISION_PATH).write_text(pretty_json(decision), encoding="utf-8")
 		second = self.install(root)

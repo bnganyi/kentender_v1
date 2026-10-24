@@ -32,6 +32,7 @@ fixed values in Planning's projection).
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import json
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -48,7 +49,7 @@ STAND_IN_TEMPLATE = ("IT-EQUIPMENT-OPEN-V1", "1.1")
 CORRECTION_REASON = "The approved source allocation refers to the wrong Budget Line. Please review the departmental funding specification through the governed Planning correction process."
 NO_CHANGE_REASON = "The approved source allocation and Budget Line are correct. No Planning change is required."
 # §13.12's isolated stopped-work clock (site datetimes are naive EAT).
-STOP_CLOCK = {"requested": "2027-03-10 09:00:00", "started": "2027-03-10 11:00:00", "decided": "2027-03-12 10:00:00"}
+STOP_CLOCK = {"requested": W("2027-03-10 09:00:00"), "started": W("2027-03-10 11:00:00"), "decided": W("2027-03-12 10:00:00")}
 
 
 # --------------------------------------------------------------------------

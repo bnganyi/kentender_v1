@@ -156,6 +156,46 @@ PAGER = (
 
 
 
+#: The record picker (approved plan, 13 Oct 2026; board: docs/mvp-1-r1/00_common/record_picker_design). Not in the pack yet; the rules read
+#: from its tokens only. One field with a search icon, the list of matches beneath it (above it when there is no room), headed parts for
+#: the reader's department and recent picks, a greyed row with its reason for what cannot be chosen, and a foot line when more matched
+#: than are shown. State is carried by modifiers (`is-active`, `is-disabled`, `is-updating`, `is-up`), never by inline style.
+PICKER = (
+	".kt-industry .kt-picker {\n\tposition: relative;\n\twidth: 100%;\n\tfont-family: var(--font-body);\n\tcolor: var(--color-text);\n}",
+	".kt-industry .kt-picker-host {\n\tdisplay: block;\n\twidth: 100%;\n}",
+	".kt-industry .kt-picker-anchor {\n\tposition: relative;\n}",
+	".kt-industry .kt-picker-field {\n\tposition: relative;\n\tdisplay: flex;\n\talign-items: center;\n}",
+	".kt-industry .kt-picker-icon {\n\tposition: absolute;\n\tleft: 10px;\n\tcolor: var(--color-neutral-700);\n\tpointer-events: none;\n}",
+	".kt-industry .kt-picker-input {\n\tpadding-left: 34px;\n\tpadding-right: 10px;\n}",
+	".kt-industry .kt-picker-input.has-choice {\n\tpadding-right: 64px;\n\tfont-weight: 600;\n\tcolor: var(--color-heading);\n}",
+	".kt-industry .kt-picker.is-invalid .kt-picker-input {\n\tborder-color: var(--status-critical);\n}",
+	".kt-industry .kt-picker-clear {\n\tposition: absolute;\n\tright: 4px;\n\theight: 28px;\n\tpadding: 0 8px;\n\tfont-size: 13px;\n}",
+	".kt-industry .kt-picker-list {\n\tposition: absolute;\n\ttop: calc(100% + 4px);\n\tleft: 0;\n\tright: 0;\n\tz-index: 30;\n\tbox-sizing: border-box;\n\tmax-height: 340px;\n\toverflow-y: auto;\n\tpadding: 4px 0;\n\tbackground: var(--color-surface);\n\tborder: 1px solid var(--color-divider);\n\tborder-radius: var(--radius-lg);\n\tbox-shadow: var(--shadow-md);\n}",
+	".kt-industry .kt-picker-list.is-up {\n\ttop: auto;\n\tbottom: calc(100% + 4px);\n}",
+	"/* Adding several: the list stays in the page beside the field instead of floating over it. */\n.kt-industry .kt-picker-list.is-inline {\n\tposition: relative;\n\ttop: auto;\n\tleft: auto;\n\tright: auto;\n\tbottom: auto;\n\tz-index: auto;\n\tmargin-top: 4px;\n\tmax-height: 360px;\n\tbox-shadow: none;\n}",
+	".kt-industry .kt-picker-status {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 8px;\n\tmargin-bottom: 4px;\n\tpadding: 8px 12px;\n\tborder-bottom: 1px solid var(--color-divider);\n\tfont-size: 12px;\n\tcolor: var(--color-text-muted);\n}",
+	".kt-industry .kt-picker-status.is-text {\n\tflex-direction: column;\n\talign-items: flex-start;\n\tgap: 4px;\n\tmargin-bottom: 0;\n\tpadding: 12px;\n\tborder-bottom: 0;\n}",
+	".kt-industry .kt-picker-status.is-error {\n\tgap: 10px;\n}",
+	".kt-industry .kt-picker-status-text {\n\tfont-size: 14px;\n\tcolor: var(--color-heading);\n}",
+	".kt-industry .kt-picker-status-hint {\n\tfont-size: 12px;\n\tcolor: var(--color-text-muted);\n\ttext-wrap: pretty;\n}",
+	".kt-industry .kt-picker-retry {\n\theight: 32px;\n\tfont-size: 13px;\n}",
+	".kt-industry .kt-picker-group {\n\tpadding: 8px 12px 4px;\n\tfont-size: 12px;\n\tfont-weight: 600;\n\tcolor: var(--color-neutral-700);\n}",
+	".kt-industry .kt-picker-option {\n\tdisplay: flex;\n\tflex-direction: column;\n\tjustify-content: center;\n\tgap: 1px;\n\tmin-height: 44px;\n\tpadding: 5px 12px;\n\tcursor: pointer;\n}",
+	".kt-industry .kt-picker-option.is-active {\n\tbackground: var(--color-accent-100);\n\tbox-shadow: inset 3px 0 0 0 var(--color-accent);\n}",
+	".kt-industry .kt-picker-option.is-disabled,\n.kt-industry .kt-picker-list.is-updating .kt-picker-option {\n\tcursor: default;\n}",
+	".kt-industry .kt-picker-name {\n\tfont-size: 14px;\n\tfont-weight: 600;\n\tline-height: 1.35;\n\tcolor: var(--color-heading);\n}",
+	".kt-industry .kt-picker-detail {\n\tfont-size: 12px;\n\tline-height: 1.35;\n\tcolor: var(--color-text-muted);\n}",
+	".kt-industry .kt-picker-option.is-disabled .kt-picker-name,\n.kt-industry .kt-picker-option.is-disabled .kt-picker-detail,\n.kt-industry .kt-picker-list.is-updating .kt-picker-name,\n.kt-industry .kt-picker-list.is-updating .kt-picker-detail {\n\tcolor: var(--color-control-disabled-text);\n}",
+	".kt-industry .kt-picker-mark {\n\tpadding: 0;\n\tbackground: none;\n\tfont-weight: 700;\n\tcolor: var(--color-accent-800);\n}",
+	".kt-industry .kt-picker-reason {\n\tdisplay: flex;\n\talign-items: center;\n\tgap: 5px;\n\tfont-size: 12px;\n\tline-height: 1.35;\n\tcolor: var(--color-text-muted);\n}",
+	".kt-industry .kt-picker-foot {\n\tmargin-top: 4px;\n\tpadding: 8px 12px 4px;\n\tborder-top: 1px solid var(--color-divider);\n\tfont-size: 12px;\n\tcolor: var(--color-text-muted);\n}",
+	".kt-industry .kt-picker-note {\n\tmargin: 5px 0 0;\n\tfont-size: 12px;\n}",
+	".kt-industry .kt-picker-note.is-error {\n\tcolor: var(--status-critical);\n}",
+	"/* Read aloud, never drawn. */\n.kt-industry .kt-picker-live {\n\tposition: absolute;\n\twidth: 1px;\n\theight: 1px;\n\toverflow: hidden;\n\tclip: rect(0 0 0 0);\n\twhite-space: nowrap;\n}",
+	"@media (forced-colors: active) {\n\t.kt-industry .kt-picker-option.is-active {\n\t\toutline: 2px solid Highlight;\n\t\toutline-offset: -2px;\n\t}\n}",
+)
+
+
 #: DS-REV-004 (Project Owner approved 6 Oct 2026, "2e it is. Approved"): the journey position figure, the compact track and the blocked next step.
 #: The pack does not carry these yet; the rules are the handoff's, scoped to `.kt-industry`, with the narrow-screen, forced-colours and print handling
 #: it asks for. They sit after the pack's `.kt-journey-*` rules, so the compact form (`.is-compact`) overrides the 4px slabs.
@@ -352,6 +392,7 @@ def build() -> str:
 	parts += ["/* Part 9: the access state (\"You do not have access to ...\") */", *ACCESS]
 	parts += ["/* Part 10: a recorded fact beside the pack's figure style (.kt-meta-value) */", *FACTS]
 	parts += ["/* Part 11: flat sections start content at the heading's edge */", *ALIGN]
+	parts += ["/* Part 12: the record picker (shared record picker) */", *PICKER]
 	return HEADER.format(source=source.relative_to(ROOT)) + "\n\n".join(parts) + "\n"
 
 

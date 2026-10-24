@@ -8,6 +8,7 @@ directions. Ending an assignment ends access but not exposure."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -118,7 +119,7 @@ class TestSeparationBothWays(DutyCase):
 		self.expose(OFFICER)
 		with records.atomic("test-conflict"):
 			conflict = records.insert(frappe.get_doc({"doctype": security_duty.CONFLICT, "tender": self.name, "tender_reference": self.reference, "user": OFFICER,
-				"conflicting_duty": "Opening committee", "basis": "Has viewed intake records", "status": "Open", "detected_at": "2027-05-19 09:00:00", "detected_by": "System"}))
+				"conflicting_duty": "Opening committee", "basis": "Has viewed intake records", "status": "Open", "detected_at": W("2027-05-19 09:00:00"), "detected_by": "System"}))
 		self.assertTrue(security_duty.committee_blocker(self.name, OFFICER, "the opening committee", "Opening committee"))
 		for user in (HEAD, OFFICER):
 			with self.subTest(user=user), self.assertRaises(frappe.PermissionError):

@@ -19,7 +19,7 @@ from kentender_procurement.tenders.tests import fixtures as fx
 FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
 	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition", "Tender Cancellation",
-	"Tender Document", "Tender Event", "Tender Submission Handoff", "Tender Command Journal",
+	"Tender Document", "Tender Event", "Tender Event Delivery", "Tender Submission Handoff", "Tender Command Journal",
 )
 
 

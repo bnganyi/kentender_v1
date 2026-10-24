@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import frappe
 
 from kentender_procurement.award.services import eligibility, restrictions, simulation, state, supplier
@@ -17,9 +19,9 @@ class TestDelivery(AwardCase):
 		self.deliver()
 		self.awarded()
 		notice = state.successful_notice(state.current_batch(self.case()))
-		self.at("2027-06-18 09:00:00")
+		self.at(W("2027-06-18 09:00:00"))
 		self.run_as(MARY, supplier.respond, notice=notice.name, response="Accept", notice_version=1)
-		self.at("2027-07-02 09:00:00")
+		self.at(W("2027-07-02 09:00:00"))
 
 	def test_delivered(self):
 		eligibility.refresh_case(self.case().name)
@@ -39,7 +41,7 @@ class TestDelivery(AwardCase):
 		self.assertTrue(frappe.db.exists("Support Issue", {"module": "Award", "subject": "Restore Contracting delivery", "status": "Open"}))
 		digest = eligibility.current_package(doc).digest
 		# a restriction arising during the outage blocks the retry after service returns
-		self.run_as(HOP, restrictions.record_external, award=doc.name, basis="Reported challenge", source="Complaint letter", received_at="2027-07-02 09:10:00",
+		self.run_as(HOP, restrictions.record_external, award=doc.name, basis="Reported challenge", source="Complaint letter", received_at=W("2027-07-02 09:10:00"),
 			reason="A bidder reported a challenge.")
 		simulation.set_controls(contracting_down=0)
 		self.assertEqual(eligibility.refresh_case(doc.name)["stage"], "Waiting to proceed")
@@ -51,7 +53,7 @@ class TestDelivery(AwardCase):
 		pkg = eligibility.current_package(self.case())
 		before = pkg.digest
 		self.run_as(HOP, restrictions.record_external, award=self.case().name, basis="Authoritative order", source="Review Board suspension notice",
-			received_at="2027-07-03 11:00:00", evidence="PPARB/2027/33", reason="The Review Board suspended the procurement.")
+			received_at=W("2027-07-03 11:00:00"), evidence="PPARB/2027/33", reason="The Review Board suspended the procurement.")
 		pkg = frappe.get_doc(state.PACKAGE, pkg.name)
 		self.assertEqual((pkg.digest, len(frappe.parse_json(pkg.updates_json))), (before, 1))
 		self.assertEqual(self.case().stage, "Sent to Contracting")

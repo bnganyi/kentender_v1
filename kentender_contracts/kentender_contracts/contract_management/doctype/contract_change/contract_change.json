@@ -1,0 +1,178 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:CM-CHG-{#####}",
+ "creation": "2026-10-15 12:00:00.000000",
+ "description": "A request to change the contract (an extension, a quantity variation): the baseline it starts from, the proposal, the reviews, the Accounting Officer's decision and the amendment that makes it effective. Terms change only on activation.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "contract_case",
+  "change_no",
+  "kind",
+  "state",
+  "baseline_json",
+  "proposal_json",
+  "reason",
+  "evidence_json",
+  "reviews_json",
+  "decision_json",
+  "rule_json",
+  "amendment_version",
+  "requested_by",
+  "requested_at",
+  "decided_by",
+  "decided_at",
+  "effective_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "contract_case",
+   "label": "Contract case",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "Contract Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "change_no",
+   "label": "Change no",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Kind",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Extension\nQuantity"
+  },
+  {
+   "fieldname": "state",
+   "label": "State",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Requested\nReviewed\nSubmitted\nApproved\nDeclined\nReturned\nEffective\nWithdrawn"
+  },
+  {
+   "fieldname": "baseline_json",
+   "label": "Baseline json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposal_json",
+   "label": "Proposal json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "label": "Reason",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_json",
+   "label": "Evidence json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviews_json",
+   "label": "Reviews json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_json",
+   "label": "Decision json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rule_json",
+   "label": "Rule json",
+   "fieldtype": "Long Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amendment_version",
+   "label": "Amendment version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "label": "Requested by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "label": "Requested at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided by",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_at",
+   "label": "Effective at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "label": "Record version",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "label": "Fixture namespace",
+   "fieldtype": "Data",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "issingle": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-15 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Contract Management",
+ "name": "Contract Change",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

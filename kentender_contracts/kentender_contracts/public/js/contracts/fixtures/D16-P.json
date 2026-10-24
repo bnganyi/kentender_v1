@@ -1,0 +1,129 @@
+{
+ "actions": {
+  "View claim history": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View notice": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_repair_claim_wait",
+ "d": "D16",
+ "dialogs": {},
+ "ev": [
+  "Defect notice 1"
+ ],
+ "id": "D16-P",
+ "name": "Security follow-up",
+ "next": {
+  "h": "Reply to the message.",
+  "k": "wait",
+  "s": "David Otieno, Peter Mugo; assigned 10 Jul 2028, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_repair_claim_wait",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Unit",
+       "CMTB0A72C-0063"
+      ],
+      [
+       "Accepted",
+       "20 Jul 2027"
+      ],
+      [
+       "Source terms",
+       "Agreement warranty, 12 months from each unit's acceptance"
+      ],
+      [
+       "Fault",
+       "Battery does not charge"
+      ],
+      [
+       "Warranty",
+       "Expired 20 July 2028; timely claim remains open"
+      ],
+      [
+       "Evidence",
+       "\u2014"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Claim"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Defect notice",
+       "Sent 10 Jul 2028"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Notice"
+  }
+ ],
+ "s2": [
+  "View notice",
+  "View claim history"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1 \u00b7 warranty claim 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_repair_claim_wait",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_repair_claim_wait",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_repair_claim_wait",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_repair_claim_wait",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_repair_claim_wait",
+    "history"
+   ]
+  }
+ ],
+ "title": "Warranty claim",
+ "version": 20
+}

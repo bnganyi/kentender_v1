@@ -1,0 +1,211 @@
+{
+ "actions": {
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  },
+  "Submit change for decision": {
+   "args": {
+    "change": 1
+   },
+   "command": "SubmitContractChangeForDecision",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delivery_extensio",
+ "d": "D27",
+ "dialogs": {
+  "return": {
+   "args": {
+    "change": 1
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "ReturnContractChange",
+   "p": "Return",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Supplier request 1"
+ ],
+ "id": "D27-R",
+ "name": "Request delivery extension",
+ "next": {
+  "h": "Submit the supported request for decision.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Submit change for decision",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_extensio",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Term",
+      "Current",
+      "Proposed"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2
+     ],
+     "rows": [
+      [
+       "Delivery date",
+       "20 July 2027",
+       "27 July 2027"
+      ],
+      [
+       "Contract value",
+       "KES 1,000,000",
+       "KES 1,000,000"
+      ],
+      [
+       "Quantity",
+       "10",
+       "10"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Reason",
+       "Supplier reports a seven-day shipment delay."
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Request"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Reviewer",
+      "Part",
+      "Declaration",
+      "Recommendation signed"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "Peter Mugo",
+       "Technical review",
+       "No conflict",
+       "2 Jul 2027, 09:00 EAT"
+      ],
+      [
+       "Faith Atieno",
+       "Committee recommendation",
+       "No conflict",
+       "2 Jul 2027, 09:00 EAT"
+      ],
+      [
+       "Brian Wafula",
+       "Legal review",
+       "No conflict",
+       "2 Jul 2027, 09:00 EAT"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Technical review",
+       "Peter Mugo: Approve date extension without price change"
+      ],
+      [
+       "Committee recommendation",
+       "Faith Atieno: Approve date extension without price change"
+      ],
+      [
+       "Legal review",
+       "Brian Wafula: Approve date extension without price change"
+      ],
+      [
+       "Appointment",
+       "AO/VAR/2027/001"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Appointed reviewers"
+  }
+ ],
+ "s2": [
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_extensio",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review delivery extension request",
+ "version": 17
+}

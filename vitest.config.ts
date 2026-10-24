@@ -294,7 +294,10 @@ export default defineConfig({
 				test: {
 					name: "pager-shared",
 					environment: "node",
-					include: ["kentender_procurement/kentender_procurement/public/js/pager_shared/*.spec.js"],
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/pager_shared/*.spec.js",
+						"kentender_procurement/kentender_procurement/public/js/record_picker_shared/*.spec.js",
+					],
 				},
 			},
 			{
@@ -307,6 +310,22 @@ export default defineConfig({
 					name: "design-fidelity",
 					environment: "node",
 					include: ["tests/ui/fidelity/**/*.spec.js"],
+					// Contract Management's board tooling check runs in its own project.
+					exclude: ["tests/ui/fidelity/contracts/**", "**/node_modules/**"],
+				},
+			},
+			{
+				plugins: [vue()],
+				test: {
+					// CM-CHG-001 v0.8 plan D15/D16 — the Contract Management board
+					// tooling check (Phase 0) and, from Phase 1, the Desk and supplier
+					// screens with their structural fidelity against the design's boards.
+					name: "contracts",
+					// Rendering all 157 boards through the design's template takes 1.7–3.7 s
+					// (measured 15 Oct 2026); under load it can pass the 5 s default.
+					testTimeout: 30_000,
+					environment: "jsdom",
+					include: ["tests/ui/fidelity/contracts/**/*.spec.js", "kentender_contracts/kentender_contracts/public/js/**/*.spec.js"],
 				},
 			},
 		],

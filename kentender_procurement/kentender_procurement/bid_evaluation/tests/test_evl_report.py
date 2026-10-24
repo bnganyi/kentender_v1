@@ -19,6 +19,7 @@ and a cancellation ends it without a false completion."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_evaluation.services import (
@@ -194,8 +195,8 @@ class TestSendAndSign(ReportCase):
 	def test_a_retry_after_validity_expired_returns_a_positive_recommendation_to_review(self):
 		"""AUD-EVL-004: a recommendation whose validity lapsed before the retry is withdrawn, not delivered."""
 		self._all_signed_delivery_failed()
-		frappe.db.set_value("Evaluation Case", self.case, "validity_end", "2027-06-01 00:00:00", update_modified=False)
-		self.at("2027-06-20 10:00:00")
+		frappe.db.set_value("Evaluation Case", self.case, "validity_end", W("2027-06-01 00:00:00"), update_modified=False)
+		self.at(W("2027-06-20 10:00:00"))
 		out = signing.retry_delivery(tender=self.name, idempotency_key=key(), user=SECRETARY)
 		self.assertEqual(out["status"], "Returned for validity")
 		self.assertEqual(self.evl_doc().state, "Reviewing")

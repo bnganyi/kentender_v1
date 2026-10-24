@@ -8,7 +8,8 @@ session role. Matrix (owner decision 6 Oct 2026):
 
 - Requisitions: check/reserve funding; release only the exact reservations its
   own requisition created and has not converted.
-- Contract: convert, release an unused amount on an owner event, adjust.
+- Contract: convert, release an unused amount on an owner event, adjust, and (16 Oct 2026)
+  revalidate the exact reservations its own contract's award names, and no other.
 - Planning, Tenders, Evaluation, Award, any session user: refused.
 """
 
@@ -20,6 +21,7 @@ from pathlib import Path
 import frappe
 from frappe.tests.utils import FrappeTestCase  # noqa: F401  (base class lives in _FinanceTestBase)
 
+from kentender_budget.services import budget_cancellation_release as cancel_release
 from kentender_budget.services import budget_check_reserve_contracts as check_reserve
 from kentender_budget.services import budget_commitment_contracts as commit
 from kentender_budget.services import budget_service_principal as principals
@@ -35,6 +37,7 @@ from kentender_budget.services.budget_service_principal import (
 )
 from kentender_budget.tests.test_bud_chg_001_phase3_check_reserve import FUNDING_SOURCE, _FinanceTestBase, owner_ou
 from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services import contract_reservation_authority as authority
 from kentender_core.services.command_write_guard import purge_doc
 
 FORBIDDEN = "BUDGET_DOWNSTREAM_FORBIDDEN"
@@ -114,12 +117,17 @@ class _PrincipalBase(_FinanceTestBase):
 			"release_reservation": lambda: commit.release_reservation("X", None, "E", "T", "K", caller=caller),
 			"convert_reservation": lambda: commit.convert_reservation("X", "C", 1, "K", contract_event_id="E", contract_event_type="T", caller=caller),
 			"adjust_commitment": lambda: commit.adjust_commitment("X", 0, "E", "T", "K", caller=caller),
+			"close_commitment": lambda: commit.close_commitment("X", "R", {"event_id": "E", "event_type": "ContractClosed", "final_amount": 1}, ["REF"], "K", caller=caller),
 			"revalidate_reservations": lambda: commit.revalidate_reservations(["X"], "E", "T", "K", caller=caller),
+			# BUD-CHG-001 v1.17 section 8.9 - the cancellation mode of release; granted to Requisitions alone.
+			"release_cancelled_tender_reservations": lambda: cancel_release.release_reservations_for_cancelled_tender(
+				recovery_id="CRR", cancellation_id="TDC", requisition_reference="REQ-SP-1", releases=[{"reservation": "X", "drawdown_line_id": "D", "amount": "1"}], idempotency_key="K", caller=caller,
+			),
 		}
 
 
 class TestNoWebSurface(_PrincipalBase):
-	NAMES = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "revalidate_reservations")
+	NAMES = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations", "release_cancelled_tender_reservations")
 
 	def test_no_budget_api_endpoint_remains_for_the_guarded_actions(self):
 		from kentender_budget.api import budget_api
@@ -129,7 +137,7 @@ class TestNoWebSurface(_PrincipalBase):
 				self.assertFalse(hasattr(budget_api, name), f"budget_api.{name} is still published")
 
 	def test_service_functions_are_not_whitelisted(self):
-		for module in (check_reserve, commit):
+		for module in (check_reserve, commit, cancel_release):
 			for name in self.NAMES:
 				fn = getattr(module, name, None)
 				if fn is not None:
@@ -165,9 +173,9 @@ class TestPrincipalMatrix(_PrincipalBase):
 
 	def test_each_principal_is_refused_the_actions_that_are_not_its_own(self):
 		self._as("Administrator")
-		not_requisitions = ("convert_reservation", "adjust_commitment", "revalidate_reservations")
-		not_contract = ("check_funding", "reserve_funding", "revalidate_reservations")
-		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment")
+		not_requisitions = ("convert_reservation", "adjust_commitment", "close_commitment", "revalidate_reservations")
+		not_contract = ("check_funding", "reserve_funding", "release_cancelled_tender_reservations")
+		not_budget = ("check_funding", "reserve_funding", "release_reservation", "convert_reservation", "adjust_commitment", "close_commitment", "release_cancelled_tender_reservations")
 		for principal, refused in ((PRINCIPAL_REQUISITIONS, not_requisitions), (PRINCIPAL_CONTRACT, not_contract), (PRINCIPAL_BUDGET, not_budget)):
 			calls = self._calls(service_caller(principal, reference="X"))
 			for action in refused:
@@ -190,7 +198,9 @@ class TestPrincipalMatrix(_PrincipalBase):
 		"""RG-26 / AUD-BUD-012 — an import and syntax-tree scan, not a regex over literal names: an aliased import,
 		a module attribute call, a variable principal or a constant of another principal is found."""
 		root = Path(frappe.get_app_path("kentender_budget")).parent.parent
-		gateway = {PRINCIPAL_REQUISITIONS: "procurement_requisitions/services/funding_gateway.py"}
+		# Contract Management reaches Budget through two gateways, one per seam: the funding provider (conversion, adjustment, closure, revalidation) and the funding-request owner (BUD-CHG-001 v1.16 section 8.6)
+		gateway = {PRINCIPAL_REQUISITIONS: ("procurement_requisitions/services/funding_gateway.py",),
+			PRINCIPAL_CONTRACT: ("kentender_budget/services/contract_funding_provider.py", "kentender_budget/services/contract_funding_request_owner.py")}
 		seed_principals = {"PRINCIPAL_CONTRACT", "PRINCIPAL_BUDGET", "PRINCIPAL_REQUISITIONS"}  # seeds exercise the registered principals
 		offenders = []
 		for path in sorted(root.glob("kentender_*/**/*.py")):
@@ -204,7 +214,8 @@ class TestPrincipalMatrix(_PrincipalBase):
 			for line, principal in mints_in(text):
 				if is_seed and principal in seed_principals:
 					continue
-				if principal and not is_seed and getattr(principals, principal, None) == PRINCIPAL_REQUISITIONS and rel.endswith(gateway[PRINCIPAL_REQUISITIONS]):
+				owned = gateway.get(getattr(principals, principal, None)) if principal else None
+				if owned and not is_seed and rel.endswith(owned):  # `owned` is the tuple of that principal's gateway files
 					continue
 				offenders.append((rel, line, principal or "(not a PRINCIPAL_* constant)"))
 		self.assertEqual(offenders, [])
@@ -407,8 +418,20 @@ class TestContractPrincipal(_PrincipalBase):
 		self.assert_forbidden(commit.adjust_commitment, commitment, 1, "", "", self._key("adj"), caller=contract_caller(self.contract))
 
 
-class TestBudgetInternalRevalidation(_PrincipalBase):
-	def test_revalidation_is_budget_internal(self):
+class TestRevalidation(_PrincipalBase):
+	"""Budget's own revalidation, and (the owner's decision of 16 Oct 2026, a narrow amendment of the 6 Oct one) Contract Management's request for the exact reservations its own contract's award names."""
+
+	def _two_reservations(self):
+		_, line = self._new_dhi_line()
+		mine = self._reserve(line, 10_000_000)
+		other = self._reserve(line, 1_000_000, reference="REQ-SP-2", plan_item="TEST-PPI-SP2")
+		self._as("Administrator")
+		return mine, other
+
+	def _revalidate(self, reservations, caller):
+		return commit.revalidate_reservations(reservations, "EVT-SP-2", "ContractFundingRevalidation", self._key("rev"), caller=caller)
+
+	def test_budget_revalidates_its_own_reservations_and_no_other_service_may(self):
 		_, line = self._new_dhi_line()
 		reservation = self._reserve(line, 10_000_000)
 		self._as("Administrator")
@@ -416,8 +439,36 @@ class TestBudgetInternalRevalidation(_PrincipalBase):
 			[reservation], "EVT-SP-1", "BudgetVersionActivated", self._key("rev"), caller=service_caller(PRINCIPAL_BUDGET)
 		)
 		self.assertTrue(result["ok"])
-		self.assert_forbidden(commit.revalidate_reservations, [reservation], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
 		self.assert_forbidden(commit.revalidate_reservations, [reservation], "E", "T", self._key("rev"), caller=req("REQ-SP-1"))
+		self.assert_forbidden(commit.revalidate_reservations, [reservation], "E", "T", self._key("rev"), caller=None)
+
+	def test_contract_management_revalidates_the_reservations_its_award_names_and_moves_no_fund(self):
+		mine, _other = self._two_reservations()
+		before = frappe.db.get_value("Funding Reservation", mine, ["remaining_amount", "original_amount", "status"], as_dict=True)
+		with authority.awarded(self.contract, mine):
+			result = self._revalidate([mine], contract_caller(self.contract))
+		self.assertTrue(result["ok"])
+		self.assertEqual(result["reservations"][0]["reservation_id"], mine)
+		self.assertEqual(frappe.db.get_value("Funding Reservation", mine, ["remaining_amount", "original_amount", "status"], as_dict=True), before, "revalidating moves no fund")
+		self.assertEqual(frappe.db.count("Procurement Commitment", {"contract": self.contract}), 0, "and converts nothing")
+
+	def test_a_reservation_the_award_does_not_name_is_refused_as_a_scope_refusal_and_the_whole_request_with_it(self):
+		mine, other = self._two_reservations()
+		with authority.awarded(self.contract, mine):
+			self.assert_forbidden(commit.revalidate_reservations, [other], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
+			self.assert_forbidden(commit.revalidate_reservations, [mine, other], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
+			self.assert_forbidden(commit.revalidate_reservations, [mine], "E", "T", self._key("rev"), caller=contract_caller(f"{self.contract}-OTHER"))  # another contract's award does not name it
+
+	def test_no_answer_from_the_owner_of_the_lineage_is_not_a_yes(self):
+		mine, _other = self._two_reservations()
+		with authority.installed():
+			self.assert_forbidden(commit.revalidate_reservations, [mine], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
+
+	def test_the_contract_principal_must_name_what_it_acts_for_and_what_to_revalidate(self):
+		mine, _other = self._two_reservations()
+		with authority.awarded(self.contract, mine):
+			self.assert_forbidden(commit.revalidate_reservations, [mine], "E", "T", self._key("rev"), caller=contract_caller(""))
+			self.assert_forbidden(commit.revalidate_reservations, [], "E", "T", self._key("rev"), caller=contract_caller(self.contract))
 
 
 class TestCheckReserveCaller(_PrincipalBase):

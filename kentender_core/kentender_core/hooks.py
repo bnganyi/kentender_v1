@@ -63,6 +63,8 @@ boot_session = ["kentender_core.services.my_work.patch_bootinfo_home"]
 
 app_include_js = [
 	f"/assets/kentender_core/js/kt_desk_document_title.js?v={_asset_version('public/js/kt_desk_document_title.js')}",
+	# Unread count on the sidebar bell (Frappe's sidebar has no unread marker).
+	f"/assets/kentender_core/js/kt_notification_badge.js?v={_asset_version('public/js/kt_notification_badge.js')}",
 	# Field-error helper — load early so Strategy / workbench binders can use ktFormErrors.
 	f"/assets/kentender_core/js/kt_form_errors.js?v={_asset_version('public/js/kt_form_errors.js')}",
 	f"/assets/kentender_core/js/kt_module_registry.js?v={_asset_version('public/js/kt_module_registry.js')}",
@@ -393,6 +395,8 @@ permission_query_conditions = {"Support Issue": "kentender_core.services.support
 # CFG-CHG-002 v0.14 §7.4 / KT-STD-001 v1.7 §3A.6 — System setup's records in
 # the shared Technical record search, and its reads in the technical-read
 # conformance gate (AUTH-ADR-001 v1.9 §9).
+# Shared record picker (approved plan, 13 Oct 2026) — System setup's people and units.
+kt_record_picker_sources = ["kentender_core.services.picker_sources.sources"]
 kt_technical_reference_resolvers = ["kentender_core.services.technical_read.reference_resolvers"]
 kt_technical_read_probes = [
 	"kentender_core.services.technical_read.read_probes",

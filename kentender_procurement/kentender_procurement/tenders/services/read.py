@@ -433,6 +433,12 @@ def allowed_actions(root, version, actor: str, roles: dict[str, bool]) -> list[s
 			actions.append("recommend_cancellation")
 		if roles["ao"]:
 			actions.append("cancel_tender")
+	if status == "Submission period ended" and roles["ao"]:
+		# TPR-CHG-001 v0.24 §10.13 / §10.19: an executable Cancel Tender only when every guard passes; otherwise the decision screen opens read-only and shows
+		# every blocker, its holder and its route. Never an enabled button that can only fail.
+		from kentender_procurement.tenders.services import post_close
+
+		actions.append("cancel_tender" if post_close.verdict(root)["allowed"] else "review_cancellation_decision")
 	if status == "Cancelled" and (roles["officer"] or roles["hopf"]):
 		actions.append("record_cancellation_evidence")
 	actions.append("view_history")

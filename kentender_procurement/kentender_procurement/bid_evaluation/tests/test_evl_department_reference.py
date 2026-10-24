@@ -19,7 +19,7 @@ from typing import Any
 import frappe
 
 from kentender_core.services import staff_home_unit as home
-from kentender_procurement.bid_evaluation.services import appointment, member_department, reads, report, roster, secretary
+from kentender_procurement.bid_evaluation.services import appointment, member_department, picker_sources, reads, report, roster, secretary
 from kentender_procurement.bid_evaluation.services.errors import EvaluationError
 from kentender_procurement.bid_evaluation.tests.support import AO, CHAIR, HOP, MEMBER, MEMBER_2, REPLACEMENT, SECRETARY
 from kentender_procurement.bid_evaluation.tests.test_evl_committee import CommitteeCase
@@ -91,10 +91,11 @@ class TestDepartmentFromTheHomeUnit(DepartmentCase):
 		self.assertEqual(self.stored(CHAIR)["department"], "Human Resources Management and Development")
 
 	def test_the_pick_list_offers_the_home_unit_not_the_first_role_assignment(self):
-		rows = {r["user"]: r for r in reads.candidates(tender_reference=self.reference, user=AO, purpose="committee")}
-		self.assertEqual(rows[CHAIR]["department"], "Human Resources Management and Development")
-		self.assertEqual(rows[MEMBER]["department"], "Digital Health")
-		self.assertEqual(rows[MEMBER_2]["department"], "")  # none recorded: the form shows Not recorded and its notice
+		rows = {r["id"]: r for r in picker_sources.committee_members(query="", context={"tender_reference": self.reference, "mode": "appoint"}, actor=AO, limit=20)}
+		self.assertEqual(rows[CHAIR]["extra"]["department"], "Human Resources Management and Development")
+		self.assertEqual(rows[MEMBER]["extra"]["department"], "Digital Health")
+		self.assertEqual(rows[MEMBER_2]["extra"]["department"], "")  # none recorded: the form shows Not recorded and its notice
+		self.assertIn("Digital Health", rows[MEMBER]["detail"])
 
 
 class TestCompletingABlank(DepartmentCase):

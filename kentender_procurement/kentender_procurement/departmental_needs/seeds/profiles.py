@@ -24,6 +24,7 @@ nothing else.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from contextlib import contextmanager
 from typing import Any, Callable
 
@@ -47,9 +48,11 @@ from . import kentender_mvp_r1 as base
 # instants: departmental work on 24 Nov 2026 inside the Needs window; the
 # successor acceptance by Dr Kimani on 2 Dec 2026, after the Digital Health
 # handover from Julia Njeri's acting period.
-PROFILE_AUTHOR_INSTANT = "2026-11-24 15:00:00"
-PROFILE_WITHDRAWAL_INSTANT = "2026-11-24 15:30:00"
-PROFILE_REVIEW_INSTANT = "2026-12-02 10:00:00"
+PROFILE_AUTHOR_INSTANT = W("2026-11-24 15:00:00")
+PROFILE_WITHDRAWAL_INSTANT = W("2026-11-24 15:30:00")
+#: Eight days after the Needs in the story; in a world whose Needs have only just happened, that is after the anchor, so it is
+#: held to the anchor (`calendar.not_after_anchor`).
+PROFILE_REVIEW_INSTANT = calendar.not_after_anchor(W("2026-12-02 10:00:00"))
 
 # --- §14.4 integrated Planning usage fixture --------------------------------
 ACTIVE_PLAN = "PLN-MOH-2027-001"
@@ -57,7 +60,7 @@ ACTIVE_PLAN_ITEM = "PPI-MOH-2027-021"
 
 # --- §14.5 isolated successor and withdrawal fixtures -----------------------
 SUCCESSOR_NEED = "NDS-MOH-2027-0001"
-SUCCESSOR_REQUIRED_BY = "2027-09-15"
+SUCCESSOR_REQUIRED_BY = F("2027-09-15")
 
 # §14.5 fixes the fixture request identifier exactly.
 WITHDRAWAL_REQUEST_ID = "NDS-WDR-MOH-2027-0001"
@@ -149,7 +152,7 @@ _SAVED_USAGE_KEY = "kt_nds_profile_saved_usage"
 # own projection is dated in the story (the FY 2027/28 Plan, 10 Dec 2026), and
 # usage is ordered on event time, so a profile event stamped with real time
 # would be older and ignored (two-year seed world, found 5 Oct 2026).
-PROFILE_USAGE_INSTANT = calendar.AS_AT
+PROFILE_USAGE_INSTANT = calendar.as_at()
 
 
 def _preserve_canonical_usage(revision: str) -> None:

@@ -1,0 +1,250 @@
+{
+ "actions": {
+  "Approve adjustment": {
+   "dialog": "approve",
+   "do": "dialog"
+  },
+  "Decline": {
+   "dialog": "decline",
+   "do": "dialog"
+  },
+  "Return for correction": {
+   "dialog": "return",
+   "do": "dialog"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_delay_adjustment_",
+ "d": "D36",
+ "dialogs": {
+  "approve": {
+   "args": {
+    "adjustment": "CM-ADJ-990925",
+    "decision": "Approve"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractAdjustment",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Approve adjustment"
+  },
+  "decline": {
+   "args": {
+    "adjustment": "CM-ADJ-990925",
+    "decision": "Decline"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractAdjustment",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Decline adjustment"
+  },
+  "return": {
+   "args": {
+    "adjustment": "CM-ADJ-990925",
+    "decision": "Return"
+   },
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "command": "DecideContractAdjustment",
+   "p": "Confirm decision",
+   "s2": [
+    "Cancel"
+   ],
+   "t": "Return for correction"
+  }
+ },
+ "ev": [
+  "Delivery 25 Jul 2027",
+  "Clause TEST-DELAY-01",
+  "Supplier response 1"
+ ],
+ "id": "D36-A",
+ "name": "Contractual delay adjustment",
+ "next": {
+  "h": "Decide the proposed delay adjustment.",
+  "k": "turn",
+  "s": "Responsible: Amina Hassan"
+ },
+ "p": "Approve adjustment",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delay_adjustment_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Due date",
+       "20 Jul 2027"
+      ],
+      [
+       "Delivered",
+       "25 Jul 2027"
+      ],
+      [
+       "Days late",
+       "5 calendar days (21\u201325 Jul inclusive)"
+      ],
+      [
+       "Eligible principal",
+       "KES 1,000,000"
+      ],
+      [
+       "Rate",
+       "0.1% per day"
+      ],
+      [
+       "Cap",
+       "10% (KES 100,000)"
+      ],
+      [
+       "Effective extension",
+       "None"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "items": [
+      [
+       "Calculation",
+       "KES 1,000 per day \u00d7 5"
+      ],
+      [
+       "Proposed adjustment",
+       "KES 5,000"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Calculation"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Causation",
+       "Supplier shipment delay"
+      ],
+      [
+       "Supplier challenge",
+       "Requests exclusion of two days"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Causation and response"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Technical/legal recommendation",
+       "No supported exclusion"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Recommendation"
+  }
+ ],
+ "s2": [
+  "Decline",
+  "Return for correction"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "All units accepted 25 Jul 2027",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delay_adjustment_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review delivery delay",
+ "version": 18
+}

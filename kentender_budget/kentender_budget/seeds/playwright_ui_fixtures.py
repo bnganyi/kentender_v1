@@ -61,6 +61,7 @@ from kentender_budget.seeds.kentender_mvp_v1_portfolio import (
 )
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
 from kentender_budget.utils.version_stamp import stamped
+from kentender_core.services import contract_reservation_authority
 from kentender_core.services.command_write_guard import purge_doc
 
 OFFICER = C.USER_BUD_OFFICER
@@ -73,7 +74,17 @@ CANONICAL_BUDGET = C.BUD_ACTIVE  # MOH-BUD-2027-001
 CANONICAL_V1 = C.BUD_ACTIVE_V1
 CANONICAL_V2 = C.BUD_ACTIVE_V2
 ISOLATED_PREFIX = "BUD19-"
+#: The kinds of ledger event a browser run writes against a canonical budget without naming a reservation or commitment of its own (a funding check, a replay of a command).
+RUN_EVENTS = ("Funding reserved", "Check funding performed", "Reservation revalidated", "Reservation released", "Reservation partially converted", "Contract commitment recorded", "Commitment adjusted", "Command recorded")
 EMPTY_FY_START = 2063
+#: The start year of every Fiscal Year the Budget fixtures scaffold for an isolated profile (`_ensure_isolated_fy`): the portfolio's isolated profiles (2031 to 2035), the profiles here (1990, 2041, 2043, the two empty
+#: years from EMPTY_FY_START) and the funding fixtures (2051, 2052). `purge` removes the budgets on these years, whoever registered them (a spec may register one through the screen), and then the years themselves, so
+#: a browser run leaves no Fiscal Year behind (`canonical.validate`: no non-canonical Fiscal Years). `test_budget_playwright_fixtures` checks that no fixture uses a start year outside this set.
+ISOLATED_FY_STARTS = frozenset({1990, 2031, 2032, 2033, 2034, 2035, 2041, 2043, 2051, 2052, EMPTY_FY_START, EMPTY_FY_START + 1})
+
+
+def isolated_fiscal_years() -> list[str]:
+	return [f"{start}-{start + 1}" for start in sorted(ISOLATED_FY_STARTS)]
 RETURN_REASON = "Attach the signed approval instrument; the uploaded file is a draft memo, not the approved allocation."
 RETURN_REASON_SUCCESSOR = "Attach the signed transfer instrument; the uploaded file is the September baseline approval, not the March transfer."
 DHI_TITLE = "Digital health infrastructure programme"
@@ -144,10 +155,13 @@ def ensure_fixture_documents() -> list[str]:
 
 def _canonical_budget_name() -> str | None:
 	# By content, not reference: the canonical references are generated
-	# (Project Owner decision, 26 Sep 2026).
+	# (Project Owner decision, 26 Sep 2026). The baseline these fixtures and the browser specs are written for
+	# (Digital Health 100m and Workforce 60m, the 80m hold, the Version 2 transfer) is the Year 2 budget, the one
+	# `upsert_isolated_successor_version` builds Version 2 on. Year 1's lines are not those lines, and Year 1
+	# carries the canonical Requisitions' own reservations, which no fixture may reserve against or remove.
 	from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
 
-	return canonical_budget() or None
+	return canonical_budget("year2") or None
 
 
 def _as(user: str):
@@ -156,47 +170,70 @@ def _as(user: str):
 
 def purge(*, commit: bool = True) -> dict[str, Any]:
 	"""Remove what a browser run leaves behind: every `BUD19-` isolated
-	budget (whole graph), every non-Active version on the canonical budget
-	with its lines and ledger rows, every reservation/commitment on the
-	canonical budget, and a superseded/closed canonical Version 1 is put
-	back to Active (the §15.3 baseline)."""
+	budget (whole graph), every non-Active version on the canonical budgets
+	with its lines and ledger rows, the reservations and commitments on the
+	canonical budgets that are not the canonical world's own, and the ledger
+	rows of a run; a superseded/closed canonical Version 1 is put back to
+	Active (the §15.3 baseline).
+
+	A reservation or commitment stamped `REQUISITIONS_NS` is the canonical
+	world's evidence of an authorised Requisition (the same rule
+	`canonical.collect_non_canonical` and `canonical.validate` apply): it is
+	never removed here, nor is the ledger that belongs to it. Removing it
+	once cost a rebuild of the shared test site, twice."""
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budgets
+	from kentender_core.seeds import calendar
+	from kentender_core.seeds.canonical import REQUISITIONS_NS
+
 	_guard()
 	frappe.set_user("Administrator")
 	deleted: dict[str, int] = {}
+	isolated_years = isolated_fiscal_years()
 	for name in frappe.get_all("Procurement Budget", filters={"generated_reference": ["like", f"{ISOLATED_PREFIX}%"]}, pluck="name"):
 		_delete_budget_graph(name, deleted)
-	canonical = _canonical_budget_name()
-	if canonical:
-		reservations = frappe.get_all("Funding Reservation", filters={"budget": canonical}, pluck="name")
-		if reservations:
-			for name in frappe.get_all("Procurement Commitment", filters={"reservation": ["in", reservations]}, pluck="name"):
-				purge_doc("Procurement Commitment", name)
-				deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
-			for name in reservations:
-				purge_doc("Funding Reservation", name)
-				deleted["Funding Reservation"] = deleted.get("Funding Reservation", 0) + 1
-		first = frappe.db.get_value("Procurement Budget Version", {"budget": canonical, "version_number": 1}, "name")
-		for version in frappe.get_all("Procurement Budget Version", filters={"budget": canonical, "version_number": [">", 1]}, pluck="name"):
-			for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="name"):
-				purge_doc("Procurement Budget Line Version", lv)
-			frappe.flags.allow_budget_audit_purge = True
-			try:
-				for ev in frappe.get_all("Budget Audit Event", filters={"budget_version": version}, pluck="name"):
-					purge_doc("Budget Audit Event", ev)
-			finally:
-				frappe.flags.allow_budget_audit_purge = False
-			purge_doc("Procurement Budget Version", version)
-			deleted["Procurement Budget Version"] = deleted.get("Procurement Budget Version", 0) + 1
-		# Ledger rows of a browser run against the canonical budget that are
-		# not the baseline's own lifecycle trail (reservations, replays).
+	for name in frappe.get_all("Procurement Budget", filters={"fiscal_year": ["in", isolated_years]}, pluck="name"):
+		_delete_budget_graph(name, deleted)
+	budgets = canonical_budgets()
+	if budgets:
+		stray_reservations = [r.name for r in frappe.get_all("Funding Reservation", filters={"budget": ["in", budgets]}, fields=["name", "fixture_namespace"]) if (r.fixture_namespace or "") != REQUISITIONS_NS]
+		stray_commitments = set(frappe.get_all("Procurement Commitment", filters={"reservation": ["in", stray_reservations or ["-"]]}, pluck="name"))
+		stray_commitments |= {c.name for c in frappe.get_all("Procurement Commitment", filters={"budget": ["in", budgets]}, fields=["name", "fixture_namespace"]) if (c.fixture_namespace or "") != REQUISITIONS_NS}
+		# The ledger of what is removed, found before it is: the events that name a removed reservation or commitment, and the events of a run that
+		# name neither (a funding check, a replay): no canonical event is later than the anchor (SEED-002 v0.8 R1), so one after it is a run's.
+		ledger = set(frappe.get_all("Budget Audit Event", filters={"reservation": ["in", stray_reservations or ["-"]]}, pluck="name"))
+		ledger |= set(frappe.get_all("Budget Audit Event", filters={"commitment": ["in", list(stray_commitments) or ["-"]]}, pluck="name"))
+		if calendar.mode() == "anchored":
+			ledger |= set(frappe.get_all("Budget Audit Event", filters={"budget": ["in", budgets], "event_at": [">", calendar.as_at()], "event_type": ["in", list(RUN_EVENTS)]}, pluck="name"))
+		for name in sorted(stray_commitments):
+			purge_doc("Procurement Commitment", name)
+			deleted["Procurement Commitment"] = deleted.get("Procurement Commitment", 0) + 1
+		for name in stray_reservations:
+			purge_doc("Funding Reservation", name)
+			deleted["Funding Reservation"] = deleted.get("Funding Reservation", 0) + 1
+		for budget in budgets:
+			first = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "version_number": 1}, "name")
+			for version in frappe.get_all("Procurement Budget Version", filters={"budget": budget, "version_number": [">", 1]}, pluck="name"):
+				for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="name"):
+					purge_doc("Procurement Budget Line Version", lv)
+				ledger |= set(frappe.get_all("Budget Audit Event", filters={"budget_version": version}, pluck="name"))
+				purge_doc("Procurement Budget Version", version)
+				deleted["Procurement Budget Version"] = deleted.get("Procurement Budget Version", 0) + 1
+			if first and frappe.db.get_value("Procurement Budget Version", first, "status") != "Active":
+				frappe.db.set_value("Procurement Budget Version", first, {"status": "Active", "closed_by": None, "closed_at": None, "superseded_at": None}, update_modified=False)
 		frappe.flags.allow_budget_audit_purge = True
 		try:
-			for ev in frappe.get_all("Budget Audit Event", filters={"budget": canonical, "event_type": ["in", ["Funding reserved", "Check funding performed", "Reservation revalidated", "Reservation released", "Reservation partially converted", "Contract commitment recorded", "Commitment adjusted", "Command recorded"]]}, pluck="name"):
-				purge_doc("Budget Audit Event", ev)
+			for ev in sorted(ledger):
+				if frappe.db.exists("Budget Audit Event", ev):
+					purge_doc("Budget Audit Event", ev)
 		finally:
 			frappe.flags.allow_budget_audit_purge = False
-		if first and frappe.db.get_value("Procurement Budget Version", first, "status") != "Active":
-			frappe.db.set_value("Procurement Budget Version", first, {"status": "Active", "closed_by": None, "closed_at": None, "superseded_at": None}, update_modified=False)
+	for fy in isolated_years:
+		if frappe.db.exists("Fiscal Year", fy):
+			try:
+				frappe.delete_doc("Fiscal Year", fy, ignore_permissions=True)
+				deleted["Fiscal Year"] = deleted.get("Fiscal Year", 0) + 1
+			except frappe.LinkExistsError:  # something else still names the year: it is not this run's to remove
+				frappe.clear_last_message()
 	if commit:
 		frappe.db.commit()
 	return deleted
@@ -204,6 +241,8 @@ def purge(*, commit: bool = True) -> dict[str, Any]:
 
 def _canonical_ids() -> dict[str, Any]:
 	budget = _canonical_budget_name()
+	if not budget:
+		frappe.throw("Budget fixtures: the Year 2 budget is not seeded. Run `make seed-canonical` with the next year reaching the budget stage or later (NEXT=budget, needs, departmental_plans or annual_plan).")
 	v1 = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "version_number": 1}, "name") if budget else None
 	lines = {
 		r.title: {"id": r.budget_line, "code": frappe.db.get_value("Procurement Budget Line", r.budget_line, "generated_reference")}
@@ -212,7 +251,7 @@ def _canonical_ids() -> dict[str, Any]:
 	return {
 		"budget": budget,
 		"budget_code": frappe.db.get_value("Procurement Budget", budget, "generated_reference") if budget else CANONICAL_BUDGET,
-		"fiscal_year": C.FY if hasattr(C, "FY") else "2027-2028",
+		"fiscal_year": frappe.db.get_value("Procurement Budget", budget, "fiscal_year") if budget else None,
 		"version": v1,
 		"version_code": frappe.db.get_value("Procurement Budget Version", v1, "generated_reference") if v1 else CANONICAL_V1,
 		"dhi_line": lines.get(DHI_TITLE, {}).get("id"),
@@ -451,7 +490,8 @@ def reset_close_ready(*, commit: bool = True) -> dict[str, Any]:
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-031-001")
 	_as(OFFICER)
 	contract = _contract_caller("KT-CON-2027-004")
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=contract)
+	with contract_reservation_authority.awarded("KT-CON-2027-004", hold):
+		commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=contract)
 	commit_svc.release_reservation(reservation=hold, amount=20_000_000, downstream_event_id="KT-CON-2027-004:unused", downstream_event_type="ContractUnusedAmount", idempotency_key=frappe.generate_hash(length=12), caller=contract)
 	return _finish(base, {"closure": iso, "reservation": hold, "active_commitments_total": 60_000_000}, commit=commit)
 
@@ -465,7 +505,8 @@ def reset_partial_conversion(*, commit: bool = True) -> dict[str, Any]:
 	iso = _isolated_budget(code="BUD19-CONVERT", fy_start_year=2043, dhi=100_000_000, hwd=None)
 	hold = _reserve(iso["dhi_line"], 80_000_000, ref="REQ-MOH-2027-021-001")
 	_as(OFFICER)
-	commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=_contract_caller("KT-CON-2027-004"))
+	with contract_reservation_authority.awarded("KT-CON-2027-004", hold):
+		commit_svc.convert_reservation(reservation=hold, contract="KT-CON-2027-004", amount=60_000_000, idempotency_key=frappe.generate_hash(length=12), contract_event_id="KT-CON-2027-004:signed", contract_event_type="ContractSigned", caller=_contract_caller("KT-CON-2027-004"))
 	return _finish(base, {"conversion": iso, "reservation": hold}, commit=commit)
 
 

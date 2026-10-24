@@ -117,10 +117,9 @@ def resume(doc, key: str, *, actor: str) -> str:
 		actor=actor)
 	from kentender_procurement.bid_opening.services import not_held
 
-	for name in frappe.get_all(not_held.DECISION, filters={"opening_case": doc.name, "kind": "Paused opening", "status": "Open"}, pluck="name"):
-		item = frappe.get_doc(not_held.DECISION, name)
-		item.update({"status": "Cleared", "cleared_at": clock.now(), "clearing_event": event["event_id"]})
-		records.save(item)
+	# only the committed Resume clears this escalation's item (BOP-CHG-001 v0.16 §5.2); a recovered finding closes its incident with it
+	not_held.clear_open_items(doc, event_id=event["event_id"])
+	incidents.close_recovered(doc, event["event_id"])
 	doc.state = "Opening"
 	return event["event_id"]
 
@@ -132,8 +131,9 @@ def ceremony_ready(doc) -> tuple[bool, str]:
 		return False, "member_absent"
 	if not custody_participation.valid(doc):
 		return False, "release_not_valid"
-	if incidents.open_incidents(doc.name):
-		return False, "incident_open"
+	blocking = incidents.blocking_incidents(doc.name)
+	if blocking:
+		return False, "cannot_recover" if any(r.current_finding == incidents.CANNOT_RECOVER for r in blocking) else "incident_open"
 	return True, ""
 
 
@@ -173,6 +173,11 @@ def begin_opening(*, tender: str, expected_version: int, idempotency_key: str, u
 			idempotency_key=prc.key(idempotency_key, "start"), actor=user)
 		count = len(envelopes(doc))
 		records.bump(doc, state="Opening", started_at=clock.now(), last_committed_event=started["event_id"], outcome="" if count else "No bids")
+		# BOP-CHG-001 v0.16 §5.2: only the committed Begin clears a pre-start escalation and closes its recovered incident — never the support finding
+		from kentender_procurement.bid_opening.services import not_held
+
+		not_held.clear_open_items(doc, event_id=started["event_id"])
+		incidents.close_recovered(doc, started["event_id"])
 		return records.summary(doc, bids=count)
 
 	return records.command("BeginOpening", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"expected_version": expected_version}, body=body)
@@ -262,9 +267,11 @@ def retry_opening(*, tender: str, expected_version: int, idempotency_key: str, u
 		row = open_pause(doc.name)
 		if doc.state != "Interrupted" or not row or row.exception_class not in ("Package unreadable", "Package mismatch", "Credential unavailable"):
 			errors.fail("BOP_VERSION_CONFLICT", {"reason": "state", "state": doc.state})
-		status = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": row.incident}, "status")
-		if status != "Resolved":
-			return {"ok": False, "code": "BOP_OPENING_PROFILE_UNAVAILABLE", "message": "Retry opening is available when support marks the problem resolved.",
+		finding = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": row.incident}, "current_finding")
+		if finding == incidents.CANNOT_RECOVER:
+			return {"ok": False, "code": "BOP_OPENING_PROFILE_UNAVAILABLE", "message": incidents.NOT_RECOVERED, "reason": "cannot_recover"}
+		if finding != incidents.RECOVERED:
+			return {"ok": False, "code": "BOP_OPENING_PROFILE_UNAVAILABLE", "message": "Retry opening is available when support records that the problem is recovered.",
 				"reason": "incident_not_resolved"}
 		refused = _material_check(doc)
 		if refused:
@@ -290,6 +297,8 @@ def resume_opening(*, tender: str, expected_version: int, idempotency_key: str, 
 		if doc.state != "Interrupted":
 			errors.fail("BOP_VERSION_CONFLICT", {"reason": "state", "state": doc.state})
 		ready, reason = ceremony_ready(doc)
+		if reason == "cannot_recover":
+			return {"ok": False, "code": "BOP_OPENING_PROFILE_UNAVAILABLE", "message": incidents.NOT_RECOVERED, "reason": "cannot_recover"}
 		if not ready:
 			absent = absent_members(doc)
 			code = "BOP_MEMBER_ABSENT" if absent else "BOP_CREDENTIAL_UNAVAILABLE"

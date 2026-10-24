@@ -19,6 +19,7 @@ removes everything this world made, including records a browser run created
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from typing import Any
 
 import frappe
@@ -40,12 +41,12 @@ FACTS = {
 	"registered_address": "Westlands Business Park, Waiyaki Way, Nairobi", "official_email": "tenders@afya-acc-pw.example", "official_phone": "+254 709 555 201",
 	"job_title": "Managing Director",
 }
-CLOCK = {"register": "2027-05-18 09:00:00", "verify": "2027-05-18 09:10:00", "representative": "2027-05-18 09:20:00", "evidence": "2027-05-18 09:30:00", "suspend": "2027-05-19 08:00:00"}
-ACCOUNT_AT = "2027-05-19 10:00:00"
+CLOCK = {"register": W("2027-05-18 09:00:00"), "verify": W("2027-05-18 09:10:00"), "representative": W("2027-05-18 09:20:00"), "evidence": W("2027-05-18 09:30:00"), "suspend": W("2027-05-19 08:00:00")}
+ACCOUNT_AT = W("2027-05-19 10:00:00")
 EVIDENCE = (
 	{"evidence_type": "Certificate of incorporation", "reference": "PVT-PW-ACC001", "valid_until": "", "title": "Certificate of incorporation"},
-	{"evidence_type": "Tax compliance certificate", "reference": "P009000201X", "valid_until": "2027-12-31", "title": "Tax compliance certificate"},
-	{"evidence_type": "Reservation evidence", "reference": "AGPO-Y-2026-04172", "valid_until": "2027-06-30", "title": "Youth reservation evidence"},
+	{"evidence_type": "Tax compliance certificate", "reference": "P009000201X", "valid_until": F("2027-12-31"), "title": "Tax compliance certificate"},
+	{"evidence_type": "Reservation evidence", "reference": "AGPO-Y-2026-04172", "valid_until": F("2027-06-30"), "title": "Youth reservation evidence"},
 )
 STATES = ("new", "verify", "active", "attention", "suspended")
 ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Business Profile", "Supplier Organisation")

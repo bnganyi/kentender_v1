@@ -43,7 +43,7 @@ import frappe
 from frappe.utils import cstr, flt, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import budget_gateway, envelope, outcome_event, plan_read, scope_lock
+from kentender_procurement.procurement_planning.services import budget_gateway, cancellation_recovery, envelope, outcome_event, plan_read, scope_lock
 from kentender_procurement.procurement_planning.services import money as money_boundary
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
@@ -107,30 +107,52 @@ def _requisition_item_name(plan_item_id: str) -> str:
 	return plan_read.resolve_item_doc_name(plan_item_id)
 
 
-def _drawn_totals(allocation_names: set[str], *, for_update: bool = False) -> dict[str, tuple[Decimal, Decimal]]:
+def _drawn_totals(allocations, *, for_update: bool = False) -> dict[str, tuple[Decimal, Decimal]]:
 	"""Exact drawn quantity/amount per allocation (REQ-CHG-001 v1.11 §5.14):
 	stored Currency/Float values are read back through the money boundary
 	and summed as `Decimal`, never with a float epsilon.
 
+	PLN-CHG-001 v1.32 §4.11 — the allowance is counted by the *stable* identity
+	`(plan_item_id, allocation_id)`, not by the allocation row's name. An Annual
+	Plan successor copies every allocation as a new row with the same
+	`allocation_id`, so a name-keyed sum would read a drawn item as undrawn after the
+	successor activated, let it be drawn again up to its full ceiling, and hide a
+	recovery's restoration on the row nobody reads. `allocations` are rows (or dicts)
+	with `name`, `plan_item_id` and `allocation_id`; the result is keyed by the
+	allocation row's name so callers keep indexing by the row they hold. A drawdown
+	written before `allocation_id` existed is still found through its allocation link.
+
 	`for_update` is the locking read a drawdown decides on (RG-23, AUD-XC-107): MariaDB
 	runs at REPEATABLE READ, so a plain read after the Plan Item lock would sum the
 	snapshot from before the lock and miss a drawdown another command had just committed."""
-	names = list(allocation_names) or [""]
+	rows_in = list(allocations)
+	if not rows_in:
+		return {}
+	names = [a.get("name") for a in rows_in]
+	by_stable = {
+		(cstr(a.get("plan_item_id")), cstr(a.get("allocation_id"))): a.get("name")
+		for a in rows_in if cstr(a.get("plan_item_id")) and cstr(a.get("allocation_id"))
+	}
+	item_ids = sorted({key[0] for key in by_stable}) or [""]
+	allocation_ids = sorted({key[1] for key in by_stable}) or [""]
+	condition = "drawdown_state = 'Active' and (allocation in %s or (plan_item_id in %s and allocation_id in %s))"
+	args = (tuple(names), tuple(item_ids), tuple(allocation_ids))
 	if for_update:
 		rows = frappe.db.sql(
-			"select allocation, quantity, amount from `tabPlan Drawdown Reference` where allocation in %s and drawdown_state = 'Active' for update",
-			(tuple(names),), as_dict=True,
+			f"select allocation, plan_item_id, allocation_id, quantity, amount from `tabPlan Drawdown Reference` where {condition} for update", args, as_dict=True,
 		)
 	else:
-		rows = frappe.get_all(
-			"Plan Drawdown Reference",
-			filters={"allocation": ("in", names), "drawdown_state": "Active"},
-			fields=["allocation", "quantity", "amount"],
+		rows = frappe.db.sql(
+			f"select allocation, plan_item_id, allocation_id, quantity, amount from `tabPlan Drawdown Reference` where {condition}", args, as_dict=True,
 		)
 	totals: dict[str, tuple[Decimal, Decimal]] = {}
 	for row in rows:
-		qty, amount = totals.get(row.allocation, (Decimal(0), Decimal(0)))
-		totals[row.allocation] = (qty + _dec(row.quantity), amount + _dec(row.amount))
+		owner = by_stable.get((cstr(row.plan_item_id), cstr(row.allocation_id))) if cstr(row.allocation_id) else None
+		owner = owner or (row.allocation if row.allocation in names else None)
+		if owner is None:
+			continue
+		qty, amount = totals.get(owner, (Decimal(0), Decimal(0)))
+		totals[owner] = (qty + _dec(row.quantity), amount + _dec(row.amount))
 	return totals
 
 
@@ -222,12 +244,14 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"Plan Source Allocation",
 		filters={"plan_item": item.name, "allocation_state": "Active"},
 		fields=[
-			"name", "allocation_id", "dpp_entry", "source_origin", "need", "need_revision",
+			"name", "plan_item_id", "allocation_id", "dpp_entry", "source_origin", "need", "need_revision",
 			"organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount",
 		],
 		order_by="creation asc",
 	)
-	drawn = _drawn_totals({a.name for a in allocations})
+	drawn = _drawn_totals(allocations)
+	# PLN-CHG-001 v1.32 §5.4.7 — a source whose Tender was cancelled is held until its recovery completes.
+	holds_by_allocation = {h["allocation_id"]: h for h in cancellation_recovery.active_holds(item.plan_item_id)}
 
 	sources: list[dict[str, Any]] = []
 	total_qty = total_value = total_remaining_qty = total_remaining_value = Decimal(0)
@@ -236,6 +260,7 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		approved_qty, approved_amount = _dec(a.quantity), _dec(a.indicative_amount)
 		remaining_qty = approved_qty - drawn_qty
 		remaining_amount = approved_amount - drawn_amount
+		held = holds_by_allocation.get(a.allocation_id)
 		entry = (
 			frappe.db.get_value(
 				"Departmental Plan Entry", a.dpp_entry,
@@ -267,6 +292,16 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 				"budget_line": a.budget_line,
 				"allocated_amount": _money_text(approved_amount),
 				"remaining_amount": _money_text(remaining_amount),
+				# v1.32 §5.4.7/§7.8 reads: the original ceiling is the approved figure above; this source's own recovery and verdict.
+				"drawable": remaining_qty > 0 and remaining_amount > 0 and held is None,
+				"recovery": (
+					{
+						"held": True, "status": held["display_status"], "reason": cstr(held["reason"]), "recovery_id": held["recovery_id"],
+						"cancellation_id": held["cancellation_id"], "pending_restoration_quantity": _qty_text(held["quantity"]),
+						"pending_restoration_amount": _money_text(held["amount"]),
+					}
+					if held else {"held": False, "status": "", "reason": "", "recovery_id": "", "cancellation_id": "", "pending_restoration_quantity": "", "pending_restoration_amount": ""}
+				),
 			}
 		)
 		total_qty += approved_qty
@@ -294,6 +329,8 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		and funding_confirmed
 		and total_remaining_qty > 0
 		and total_remaining_value > 0
+		# a held source draws nothing, so an item whose only remaining allowance is held is not eligible
+		and (not holds_by_allocation or any(src["drawable"] for src in sources))
 	)
 	from kentender_procurement.procurement_planning.services import schedule
 
@@ -349,6 +386,10 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"remaining_quantity": _qty_text(total_remaining_qty),
 		"remaining_value": _money_text(total_remaining_value),
 		"sources": sources,
+		"recovery_holds": [
+			{"allocation_id": h["allocation_id"], "recovery_id": h["recovery_id"], "status": h["display_status"], "reason": cstr(h["reason"])}
+			for h in holds_by_allocation.values()
+		],
 		"evaluated_at": cstr(now_datetime()),
 	}
 
@@ -406,15 +447,21 @@ def list_requisition_eligible_plan_items(*, user: str | None = None) -> list[dic
 	allocations = frappe.get_all(
 		"Plan Source Allocation",
 		filters={"plan_item": ("in", confirmed_item_names), "allocation_state": "Active"},
-		fields=["name", "plan_item", "organisation_unit", "quantity", "indicative_amount"],
+		fields=["name", "plan_item", "plan_item_id", "allocation_id", "organisation_unit", "quantity", "indicative_amount"],
 	)
 	units_by_item: dict[str, set[str]] = {}
 	allocation_names_by_item: dict[str, set[str]] = {}
 	for a in allocations:
 		units_by_item.setdefault(a.plan_item, set()).add(a.organisation_unit)
 		allocation_names_by_item.setdefault(a.plan_item, set()).add(a.name)
-	all_allocation_names = {n for names in allocation_names_by_item.values() for n in names}
-	drawn = _drawn_totals(all_allocation_names)
+	drawn = _drawn_totals(allocations)
+	# v1.32 §5.4.7 — a held source is not drawable, so it adds nothing to what this actor may start a Requisition against.
+	held = {
+		(h.plan_item_id, h.allocation_id)
+		for h in frappe.get_all(
+			cancellation_recovery.HOLD, filters={"plan_item_id": ("in", sorted({c.plan_item_id for c in candidates})), "state": "Active"}, fields=["plan_item_id", "allocation_id"],
+		)
+	}
 	references = dict(
 		frappe.get_all("Plan Item", filters={"name": ("in", sorted({c.plan_item_id for c in candidates}))}, fields=["name", "plan_item_reference"], as_list=True)
 	)
@@ -432,6 +479,8 @@ def list_requisition_eligible_plan_items(*, user: str | None = None) -> list[dic
 		for a_name in allocation_names_by_item.get(c.name, set()):
 			drawn_qty, drawn_amt = drawn.get(a_name, (Decimal(0), Decimal(0)))
 			a = next(a for a in allocations if a.name == a_name)
+			if (c.plan_item_id, a.allocation_id) in held:
+				continue
 			remaining_qty += _dec(a.quantity) - drawn_qty
 			remaining_amount += _dec(a.indicative_amount) - drawn_amt
 		if remaining_qty <= 0 or remaining_amount <= 0:
@@ -506,6 +555,9 @@ def authorise_requisition_drawdown(
 	root = scope_lock.guard(item.plan_item_id)
 	if root.authorisation_hold:
 		fail("PLN_ITEM_AUTHORISATION_HELD", detail={"plan_item_id": item.plan_item_id, "open_requests": int(root.open_correction_requests or 0)})
+	# PLN-CHG-001 v1.32 §5.4.7 — a source whose Tender was cancelled draws nothing while its recovery is
+	# unresolved; the item's other sources are not affected. Decided under the same stable-item guard.
+	cancellation_recovery.refuse_if_held(item.plan_item_id, [cstr(spec.get("plan_source_allocation_id")) for spec in allocations])
 
 	# Validate every requested allocation first and only write once the whole
 	# batch is known good — all or none, without leaning on a request-level
@@ -525,7 +577,7 @@ def authorise_requisition_drawdown(
 			frappe.throw(f"Source allocation {allocation.allocation_id} is not currently drawable.")
 		requested_qty = _strict(spec.get("quantity"), parse=money_boundary.parse_quantity, field="quantity", code="PLN_MONEY_PRECISION_INVALID")
 		requested_amount = _strict(spec.get("amount"), parse=money_boundary.parse_money, field="amount", code="PLN_MONEY_PRECISION_INVALID")
-		drawn_qty, drawn_amount = _drawn_totals({allocation.name}, for_update=True).get(allocation.name, (Decimal(0), Decimal(0)))
+		drawn_qty, drawn_amount = _drawn_totals([allocation], for_update=True).get(allocation.name, (Decimal(0), Decimal(0)))
 		approved_qty, approved_amount = _dec(allocation.quantity), _dec(allocation.indicative_amount)
 		if drawn_qty + requested_qty > approved_qty or drawn_amount + requested_amount > approved_amount:
 			fail(
@@ -545,7 +597,7 @@ def authorise_requisition_drawdown(
 			{
 				"doctype": "Plan Drawdown Reference",
 				"plan_item": item.name, "plan_item_id": item.plan_item_id,
-				"allocation": allocation.name,
+				"allocation": allocation.name, "allocation_id": allocation.allocation_id,
 				"requisition_reference": requisition_reference,
 				"requisition_version": cstr(requisition_version).strip(),
 				"correlation_id": cstr(correlation_id).strip(),
@@ -631,9 +683,13 @@ def reverse_requisition_drawdown(
 	envelope.check_record_version(drawdown, expected_record_version)
 	if drawdown.drawdown_state != "Active":
 		frappe.throw("This drawdown has already been reversed.")
+	# PLN-CHG-001 v1.32 §7.8 — a drawdown whose Tender was cancelled is restored only by its verified recovery
+	# (`reverse_requisition_drawdowns_for_cancellation`); this ordinary route never reverses one under a hold.
+	if cancellation_recovery.drawdown_is_held(drawdown.name):
+		fail("PLN_CANCELLATION_RECOVERY_PENDING", detail={"drawdown_reference": drawdown.name})
 
 	reversal_reference = f"REV-{drawdown.name}"
-	envelope.bump(drawdown, drawdown_state="Reversed", reversal_reference=reversal_reference)
+	envelope.bump(drawdown, drawdown_state="Reversed", reversal_reference=reversal_reference, reversal_reason="Requisition revoked", reversed_at=now_datetime())
 	result = {"ok": True, "idempotent": False, "action": "reversed", "reversal_reference": reversal_reference}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ReverseRequisitionDrawdown", payload=payload,

@@ -1,0 +1,218 @@
+{
+ "actions": {
+  "Prepare report for signing": {
+   "args": {
+    "arrivals": [
+     "CM-ARR-990537"
+    ]
+   },
+   "command": "PrepareAcceptanceReport",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "appointee"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-BOARDS",
+ "d": "D06",
+ "dialogs": {},
+ "ev": [
+  "Inspection 1"
+ ],
+ "id": "D06",
+ "name": "Acceptance review",
+ "next": {
+  "h": "Prepare the acceptance report.",
+  "k": "turn",
+  "s": "Responsible: Julia Njeri"
+ },
+ "p": "Prepare report for signing",
+ "page": "record",
+ "ref": "CM-TEST-BOARDS",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Delivered",
+       "10"
+      ],
+      [
+       "Meets",
+       "8"
+      ],
+      [
+       "Does not meet",
+       "2"
+      ],
+      [
+       "Needs review",
+       "0"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Findings"
+  },
+  {
+   "b": [
+    {
+     "cols": [
+      "Unit",
+      "Check",
+      "Required",
+      "Observed",
+      "Result"
+     ],
+     "inputs": {},
+     "k": "table",
+     "live": {},
+     "num": [],
+     "rows": [
+      [
+       "CMT938427-0009",
+       "Starts successfully is No, the requirement is Yes.",
+       "",
+       "",
+       "!Does not meet"
+      ],
+      [
+       "CMT938427-0010",
+       "Starts successfully is No, the requirement is Yes.",
+       "",
+       "",
+       "!Does not meet"
+      ]
+     ]
+    }
+   ],
+   "t": "Units that do not meet"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted",
+       "8"
+      ],
+      [
+       "Rejected",
+       "2"
+      ],
+      [
+       "Deferred",
+       "0"
+      ]
+     ],
+     "k": "facts"
+    },
+    {
+     "items": [
+      [
+       "Reason",
+       "Starts successfully is No, the requirement is Yes."
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Quantity disposition"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Statement",
+       "We record the inspection findings and the accept/reject disposition for the goods or services identified in the coverage schedule, with the stated exceptions and evidence."
+      ],
+      [
+       "Findings",
+       "8 meet; 2 do not meet; 0 need review"
+      ],
+      [
+       "Accepted",
+       "8"
+      ],
+      [
+       "Rejected",
+       "2"
+      ],
+      [
+       "Deferred",
+       "0"
+      ],
+      [
+       "Reason",
+       "Starts successfully is No, the requirement is Yes."
+      ],
+      [
+       "Signers",
+       "Julia Njeri, Peter Mugo, Brian Wafula"
+      ]
+     ],
+     "k": "preview",
+     "open": true,
+     "t": "Report preview"
+    }
+   ],
+   "t": ""
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "Technical certificate \u2014 signed by Peter Mugo, 2 Jul 2027, 09:00 EAT"
+    }
+   ],
+   "t": "Technical evidence"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Deliveries",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-BOARDS",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-BOARDS",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-BOARDS",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-BOARDS",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-BOARDS",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review inspection",
+ "version": 12
+}

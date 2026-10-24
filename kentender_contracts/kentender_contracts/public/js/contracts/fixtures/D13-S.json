@@ -1,0 +1,144 @@
+{
+ "actions": {
+  "Send reply": {
+   "args": {
+    "issue": "CM-ISS-991370"
+   },
+   "command": "ReplyContractCorrespondence",
+   "do": "command"
+  },
+  "View acceptance report": {
+   "do": "tab",
+   "tab": "Deliveries"
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-test_a_delivery_issue_fr",
+ "d": "D13",
+ "dialogs": {},
+ "ev": [],
+ "id": "D13-S",
+ "name": "Delivery issue",
+ "next": {
+  "h": "Reply to the replacement request.",
+  "k": "turn",
+  "s": "Responsible: David Otieno"
+ },
+ "p": "Send reply",
+ "page": "record",
+ "ref": "CM-TEST-test_a_delivery_issue_fr",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Units",
+       "CMTB0A72C-0029 and CMTB0A72C-0030"
+      ],
+      [
+       "Result",
+       "Does not meet"
+      ],
+      [
+       "Observed",
+       "Starts successfully is No, the requirement is Yes."
+      ],
+      [
+       "Requested remedy",
+       "Replacement"
+      ],
+      [
+       "Requested reply date",
+       "22 July 2027"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Issue"
+  },
+  {
+   "b": [
+    {
+     "k": "text",
+     "v": "Two laptops did not start during inspection. Please arrange replacement and confirm the delivery date."
+    }
+   ],
+   "t": "Message from Ministry of Health"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reply",
+       "name": "message",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Remedy you propose",
+       "name": "remedy",
+       "o": {},
+       "t": "tx",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Your reply"
+  }
+ ],
+ "s2": [
+  "View acceptance report"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Issue 1 version 3",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_delivery_issue_fr",
+    "history"
+   ]
+  }
+ ],
+ "title": "2 laptop computers need replacement",
+ "version": 19
+}

@@ -1,0 +1,97 @@
+{
+ "actions": {
+  "View contract": {
+   "do": "tab",
+   "tab": "Agreement"
+  }
+ },
+ "audiences": [
+  "supplier"
+ ],
+ "back": "Back to my contracts",
+ "case": "CM-TEST-0001",
+ "d": "D25",
+ "dialogs": {},
+ "ev": [
+  "Guarantee TEST-G-001"
+ ],
+ "id": "D25-J",
+ "name": "Verify security",
+ "next": {
+  "h": "Supply a replacement security.",
+  "k": "wait",
+  "s": "Mary Wanjiku; assigned 2 Jul 2027, 09:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-0001",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Reference",
+       "TEST-G-001"
+      ],
+      [
+       "Reason",
+       "The issuer could not confirm this instrument."
+      ],
+      [
+       "History",
+       "Rejected instrument retained"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Rejected instrument"
+  }
+ ],
+ "s2": [
+  "View contract"
+ ],
+ "st": "Preparing",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Agreement",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-0001",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-0001",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-0001",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-0001",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-0001",
+    "history"
+   ]
+  }
+ ],
+ "title": "Performance security",
+ "version": 4
+}

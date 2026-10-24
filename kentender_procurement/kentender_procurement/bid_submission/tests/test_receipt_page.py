@@ -11,6 +11,7 @@ address, is Not found."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import re
 
 import frappe
@@ -95,9 +96,9 @@ class TestReceiptPage(ReceiptCase):
 class TestReplacementReceipt(ReceiptCase):
 	def test_a_replacement_receipt_names_the_version_it_superseded(self):
 		first = self.submitted()
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.assertTrue(self.replace()["ok"])
-		self.at("2027-05-31 09:15:00")
+		self.at(W("2027-05-31 09:15:00"))
 		second = self.submitted(replaces=first)
 		view = self.page(second)
 		self.assertEqual((view["page"]["title"], view["page"]["description"]), ("Replacement bid submitted", "Your replacement bid was accepted into the electronic tender box."))
@@ -126,7 +127,7 @@ class TestReplacementPage(ReceiptCase):
 		targets = {f["fix_id"]: f["target"] for f in reads.get_bid_workspace(bid_reference=self.bid, user=MARY)["next_step"]["fixes"]}
 		self.assertEqual(targets, {"prepare_replacement": f"{base}/replace", "withdraw_bid": f"{base}/receipt/{receipt}?action=withdraw"})
 		# once the replacement Draft is open the page leads to it
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.assertTrue(self.replace()["ok"])
 		self.assertEqual(reads.get_submit_page(tender_reference=self.reference, user=MARY)["replaces"], receipt)  # the Submit page names the current receipt
 		opened = changes_view.get_replacement_page(tender_reference=self.reference, user=MARY)

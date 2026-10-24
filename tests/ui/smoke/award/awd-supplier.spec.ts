@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import { collectPortalConsoleErrors, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
-import { DAVID, EVIDENCE, MARY, PASSWORD, awardWorld, closeSession, restoreAwardWorld } from "./awdWorld";
+import { shortDateTime } from "../../helpers/anchor";
+import { DAVID, EVIDENCE, MARY, PASSWORD, awardWorld, awardWorldInstant, closeSession, restoreAwardWorld } from "./awdWorld";
 
 /**
  * AWD-CHG-001 v0.4 slice 6 (boards D04, X01, V13, X11, V14, V22; tracker
@@ -51,7 +52,7 @@ test.describe("Award — the supplier's notice", () => {
 		portal = await openNotice(page, MARY, world.notice);
 		await expect(portal).toHaveAttribute("data-screen", "supplier-notice");
 		await expect(portal).toContainText("Accepting this award does not create a contract.");
-		await expect(portal.locator('[data-testid="awd-fact-reply-by"]')).toHaveText("24 Jun 2027, 17:00 EAT");
+		await expect(portal.locator('[data-testid="awd-fact-reply-by"]')).toHaveText(shortDateTime(awardWorldInstant("2027-06-24 17:00:00")));
 		await expectNoHorizontalOverflow(page);
 		await page.screenshot({ path: `${EVIDENCE}/D04.png`, fullPage: true });
 		await portal.locator('[data-testid="awd-action-accept-award"]').click();
@@ -86,7 +87,7 @@ test.describe("Award — the supplier's notice", () => {
 		const page = await context.newPage();
 		const portal = await openNotice(page, MARY, world.notice);
 		await expect(portal.locator('[data-testid="awd-next-step-headline"]')).toHaveText("Your response was received after the deadline. It cannot be used to proceed with this award.");
-		await expect(portal.locator('[data-testid="awd-fact-received"]')).toHaveText("24 Jun 2027, 17:01 EAT");
+		await expect(portal.locator('[data-testid="awd-fact-received"]')).toHaveText(shortDateTime(awardWorldInstant("2027-06-24 17:01:00")));
 		await page.screenshot({ path: `${EVIDENCE}/V22.png`, fullPage: true });
 		await context.close();
 	});

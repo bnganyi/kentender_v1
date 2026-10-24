@@ -10,6 +10,7 @@ implicit Procuring Entity) and the `Needs Intake Window` doctype itself.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from uuid import uuid4
 
 import frappe
@@ -105,7 +106,7 @@ class TestDepartmentalNeedsDomainModel(IntegrationTestCase):
 			"expected_operational_result": "Facilities can use the deployed digital health services.",
 			"indicative_quantity": 10,
 			"unit": "Each",
-			"required_by_date": "2027-12-31",
+			"required_by_date": F("2027-12-31"),
 		}
 		values.update(overrides)
 		return frappe.get_doc(values).insert(ignore_permissions=True)

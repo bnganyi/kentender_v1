@@ -17,6 +17,7 @@ independent grant.
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -476,7 +477,7 @@ class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
 		# The two-year seed world puts the acting term in FY 2026/27's planning
 		# history (2 Oct–1 Dec 2025, the PLN-CHG-001 v1.18 §13.1 term moved
 		# 364 days earlier), so it is a real, dated, expired assignment.
-		self.assertEqual((str(row.effective_from)[:10], str(row.effective_to)[:10]), ("2025-10-02", "2025-12-01"))
+		self.assertEqual((str(row.effective_from)[:10], str(row.effective_to)[:10]), (W("2025-10-02"), W("2025-12-01")))
 		# The synced Frappe Role projection — a UI convenience, not an
 		# independent authority source (§6) — follows the term: it is gone
 		# once the term has ended.

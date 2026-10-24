@@ -10,6 +10,8 @@ Technical Operator and Release Operator (owner decision 27 Sep 2026)."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 from unittest import mock
 
 import frappe
@@ -111,7 +113,7 @@ class TestSubmissionWorlds(GuidanceCase):
 		trust.revoke_certificate(self.certificate)
 		blocked = self.expect(MARY, ns.KIND_BLOCKED, "Obtain a valid digital signature certificate from an approved licensed certifying agency before submitting.", "DBN")
 		self.assertEqual(blocked["fixes"][0]["fix_id"], "check_certificate")
-		trust.issue_certificate(user=MARY, organisation="ORG-BDST-AFYA", subject_name="Mary Wanjiku", valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+		trust.issue_certificate(user=MARY, organisation="ORG-BDST-AFYA", subject_name="Mary Wanjiku", valid_from=W("2027-01-01 00:00:00"), valid_to=W("2027-12-31 23:59:59"))
 		simulation.set_controls(gate_closed=1)
 		self.expect(MARY, ns.KIND_WAITING, "Release operator Nadia Kamau holds the verified production-submission release.", "DBN", ["Nadia Kamau"])
 		simulation.set_controls(gate_closed=0, trust_service_down=1)
@@ -120,7 +122,15 @@ class TestSubmissionWorlds(GuidanceCase):
 		self.expect(MARY, ns.KIND_WAITING, "Technical operator Daniel Otieno is restoring electronic submission.", "DBN")
 		simulation.set_controls(custody_service_down=0)
 		with mock.patch("kentender_core.services.public_portal.get_public_portal_information", return_value={"status": "Incomplete"}):
-			self.expect(MARY, ns.KIND_WAITING, "CFG System Manager Daniel Otieno is restoring supplier portal information.", "DBN")
+			# The canonical Technical Operator holds no System Manager role (a read carries no setup power, KT-ACCESS-REV-001), so no person qualifies and
+			# the role is named alone; a Technical Operator who also holds System Manager is named.
+			self.expect(MARY, ns.KIND_WAITING, "CFG System Manager is restoring supplier portal information.", "DBN")
+			daniel = frappe.get_doc("User", DANIEL)
+			daniel.add_roles("System Manager")
+			try:
+				self.expect(MARY, ns.KIND_WAITING, "CFG System Manager Daniel Otieno is restoring supplier portal information.", "DBN")
+			finally:
+				daniel.remove_roles("System Manager")
 
 	def test_rejected_and_uncertain_attempts(self):
 		simulation.set_controls(deposit_outcome="Reject")
@@ -131,7 +141,7 @@ class TestSubmissionWorlds(GuidanceCase):
 		self.submit(self.signed())
 		for viewer in (MARY, DAVID):
 			pending = self.expect(viewer, ns.KIND_WAITING, "Technical operator Daniel Otieno is checking the same submission attempt.", "DBN", ["Daniel Otieno"])
-			self.assertEqual(pending["since"]["display"], "30 May 2027, 14:30 EAT")
+			self.assertEqual(pending["since"]["display"], f"{ad.dt_eat('2027-05-30 14:30:00')}")
 
 
 class TestAfterSubmission(GuidanceCase):
@@ -141,7 +151,7 @@ class TestAfterSubmission(GuidanceCase):
 		options = self.expect(MARY, ns.KIND_YOUR_TURN, f"You may prepare a replacement or withdraw before {self.deadline_label()}. Version 1 remains submitted.", "DDD")
 		self.assertEqual([f["fix_id"] for f in options["fixes"]], ["prepare_replacement", "withdraw_bid"])
 		self.expect(DAVID, ns.KIND_DONE, f"Bid Version 1 was accepted on {accepted}.", "DDD")
-		self.at("2027-05-31 08:30:00")
+		self.at(W("2027-05-31 08:30:00"))
 		self.replace()
 		self.expect(MARY, ns.KIND_YOUR_TURN, "Finish and submit the replacement before the deadline. Version 1 remains submitted.", "CNN")
 		self.expect(DAVID, ns.KIND_WAITING, "Authorised Signatory Mary Wanjiku must submit this bid.", "DCN")
@@ -150,10 +160,10 @@ class TestAfterSubmission(GuidanceCase):
 
 	def test_withdrawn_then_an_unsubmitted_draft_after_the_deadline(self):
 		receipt = self.submitted()
-		self.at("2027-05-30 15:00:00")
+		self.at(W("2027-05-30 15:00:00"))
 		self.withdraw(receipt=receipt)
 		self.expect(MARY, ns.KIND_YOUR_TURN, "You may start a new bid before the deadline. This bid was withdrawn; no bid is currently submitted.", "DDD")
-		self.at("2027-05-31 10:00:00")
+		self.at(W("2027-05-31 10:00:00"))
 		self.replace()
 		self.at(str(self.deadline()))
 		self.expect(MARY, ns.KIND_DONE, f"Submission closed at {self.deadline_label()}; this Draft was not submitted.", "DNN")

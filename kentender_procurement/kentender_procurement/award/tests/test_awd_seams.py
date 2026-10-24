@@ -11,6 +11,8 @@ same shape. Nothing is written."""
 
 from __future__ import annotations
 
+from kentender_core.seeds.calendar import fiscal as F  # noqa: F401
+from kentender_procurement.award.test_services.timeline import W  # noqa: F401
 import unittest
 
 import frappe
@@ -22,7 +24,7 @@ from kentender_procurement.award.test_services import sources as syn
 REF = "TND-MOH-2027-002"
 MARY = "mary.wanjiku@afyadigital.example"
 DAVID = "david.ouma@afyadigital.example"
-AT = "2027-06-17 10:00:00"
+AT = W("2027-06-17 10:00:00")
 
 
 class TestRealSeams(IntegrationTestCase):
@@ -48,7 +50,7 @@ class TestRealSeams(IntegrationTestCase):
 			("Afya Digital Supplies Limited", "46400000.00", "46400000.00", "250 Each", "36 months"))
 		self.assertTrue(rec["organisation"])
 		self.assertEqual(real["tender_title"], "Supply and delivery of business laptops")
-		self.assertEqual(str(real["validity"]["validity_end"]), "2027-10-10 11:00:00")
+		self.assertEqual(str(real["validity"]["validity_end"]), W("2027-10-10 11:00:00"))
 
 	def test_the_bidder_audience_and_authority(self):
 		p = sources.EvaluationSource()

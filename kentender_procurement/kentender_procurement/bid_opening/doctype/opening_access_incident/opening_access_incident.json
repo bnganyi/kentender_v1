@@ -14,6 +14,12 @@
   "raised_at",
   "holder_user",
   "status",
+  "current_finding",
+  "incident_revision",
+  "closure",
+  "closure_ref",
+  "closed_at",
+  "service_followup",
   "resolution_note",
   "resolved_at",
   "resolved_by",
@@ -71,7 +77,7 @@
    "fieldtype": "Select",
    "label": "Status",
    "read_only": 1,
-   "options": "Open\nResolved\nUnresolved",
+   "options": "Open\nClosed",
    "reqd": 1
   },
   {
@@ -112,12 +118,52 @@
    "fieldtype": "Datetime",
    "label": "Last notified at",
    "read_only": 1
+  },
+  {
+   "fieldname": "current_finding",
+   "label": "Current finding",
+   "fieldtype": "Select",
+   "options": "Unresolved\nRecovered\nCannot recover",
+   "default": "Unresolved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "incident_revision",
+   "label": "Incident revision",
+   "fieldtype": "Int",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closure",
+   "label": "Closure",
+   "fieldtype": "Select",
+   "options": "\nRecovered and the opening continued\nClosed after tender cancellation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closure_ref",
+   "label": "Closure reference",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "label": "Closed at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "service_followup",
+   "label": "Service follow-up",
+   "fieldtype": "Select",
+   "options": "\nOpen\nResolved",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-10-10 23:00:00.000000",
+ "modified": "2026-10-18 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Opening",
  "name": "Opening Access Incident",

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 
+import { year, shortDate } from "../../helpers/anchor";
 import { loginAsNdsFixtureAuthor } from "../../helpers/auth";
 import { expectLayoutSanity } from "../../helpers/designFidelity";
 import {
@@ -235,13 +236,13 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await gotoNeeds(page, "/new");
 		await expectScreen(page, "editor");
 		const requiredBy = page.locator('[data-testid="nds-required-by"]');
-		await expect(requiredBy).toHaveAttribute("min", "2027-07-01");
-		await expect(requiredBy).toHaveAttribute("max", "2028-06-30");
+		await expect(requiredBy).toHaveAttribute("min", year("year2").start_date);
+		await expect(requiredBy).toHaveAttribute("max", year("year2").end_date);
 		await page.locator('[data-testid="nds-title"]').fill("Required by outside the year");
 		await requiredBy.fill("2030-01-31");
 		await page.locator('[data-testid="nds-save-draft"]').first().click();
 		await expect(page.locator('[data-testid="nds-required-by-error"]')).toHaveText(
-			"Required by must be between 1 Jul 2027 and 30 Jun 2028, the dates of FY 2027/28.",
+			`Required by must be between ${shortDate(year("year2").start_date)} and ${shortDate(year("year2").end_date)}, the dates of ${year("year2").label}.`,
 		);
 		// Nothing was sent: no server summary, and the route did not change.
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);

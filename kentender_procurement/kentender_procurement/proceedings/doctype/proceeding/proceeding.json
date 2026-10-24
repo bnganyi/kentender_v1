@@ -22,6 +22,8 @@
   "ceased_at",
   "not_held_reason",
   "cancellation_reference",
+  "cancellation_source_at",
+  "cancellation_received_at",
   "custody_reference",
   "current_minutes_version",
   "finalized_at",
@@ -169,6 +171,18 @@
    "fieldname": "fixture_namespace",
    "fieldtype": "Data",
    "label": "Fixture namespace",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_source_at",
+   "label": "Cancellation decided at",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_received_at",
+   "label": "Cancellation received at",
+   "fieldtype": "Datetime",
    "read_only": 1
   }
  ],

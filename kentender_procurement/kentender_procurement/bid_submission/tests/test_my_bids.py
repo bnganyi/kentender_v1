@@ -11,6 +11,8 @@ masked for anyone else. Reads create nothing."""
 
 from __future__ import annotations
 
+from kentender_core.tests import anchor_display as ad
+from kentender_core.seeds.calendar import fiscal as F, world as W  # noqa: F401
 import frappe
 
 from kentender_procurement.bid_submission.services import changes_view, overview, reads, receipt_view, simulation
@@ -29,19 +31,19 @@ class TestMyBids(ChangeCase):
 		# David prepared the bid and cannot submit it: the way on is the bid page, where he hands it over; Mary reviews and submits
 		self.assertEqual(ready["actions"], [{"label": "Hand over bid", "href": f"/tenders/{self.reference}/bid"}])
 		self.assertEqual(self.row(user=MARY)["actions"], [{"label": "Review bid", "href": f"/tenders/{self.reference}/bid/review"}])
-		self.assertRegex(ready["updated_label"], r"^\d{1,2} \w{3} 2027, \d{2}:\d{2} EAT$")
-		self.assertRegex(ready["deadline_label"], r"^\d{1,2} \w{3} 2027, \d{2}:\d{2} EAT$")
+		self.assertRegex(ready["updated_label"], r"^\d{1,2} \w{3} \d{4}, \d{2}:\d{2} EAT$")
+		self.assertRegex(ready["deadline_label"], r"^\d{1,2} \w{3} \d{4}, \d{2}:\d{2} EAT$")
 		self.assertEqual(reads.get_my_bids(user=DAVID)["count_text"], "1 bid")
 
 		receipt = self.submitted()
 		submitted = self.row()
-		self.assertEqual((submitted["status_label"], submitted["version_label"], submitted["updated_label"]), ("Submitted", "Submitted bid Version 1", "30 May 2027, 14:30 EAT"))
+		self.assertEqual((submitted["status_label"], submitted["version_label"], submitted["updated_label"]), ("Submitted", "Submitted bid Version 1", f"{ad.dt_eat('2027-05-30 14:30:00')}"))
 		self.assertEqual(submitted["actions"], [{"label": "View receipt", "href": f"/tenders/{self.reference}/bid/receipt/{receipt}"}])
 
-		self.at("2027-05-30 15:00:00")
+		self.at(W("2027-05-30 15:00:00"))
 		ack = self.withdraw(receipt=receipt)["acknowledgement_reference"]
 		withdrawn = self.row(user=MARY)
-		self.assertEqual((withdrawn["status_label"], withdrawn["status_tone"], withdrawn["version_label"], withdrawn["updated_label"]), ("Withdrawn", "critical", "", "30 May 2027, 15:00 EAT"))
+		self.assertEqual((withdrawn["status_label"], withdrawn["status_tone"], withdrawn["version_label"], withdrawn["updated_label"]), ("Withdrawn", "critical", "", f"{ad.dt_eat('2027-05-30 15:00:00')}"))
 		view, start = withdrawn["actions"]
 		self.assertEqual(view, {"label": "View acknowledgement", "href": f"/tenders/{self.reference}/bid/receipt/{ack}"})
 		self.assertEqual((start["label"], start["command"], start["href"], start["record_version"]), ("Start replacement", "prepare_replacement", f"/tenders/{self.reference}/bid", self.version()))
@@ -70,14 +72,14 @@ class TestReceiptHistory(ChangeCase):
 		empty = reads.get_receipt_history(user=DAVID)
 		self.assertEqual((empty["rows"], empty["empty_text"], empty["suspended"]), ([], "No submission or withdrawal receipts for this organisation.", False))
 		receipt = self.submitted()
-		self.at("2027-05-30 15:00:00")
+		self.at(W("2027-05-30 15:00:00"))
 		ack = self.withdraw(receipt=receipt)["acknowledgement_reference"]
 		read = reads.get_receipt_history(user=DAVID)
 		self.assertEqual(
 			[(r["document"], r["event"], r["event_tone"], r["at_label"], r["href"]) for r in read["rows"]],
 			[
-				(receipt, "Submitted", "live", "30 May 2027, 14:30", f"/tenders/{self.reference}/bid/receipt/{receipt}"),
-				(ack, "Withdrawn", "critical", "30 May 2027, 15:00", f"/tenders/{self.reference}/bid/receipt/{ack}"),
+				(receipt, "Submitted", "live", f"{ad.d_short('2027-05-30')}, 14:30", f"/tenders/{self.reference}/bid/receipt/{receipt}"),
+				(ack, "Withdrawn", "critical", f"{ad.d_short('2027-05-30')}, 15:00", f"/tenders/{self.reference}/bid/receipt/{ack}"),
 			],
 		)
 		self.assertEqual(read["count_text"], "2 records")
@@ -124,11 +126,11 @@ class TestPortalAddresses(ChangeCase):
 		# the spec"): received 14:31:58, accepted 14:32:01 — every list and
 		# summary says Submitted 14:32 (truncated, never rounded); the receipt
 		# alone names both instants to the second
-		self.at("2027-05-30 14:31:58")
+		self.at(W("2027-05-30 14:31:58"))
 		simulation.set_controls(accept_after_seconds=3)
 		receipt = self.submitted()
-		self.at("2027-05-30 14:40:00")
-		minute = "30 May 2027, 14:32"
+		self.at(W("2027-05-30 14:40:00"))
+		minute = f"{ad.d_short('2027-05-30')}, 14:32"
 		register = next(r for r in reads.get_receipt_history(user=DAVID)["rows"] if r["document"] == receipt)
 		mine = next(r for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid)
 		tender = overview.get_tender_overview(tender_reference=self.reference, user=DAVID)
@@ -138,5 +140,5 @@ class TestPortalAddresses(ChangeCase):
 			(minute, f"{minute} EAT", f"Submitted {minute} EAT", f"{minute} EAT"),
 		)
 		facts = {r["label"]: r["value"] for r in receipt_view.get_receipt_page(tender_reference=self.reference, receipt_reference=receipt, user=DAVID)["receipt"]}
-		self.assertEqual((facts["Received by tender-box service"], facts["Accepted into tender box"]), ("30 May 2027, 14:31:58 EAT", "30 May 2027, 14:32:01 EAT"))
+		self.assertEqual((facts["Received by tender-box service"], facts["Accepted into tender box"]), (f"{ad.dt_eat('2027-05-30 14:31:58', seconds=True)}", f"{ad.dt_eat('2027-05-30 14:32:01', seconds=True)}"))
 

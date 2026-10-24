@@ -1,0 +1,163 @@
+{
+ "actions": {
+  "Cancel": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "Request change": {
+   "args": {
+    "kind": "Quantity"
+   },
+   "command": "RequestContractChange",
+   "do": "command"
+  },
+  "View issue": {
+   "do": "tab",
+   "tab": "Obligations"
+  },
+  "View rule": {
+   "do": "tab",
+   "tab": "Obligations"
+  }
+ },
+ "audiences": [
+  "coordinator"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_quantity_change_f",
+ "d": "D34",
+ "dialogs": {},
+ "ev": [
+  "Agreement 1"
+ ],
+ "id": "D34",
+ "name": "Quantity variation",
+ "next": {
+  "h": "Explain the additional quantity.",
+  "k": "turn",
+  "s": "Responsible: Carol Coordinator"
+ },
+ "p": "Request change",
+ "page": "record",
+ "ref": "CM-TEST-test_a_quantity_change_f",
+ "regions": [
+  {
+   "b": [
+    {
+     "cols": [
+      "Item",
+      "Original",
+      "Rate",
+      "Proposed"
+     ],
+     "inputs": {
+      "0,3": "quantity.L1"
+     },
+     "k": "table",
+     "live": {},
+     "num": [
+      1,
+      2,
+      3
+     ],
+     "rows": [
+      [
+       "Laptop computer",
+       "10",
+       "KES 100,000",
+       "#11"
+      ]
+     ]
+    },
+    {
+     "items": [
+      [
+       "Proposed total",
+       "KES 1,100,000"
+      ],
+      [
+       "Cumulative quantity change",
+       "10%"
+      ],
+      [
+       "Cumulative value change",
+       "10%"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Quantity"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      {
+       "l": "Reason",
+       "name": "reason",
+       "o": {},
+       "t": "ta",
+       "v": ""
+      },
+      {
+       "l": "Source request",
+       "name": "evidence",
+       "o": {},
+       "t": "file",
+       "v": ""
+      }
+     ],
+     "k": "fields"
+    }
+   ],
+   "t": "Request"
+  }
+ ],
+ "s2": [
+  "Cancel"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_quantity_change_f",
+    "history"
+   ]
+  }
+ ],
+ "title": "Request quantity change",
+ "version": 9
+}

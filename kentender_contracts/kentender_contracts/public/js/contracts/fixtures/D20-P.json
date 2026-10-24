@@ -1,0 +1,147 @@
+{
+ "actions": {
+  "View delivery status": {
+   "do": "tab",
+   "tab": "History"
+  },
+  "View notice": {
+   "do": "tab",
+   "tab": "History"
+  }
+ },
+ "audiences": [
+  "office",
+  "signatory"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_a_termination_from_",
+ "d": "D20",
+ "dialogs": {},
+ "ev": [
+  "Default notice and delivery proof",
+  "Legal advice 1"
+ ],
+ "id": "D20-P",
+ "name": "Termination review",
+ "next": {
+  "h": "Complete the accounting details for the invoice.",
+  "k": "wait",
+  "s": "Josphat Mwangi; assigned 25 Jul 2027, 10:00 EAT."
+ },
+ "p": "",
+ "page": "record",
+ "ref": "CM-TEST-test_a_termination_from_",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Grounds",
+       "Material non-delivery"
+      ],
+      [
+       "Contractual notice",
+       "Contract clause 8; notice and cure evidence attached"
+      ],
+      [
+       "HOP recommendation",
+       "Terminate unperformed balance"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Grounds"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Accepted value",
+       "KES 800,000"
+      ],
+      [
+       "Cash paid",
+       "KES 600,000"
+      ],
+      [
+       "Supported unpaid",
+       "KES 200,000"
+      ],
+      [
+       "Advance balance",
+       "KES 0"
+      ],
+      [
+       "Disputed claim",
+       "KES 0"
+      ]
+     ],
+     "k": "facts"
+    }
+   ],
+   "t": "Financial position"
+  },
+  {
+   "b": [
+    {
+     "items": [
+      "Default notice and delivery proof",
+      "Legal advice 1"
+     ],
+     "k": "links"
+    }
+   ],
+   "t": "Supporting evidence"
+  }
+ ],
+ "s2": [
+  "View notice",
+  "View delivery status"
+ ],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "subj": "Agreement 1 \u00b7 termination 1 draft 1",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_a_termination_from_",
+    "history"
+   ]
+  }
+ ],
+ "title": "Review contract termination",
+ "version": 30
+}

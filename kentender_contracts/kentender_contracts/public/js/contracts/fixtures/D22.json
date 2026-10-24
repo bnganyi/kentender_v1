@@ -1,0 +1,126 @@
+{
+ "actions": {
+  "Sign and issue certificate": {
+   "args": {},
+   "command": "IssueCompletionCertificate",
+   "do": "command"
+  }
+ },
+ "audiences": [
+  "office"
+ ],
+ "back": "Back to contracts",
+ "case": "CM-TEST-test_the_accounting_offi",
+ "d": "D22",
+ "dialogs": {},
+ "ev": [
+  "Final acceptance 1",
+  "Financial reconciliation 1"
+ ],
+ "id": "D22",
+ "name": "Completion certificate",
+ "next": {
+  "h": "Issue the completion certificate.",
+  "k": "turn",
+  "s": "Responsible: Charles Mutiso"
+ },
+ "p": "Sign and issue certificate",
+ "page": "record",
+ "ref": "CM-TEST-test_the_accounting_offi",
+ "regions": [
+  {
+   "b": [
+    {
+     "items": [
+      [
+       "Delivered and accepted",
+       "10 laptop computer"
+      ],
+      [
+       "Acceptance",
+       "10 on 20 July 2027"
+      ],
+      [
+       "Contracted services",
+       "No contracted service line"
+      ],
+      [
+       "Unresolved defects",
+       "None"
+      ],
+      [
+       "Final acceptance",
+       "Recorded"
+      ],
+      [
+       "Obligations",
+       "All fulfilled"
+      ],
+      [
+       "Recipient",
+       "Afya Digital Supplies Limited"
+      ]
+     ],
+     "k": "rows"
+    },
+    {
+     "k": "text",
+     "v": "I confirm delivery and acceptance of the goods and services identified in the contract completion schedule, under contract CM-TEST-test_the_accounting_offi agreement 1, completed on 28 July 2028, with the surviving obligations expressly listed."
+    },
+    {
+     "items": [
+      [
+       "Surviving obligations",
+       "Publication \u2014 hopfsp, Not confirmed \u2014 set by current directions"
+      ]
+     ],
+     "k": "rows"
+    }
+   ],
+   "t": "Certificate summary"
+  }
+ ],
+ "s2": [],
+ "st": "Active",
+ "sub": "Afya Digital Supplies Limited",
+ "tab": "Obligations",
+ "tabs": [
+  {
+   "label": "Agreement",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "agreement"
+   ]
+  },
+  {
+   "label": "Deliveries",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "deliveries"
+   ]
+  },
+  {
+   "label": "Invoices",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "invoices"
+   ]
+  },
+  {
+   "label": "Obligations",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "obligations"
+   ]
+  },
+  {
+   "label": "History",
+   "route": [
+    "CM-TEST-test_the_accounting_offi",
+    "history"
+   ]
+  }
+ ],
+ "title": "Confirm contract completion",
+ "version": 18
+}
