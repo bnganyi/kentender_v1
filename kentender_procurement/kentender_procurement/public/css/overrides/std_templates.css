@@ -73,7 +73,7 @@
 	flex-wrap: wrap !important;
 	align-items: end !important;
 	gap: 12px 14px !important;
-	margin: 0 !important;
+	margin: 12px 0 !important;
 	padding: 14px 16px !important;
 	background: #f8fbfa !important;
 	border: 1px solid var(--kt-line) !important;

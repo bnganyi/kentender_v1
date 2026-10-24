@@ -25,13 +25,15 @@
 	background: none !important;
 	border: none !important;
 	box-sizing: border-box !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 20px !important;
 }
 
-/* ========== WORKSPACE LIST ========== */
+/* ========== HEADER ========== */
 
-/* Header */
 .kt-shell[data-testid="req-shell"] .req-page > h3 {
-	margin: 0 0 6px !important;
+	margin: 0 !important;
 	padding: 22px 24px 0 !important;
 	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%) !important;
 	border: 1px solid var(--kt-line) !important;
@@ -45,7 +47,7 @@
 }
 
 .kt-shell[data-testid="req-shell"] .req-lede {
-	margin: 0 0 20px !important;
+	margin: 0 !important;
 	padding: 6px 24px 22px !important;
 	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%) !important;
 	border: 1px solid var(--kt-line) !important;
@@ -57,7 +59,35 @@
 	line-height: 1.5 !important;
 }
 
-/* Register */
+/* ========== READY TO START ========== */
+
+.kt-shell[data-testid="req-shell"] section[data-testid="req-ready"] {
+	margin: 0 !important;
+	padding: 20px 22px !important;
+	background: var(--kt-white) !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: var(--kt-radius) !important;
+	box-shadow: 0 1px 3px rgb(15 46 43 / 4%) !important;
+}
+
+.kt-shell[data-testid="req-shell"] .req-empty {
+	padding: 24px 16px !important;
+	text-align: center !important;
+}
+
+.kt-shell[data-testid="req-shell"] .req-empty-title {
+	color: var(--kt-ink) !important;
+	font-size: 15px !important;
+	font-weight: 650 !important;
+}
+
+.kt-shell[data-testid="req-shell"] .req-empty .kt-muted {
+	color: var(--kt-muted) !important;
+	font-size: 13.5px !important;
+}
+
+/* ========== REGISTER ========== */
+
 .kt-shell[data-testid="req-shell"] section[data-testid="req-register"] {
 	margin: 0 !important;
 	padding: 0 !important;
@@ -65,12 +95,25 @@
 	border: 0 !important;
 }
 
-.kt-shell[data-testid="req-shell"] .req-register-title {
+.kt-shell[data-testid="req-shell"] .req-register-head {
 	margin: 0 0 14px !important;
+}
+
+.kt-shell[data-testid="req-shell"] .req-card-title {
+	margin: 0 !important;
 	color: var(--kt-ink) !important;
 	font-size: 16.5px !important;
 	font-weight: 680 !important;
 	letter-spacing: -0.015em !important;
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+}
+
+.kt-shell[data-testid="req-shell"] .req-card-title svg {
+	stroke: var(--kt-accent) !important;
+	fill: none !important;
+	flex-shrink: 0 !important;
 }
 
 /* Filters */
@@ -79,7 +122,7 @@
 	flex-wrap: wrap !important;
 	align-items: end !important;
 	gap: 12px 14px !important;
-	margin: 0 0 20px !important;
+	margin: 0 0 16px !important;
 	padding: 14px 16px !important;
 	background: #f8fbfa !important;
 	border: 1px solid var(--kt-line) !important;
@@ -112,6 +155,13 @@
 	flex-shrink: 0 !important;
 }
 
+.kt-shell[data-testid="req-shell"] .req-filters .btn {
+	height: 40px !important;
+	padding: 0 16px !important;
+	border-radius: 10px !important;
+	font-weight: 600 !important;
+}
+
 /* Table */
 .kt-shell[data-testid="req-shell"] .table {
 	width: 100% !important;
@@ -137,11 +187,6 @@
 	border-bottom: 1px solid var(--kt-line) !important;
 }
 
-.kt-shell[data-testid="req-shell"] .table th.is-num,
-.kt-shell[data-testid="req-shell"] .table td.is-num {
-	text-align: right !important;
-}
-
 .kt-shell[data-testid="req-shell"] .table th,
 .kt-shell[data-testid="req-shell"] .table td {
 	padding: 14px !important;
@@ -153,7 +198,8 @@
 	border-bottom: 0 !important;
 }
 
-.kt-shell[data-testid="req-shell"] .table tbody tr:hover {
+.kt-shell[data-testid="req-shell"] .table tbody tr:hover,
+.kt-shell[data-testid="req-shell"] .req-row-link:hover {
 	background: #fafcfb !important;
 }
 
@@ -167,17 +213,20 @@
 	text-decoration: underline !important;
 }
 
-.kt-shell[data-testid="req-shell"] .table td .kt-label {
-	display: block !important;
-	margin-top: 3px !important;
-	color: var(--kt-muted) !important;
-	font-size: 12.5px !important;
-	font-weight: 500 !important;
+/* Mobile cards — hidden by default */
+.kt-shell[data-testid="req-shell"] .req-row-cards {
+	display: none !important;
 }
 
-/* Pager */
+/* ========== PAGER ========== */
+
 .kt-shell[data-testid="req-shell"] .kt-pager {
-	margin-top: 12px !important;
+	display: flex !important;
+	flex-wrap: wrap !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	gap: 12px !important;
+	margin-top: 16px !important;
 	padding: 0 !important;
 }
 
@@ -188,14 +237,69 @@
 	font-weight: 500 !important;
 }
 
-/* Mobile cards */
-.kt-shell[data-testid="req-shell"] .req-row-cards {
-	display: none !important;
+.kt-shell[data-testid="req-shell"] .kt-pager-size {
+	display: flex !important;
+	align-items: center !important;
+	gap: 8px !important;
+	font-size: 13.5px !important;
+	color: var(--kt-muted) !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-size .input {
+	width: auto !important;
+	height: 34px !important;
+	padding: 0 10px !important;
+	border: 1px solid #d4e0dc !important;
+	border-radius: 8px !important;
+	background: var(--kt-white) !important;
+	color: var(--kt-ink) !important;
+	font-size: 13.5px !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-nav {
+	display: flex !important;
+	align-items: center !important;
+	gap: 4px !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-status {
+	color: var(--kt-muted) !important;
+	font-size: 13.5px !important;
+	padding: 0 8px !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-page,
+.kt-shell[data-testid="req-shell"] .kt-pager-step {
+	min-width: 34px !important;
+	height: 34px !important;
+	padding: 0 10px !important;
+	border: 0 !important;
+	border-radius: 8px !important;
+	background: transparent !important;
+	color: var(--kt-ink) !important;
+	font-size: 13.5px !important;
+	font-weight: 500 !important;
+	cursor: pointer !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-page:hover,
+.kt-shell[data-testid="req-shell"] .kt-pager-step:hover:not(:disabled) {
+	background: var(--kt-soft) !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-page.is-current {
+	background: var(--kt-accent-soft) !important;
+	color: var(--kt-accent) !important;
+	font-weight: 650 !important;
+}
+
+.kt-shell[data-testid="req-shell"] .kt-pager-step:disabled {
+	opacity: 0.4 !important;
+	cursor: not-allowed !important;
 }
 
 /* ========== AUTHORISED RECORD ========== */
 
-/* Record header */
 .kt-shell[data-testid="req-shell"] .req-authorised-head {
 	margin: 0 0 16px !important;
 	padding: 22px 24px !important;
@@ -363,27 +467,6 @@
 	gap: 12px !important;
 }
 
-.kt-shell[data-testid="req-shell"] .req-review-title {
-	display: flex !important;
-	align-items: center !important;
-	gap: 8px !important;
-}
-
-.kt-shell[data-testid="req-shell"] .req-card-title {
-	margin: 0 !important;
-	color: var(--kt-ink) !important;
-	font-size: 15px !important;
-	font-weight: 680 !important;
-	display: flex !important;
-	align-items: center !important;
-	gap: 8px !important;
-}
-
-.kt-shell[data-testid="req-shell"] .req-card-title svg {
-	stroke: var(--kt-accent) !important;
-	flex-shrink: 0 !important;
-}
-
 .kt-shell[data-testid="req-shell"] .req-review-summary {
 	margin: 4px 0 0 !important;
 	color: var(--kt-muted) !important;
@@ -422,15 +505,6 @@
 	font-size: 13.5px !important;
 }
 
-/* Funding section */
-.kt-shell[data-testid="req-shell"] section:has(> .table[data-testid="req-reservations"]) {
-	margin: 16px 0 !important;
-	padding: 16px 18px !important;
-	background: var(--kt-white) !important;
-	border: 1px solid var(--kt-line) !important;
-	border-radius: 12px !important;
-}
-
 /* Disclosure */
 .kt-shell[data-testid="req-shell"] .kt-disclosure {
 	margin: 16px 0 !important;
@@ -457,6 +531,7 @@
 
 .kt-shell[data-testid="req-shell"] .kt-disclosure-chevron {
 	stroke: var(--kt-muted) !important;
+	fill: none !important;
 	transition: transform 0.15s !important;
 }
 
@@ -550,6 +625,10 @@
 		margin: 0 !important;
 		color: var(--kt-ink) !important;
 		font-size: 14px !important;
+	}
+	.kt-shell[data-testid="req-shell"] .kt-pager {
+		flex-direction: column !important;
+		align-items: stretch !important;
 	}
 	.kt-shell[data-testid="req-shell"] .req-authorised-head {
 		padding: 18px 18px !important;
