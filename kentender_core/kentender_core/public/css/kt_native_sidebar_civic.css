@@ -255,6 +255,13 @@
 	content: "shield";
 }
 .body-sidebar
+	.sidebar-item-container[data-id="Tender-security intake duty"]
+	> .standard-sidebar-item
+	> .item-anchor
+	> .sidebar-item-icon::before {
+	content: "assignment_ind";
+}
+.body-sidebar
 	.sidebar-item-container[data-id="Contract Management"]
 	> .standard-sidebar-item
 	> .item-anchor

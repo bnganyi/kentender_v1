@@ -17,6 +17,7 @@ def create_homepage():
     page.route = "home"
     page.published = 1
     page.content_type = "HTML"
+    page.dynamic_template = 1
     page.full_width = 1
     page.show_title = 0
     page.main_section_html = PAGE_HTML
@@ -206,11 +207,29 @@ footer.web-footer { display: none !important; }
       </div>
     </div>
 
-    <div id="kt-start-trial-wrap" class="hidden md:block">
+    <div id="kt-header-actions" class="kt-header-actions">
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" id="kt-dashboard-button">
+        <i class="fas fa-table-columns"></i>
+        <span>Go to Dashboard</span>
+      </a>
+      <div class="kt-profile-wrap">
+        <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
+          <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.utils.get_fullname(frappe.session.user)[0:1]|upper }}</span>
+          <span>{{ frappe.utils.get_fullname(frappe.session.user) }}</span>
+          <i class="fas fa-chevron-down kt-profile-chevron"></i>
+        </button>
+        <div id="kt-profile-menu" role="menu" hidden>
+          <a href="/account" role="menuitem"><i class="fas fa-user"></i><span>Profile</span></a>
+          <button type="button" role="menuitem" onclick="frappe.logout(); return false;"><i class="fas fa-right-from-bracket"></i><span>Log out</span></button>
+        </div>
+      </div>
+      {% else %}
       <a href="/login" id="kt-start-trial">
         <i class="fas fa-rocket"></i>
-        <span>Start Free Trial</span>
+        <span>Get Started</span>
       </a>
+      {% endif %}
     </div>
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl">
@@ -227,18 +246,82 @@ footer.web-footer { display: none !important; }
       <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
       <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
       <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
-      <a href="/login" class="btn-primary text-sm inline-block mt-2">Start Free Trial</a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2"><i class="fas fa-table-columns mr-2"></i>Go to Dashboard</a>
+      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
+      {% else %}
+      <a href="/login" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      {% endif %}
     </div>
   </div>
 </div>
 
 <style>
-#kt-start-trial-wrap {
-  display: block !important;
+#kt-header-actions {
+  display: flex !important;
   visibility: visible !important;
   opacity: 1 !important;
   flex-shrink: 0 !important;
 }
+#kt-dashboard-button {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  color: #0047AB !important;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.kt-profile-wrap { position: relative; }
+#kt-profile-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #0A1929;
+  font-weight: 600;
+  cursor: pointer;
+}
+.kt-profile-avatar {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #0047AB;
+  color: white;
+}
+.kt-profile-chevron { font-size: 10px; transition: transform 0.2s ease; }
+#kt-profile-button[aria-expanded="true"] .kt-profile-chevron { transform: rotate(180deg); }
+#kt-profile-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 180px;
+  padding: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  z-index: 9999;
+}
+#kt-profile-menu:not([hidden]) { display: block !important; }
+#kt-profile-menu a, #kt-profile-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #374151;
+  text-decoration: none;
+  cursor: pointer;
+}
+#kt-profile-menu a:hover, #kt-profile-menu button:hover { background: #f3f4f6; color: #2563eb; }
 #kt-start-trial {
   display: inline-flex !important;
   visibility: visible !important;
@@ -268,7 +351,7 @@ footer.web-footer { display: none !important; }
   box-shadow: 0 10px 30px rgba(0,102,255,0.4) !important;
 }
 @media (max-width: 767px) {
-  #kt-start-trial-wrap { display: none !important; }
+  #kt-header-actions { display: none !important; }
 }
 </style>
 
@@ -741,6 +824,31 @@ footer.web-footer { display: none !important; }
       if (window.scrollY > 500) scrollTopBtn.style.display = 'flex';
       else scrollTopBtn.style.display = 'none';
     }, { passive: true });
+  }
+
+  // Profile menu
+  var profileButton = document.getElementById('kt-profile-button');
+  var profileMenu = document.getElementById('kt-profile-menu');
+  if (profileButton && profileMenu) {
+    profileButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var open = profileMenu.hidden;
+      profileMenu.hidden = !open;
+      profileButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.kt-profile-wrap')) {
+        profileMenu.hidden = true;
+        profileButton.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        profileMenu.hidden = true;
+        profileButton.setAttribute('aria-expanded', 'false');
+        profileButton.focus();
+      }
+    });
   }
 
   // Active nav highlight

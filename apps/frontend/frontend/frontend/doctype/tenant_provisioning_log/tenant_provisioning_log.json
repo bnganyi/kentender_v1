@@ -1,0 +1,50 @@
+{
+  "doctype": "DocType",
+  "name": "Tenant Provisioning Log",
+  "module": "Frontend",
+  "custom": 0,
+  "autoname": "hash",
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "registration",
+      "label": "Registration",
+      "fieldtype": "Link",
+      "options": "Tenant Registration",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "step",
+      "label": "Step",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Running\nSuccess\nFailed",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "message",
+      "label": "Message",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "report": 1,
+      "export": 1
+    }
+  ]
+}

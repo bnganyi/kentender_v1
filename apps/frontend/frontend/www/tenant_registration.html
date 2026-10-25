@@ -1,0 +1,118 @@
+{% extends "templates/web.html" %}
+{% block title %}Create your Kentender workspace{% endblock %}
+{% block page_content %}
+<style>
+  .navbar, nav.navbar, .navbar-light, header.navbar,
+  .web-footer, footer.web-footer, .page-header-wrapper,
+  .page-breadcrumbs, .page-header, .page-footer { display: none !important; }
+
+  html, body { margin: 0 !important; padding: 0 !important; }
+  html { background: #fff; }
+  body { padding-top: 0 !important; background: #fff; }
+  main, .main-section, .page-content {
+    width: 100% !important; max-width: none !important;
+    margin: 0 !important; padding: 0 !important;
+  }
+
+  .tenant-registration-shell { min-height: 100vh; display: flex; }
+  .tenant-registration-hero {
+    display: none;
+  }
+  .tenant-registration-form-wrap {
+    width: 100%; min-height: 100vh; display: flex;
+    align-items: center; justify-content: center; padding: 40px 20px;
+  }
+  .tenant-registration-card { width: 100%; max-width: 480px; }
+  .tenant-registration-card h1 {
+    margin: 0 0 8px; color: #0a1622;
+    font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: 0;
+  }
+  .tenant-registration-card .text-muted {
+    margin: 0 0 28px; color: #7c8796; line-height: 1.5;
+  }
+  #tenant-registration-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  #tenant-registration-form .form-group { margin: 0; }
+  #tenant-registration-form .full-width { grid-column: 1 / -1; }
+  #tenant-registration-form label {
+    display: block; margin: 0 0 8px; color: #364152;
+    font-size: 13px; font-weight: 600;
+  }
+  #tenant-registration-form .form-control {
+    width: 100%; height: 42px; border: 0; border-radius: 999px;
+    padding: 0 18px; background: #f1f3f5; color: #111827;
+    box-shadow: none; outline: none;
+  }
+  #tenant-registration-form select.form-control { appearance: auto; }
+  #tenant-registration-form .form-control:focus {
+    background: #fff; border: 1px solid #2490ef;
+    box-shadow: 0 0 0 3px rgba(36, 144, 239, 0.12);
+  }
+  #tenant-registration-form small { display: block; margin-top: 7px; }
+  #submit-button {
+    grid-column: 1 / -1; width: 100%; height: 42px;
+    border: 0; border-radius: 999px; background: #2490ef; color: #fff;
+    font-size: 15px; font-weight: 600; margin-top: 4px;
+  }
+  #submit-button:hover { background: #1978c8; }
+  #submit-button:disabled { opacity: 0.65; cursor: wait; }
+  #registration-message { grid-column: 1 / -1; margin-top: 0 !important; }
+
+  @media (min-width: 768px) {
+    html::before {
+      content: ""; position: fixed; inset: 0 auto 0 0; width: 50%; height: 100vh;
+      background-color: #0a1622; background-image: url("/assets/frontend/images/kentender_login.png");
+      border-radius: 0 24px 24px 0; background-repeat: no-repeat;
+      background-position: center; background-size: cover; z-index: 0;
+    }
+    body::before {
+      content: "Kentender"; position: fixed; z-index: 1;
+      left: 48px; bottom: 220px; width: calc(50% - 96px);
+      color: #fff; font-size: 28px; font-weight: 700;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    body::after {
+      content: "Create your workspace\Astart managing tenders today";
+      white-space: pre-line; position: fixed; z-index: 1;
+      left: 48px; bottom: 140px; width: calc(50% - 96px);
+      color: rgba(255,255,255,0.82); font-size: 20px; line-height: 1.4;
+    }
+    .tenant-registration-shell { position: relative; z-index: 2; }
+    .tenant-registration-form-wrap { width: 50%; margin-left: 50%; }
+  }
+  @media (max-width: 767px) {
+    .tenant-registration-form-wrap { align-items: flex-start; padding-top: 32px; }
+  }
+  @media (max-width: 560px) {
+    #tenant-registration-form { grid-template-columns: 1fr; }
+    .tenant-registration-card h1 { font-size: 27px; }
+    #tenant-registration-form .full-width { grid-column: 1; }
+  }
+</style>
+<div id="tenant-registration-page" class="tenant-registration-shell">
+  <div class="tenant-registration-hero" aria-hidden="true"></div>
+  <div class="tenant-registration-form-wrap">
+    <div class="tenant-registration-card">
+    <h1>Create your Kentender workspace</h1>
+    <p class="text-muted">Register your organization. Your private workspace will be provisioned automatically.</p>
+    <form id="tenant-registration-form">
+      <div class="form-group full-width"><label for="company_name">Company / workspace name</label><input class="form-control" id="company_name" name="company_name" required maxlength="140" autocomplete="organization"></div>
+      <div class="form-group"><label for="country">Country</label>
+        <select class="form-control" id="country" name="country" required>
+          <option value="">Select country</option>
+          <option>Kenya</option><option>Somalia</option><option>Uganda</option><option>Tanzania</option><option>Rwanda</option>
+          <option>Ethiopia</option><option>South Sudan</option><option>Nigeria</option><option>Ghana</option><option>United States</option><option>United Kingdom</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="phone">Phone</label><input class="form-control" id="phone" name="phone" type="tel" required maxlength="30" autocomplete="tel" placeholder="+2547..."></div>
+      <div class="form-group"><label for="administrator_name">Full name</label><input class="form-control" id="administrator_name" name="administrator_name" required maxlength="140" autocomplete="name"></div>
+      <div class="form-group"><label for="email">Email</label><input class="form-control" id="email" name="email" type="email" required maxlength="140" autocomplete="email"></div>
+      <div class="form-group"><label for="password">Password</label><input class="form-control" id="password" name="password" type="password" required minlength="12" maxlength="256" autocomplete="new-password"><small class="text-muted">Use at least 12 characters.</small></div>
+      <button id="submit-button" class="btn btn-primary btn-lg btn-block" type="submit">Create workspace</button>
+      <div id="registration-message" role="status" aria-live="polite" style="margin-top:16px;"></div>
+    </form>
+    <div id="registration-status" class="full-width" style="display:none;margin-top:24px;"></div>
+    </div>
+  </div>
+</div>
+<script src="/assets/frontend/js/tenant_registration.js?v=2"></script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{
+  "doctype": "DocType",
+  "name": "Tenant Registration",
+  "module": "Frontend",
+  "custom": 0,
+  "autoname": "format:TREG-{#####}",
+  "title_field": "company_name",
+  "search_fields": "company_name,email,phone,tenant_site,status",
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "track_changes": 1,
+  "fields": [
+    {
+      "fieldname": "company_name",
+      "label": "Company / Workspace Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "country",
+      "label": "Country",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "administrator_name",
+      "label": "Administrator Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "email",
+      "label": "Administrator Email",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "workspace_slug",
+      "label": "Workspace Slug",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "tenant_site",
+      "label": "Tenant Site",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "reqd": 1,
+      "options": "Pending\nProvisioning\nActive\nFailed",
+      "default": "Pending"
+    },
+    {
+      "fieldname": "admin_password",
+      "label": "Temporary Administrator Password",
+      "fieldtype": "Password",
+      "reqd": 0,
+      "hidden": 1
+    },
+    {
+      "fieldname": "request_ip",
+      "label": "Request IP",
+      "fieldtype": "Data",
+      "reqd": 0,
+      "hidden": 1
+    },
+    {
+      "fieldname": "provisioning_error",
+      "label": "Provisioning Error",
+      "fieldtype": "Small Text",
+      "reqd": 0,
+      "hidden": 1
+    },
+    {
+      "fieldname": "registered_at",
+      "label": "Registered At",
+      "fieldtype": "Datetime",
+      "reqd": 0
+    },
+    {
+      "fieldname": "provisioned_at",
+      "label": "Provisioned At",
+      "fieldtype": "Datetime",
+      "reqd": 0
+    },
+    {
+      "fieldname": "email_sent_at",
+      "label": "Email Sent At",
+      "fieldtype": "Datetime",
+      "reqd": 0
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0,
+      "submit": 0,
+      "cancel": 0,
+      "export": 1,
+      "report": 1,
+      "share": 1,
+      "print": 1,
+      "email": 1
+    }
+  ]
+}

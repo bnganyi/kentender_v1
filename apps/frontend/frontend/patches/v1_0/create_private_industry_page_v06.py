@@ -2,18 +2,19 @@ import frappe
 
 
 def execute():
-    create_public_industry_page()
+    create_private_industry_page()
 
 
-def create_public_industry_page():
-    frappe.db.sql("DELETE FROM `tabWeb Page` WHERE name = 'industry/public' OR route = 'industry/public'")
+def create_private_industry_page():
+    frappe.db.sql("DELETE FROM `tabWeb Page` WHERE name = 'industry/private' OR route = 'industry/private'")
     frappe.db.commit()
 
     page = frappe.new_doc("Web Page")
-    page.title = "Public Procurement Module"
-    page.route = "industry/public"
+    page.title = "Private Sector Procurement Module"
+    page.route = "industry/private"
     page.published = 1
     page.content_type = "HTML"
+    page.dynamic_template = 1
     page.full_width = 1
     page.show_title = 0
     page.main_section_html = PAGE_HTML
@@ -50,6 +51,8 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 ::-webkit-scrollbar-thumb:hover { background: var(--deep-blue); }
 
 .navbar-blur { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,0.1); }
+.kt-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+@media (max-width:767px) { .kt-header-actions { display:none !important; } }
 #mainNav { display:flex !important; align-items:center; gap:2rem; }
 @media (max-width:767px) { #mainNav { display:none !important; } }
 #mobileMenu:not(.hidden) { display:block !important; }
@@ -126,7 +129,7 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 .mono { font-family:'Space Mono', monospace; }
 
 .neon-glow {
-  box-shadow: 0 0 20px rgba(2,50,122,0.3),
+  box-shadow: 0 0 20px rgba(2,46,112,0.3),
               0 0 40px rgba(0,102,255,0.2),
               0 0 60px rgba(0,102,255,0.1);
 }
@@ -194,28 +197,14 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       </div>
     </div>
 
-   <div class="hidden md:block" style="display:block !important;">
-  <a href="/login" 
-     class="btn-primary text-sm"
-     style="display:inline-flex !important;
-            visibility:visible !important;
-            opacity:1 !important;
-            background:linear-gradient(135deg,#0047AB,#003580) !important;
-            color:#ffffff !important;
-            padding:12px 24px !important;
-            border-radius:10px !important;
-            font-weight:600 !important;
-            font-size:14px !important;
-            text-decoration:none !important;
-            align-items:center !important;
-            gap:8px !important;
-            white-space:nowrap !important;
-            min-width:180px !important;
-            justify-content:center !important;">
-    <i class="fas fa-rocket" style="color:#ffffff !important;"></i>
-    <span style="color:#ffffff !important;">Start Free Trial</span>
-  </a>
-</div>
+    <div class="kt-header-actions">
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
+      {% else %}
+      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+      {% endif %}
+    </div>
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
   </nav>
@@ -226,7 +215,12 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
       <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
-      <a href="/login" class="btn-primary text-sm inline-block mt-2">Start Free Trial</a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
+      {% else %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
+      <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -240,51 +234,51 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
     <div class="max-w-8xl mx-auto text-center">
       <div class="animate-in mb-12">
         <h1 class="text-3xl md:text-5xl mt-6 font-bold text-gray-600 mb-8 leading-tight">
-          Public Procurement<br>&amp; Asset Disposal Module
+          Private Sector Procurement<br>&amp; Contract Administration Module
         </h1>
         <p class="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
-          Manages end-to-end public procurement, asset disposal, and e-auctioning processes
+          Automates private sector procurement and sourcing activities
         </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 animate-in" style="animation-delay: 0.2s;">
         <div class="glass rounded-2xl p-8 text-left card-hover bg-black/5">
           <div class="flex items-start gap-4">
-            <i class="fas fa-file-alt text-cyan-600 text-3xl mt-1"></i>
+            <i class="fas fa-sitemap text-cyan-600 text-3xl mt-1"></i>
             <div>
-              <h3 class="text-2xl font-bold text-gray-800 mb-3">Electronic Tendering</h3>
-              <p class="text-lg text-gray-600">Supports electronic tendering, bid submission, evaluation, award, and online auctions</p>
+              <h3 class="text-2xl font-bold text-gray-800 mb-3">Flexible Workflows</h3>
+              <p class="text-lg text-gray-600">Supports flexible approval workflows and supplier management</p>
             </div>
           </div>
         </div>
 
         <div class="glass rounded-2xl p-8 text-left card-hover bg-black/5">
           <div class="flex items-start gap-4">
-            <i class="fas fa-balance-scale text-cyan-600 text-3xl mt-1"></i>
+            <i class="fas fa-file-contract text-cyan-600 text-3xl mt-1"></i>
             <div>
-              <h3 class="text-2xl font-bold text-gray-800 mb-3">Regulatory Compliance</h3>
-              <p class="text-lg text-gray-600">Ensures compliance with public procurement laws and regulations</p>
+              <h3 class="text-2xl font-bold text-gray-800 mb-3">Contract Management</h3>
+              <p class="text-lg text-gray-600">Manages contracts, renewals, and performance tracking</p>
             </div>
           </div>
         </div>
 
         <div class="glass rounded-2xl p-8 text-left card-hover bg-black/5">
           <div class="flex items-start gap-4">
-            <i class="fas fa-eye text-cyan-600 text-3xl mt-1"></i>
+            <i class="fas fa-chart-line text-cyan-600 text-3xl mt-1"></i>
             <div>
-              <h3 class="text-2xl font-bold text-gray-800 mb-3">Full Transparency</h3>
-              <p class="text-lg text-gray-600">Provides transparency through real-time bidding, audit trails, and public access to information</p>
+              <h3 class="text-2xl font-bold text-gray-800 mb-3">Operational Excellence</h3>
+              <p class="text-lg text-gray-600">Improves efficiency, cost control, and operational visibility</p>
             </div>
           </div>
         </div>
       </div>
 
       <div class="animate-in" style="animation-delay: 0.4s;">
-        <a href="https://epublic.midas.co.ke/#login"
+        <a href="https://eprivate.midas.co.ke/#login"
            class="inline-flex items-center bg-blue-800 py-3 px-6 rounded-full text-white font-semibold hover:bg-blue-700 transition-colors gap-3 neon-glow">
           <i class="fas fa-rocket mr-3"></i> Get Started
         </a>
-        <p class="text-gray-600 mt-10 text-lg">Transform your procurement process today</p>
+        <p class="text-gray-600 mt-10 text-lg">Streamline your private sector procurement today</p>
       </div>
     </div>
   </div>

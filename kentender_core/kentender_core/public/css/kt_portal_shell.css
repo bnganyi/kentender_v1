@@ -77,6 +77,50 @@
 .kt-industry.kt-portal .kt-portal-nav {
 	margin-left: auto;
 }
+.kt-industry.kt-portal .kt-portal-header-actions {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	margin-left: var(--kt-space-4);
+}
+.kt-industry.kt-portal .kt-portal-get-started,
+.kt-industry.kt-portal .kt-portal-dashboard {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 0 16px;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 700;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.kt-industry.kt-portal .kt-portal-get-started {
+	background: var(--kt-color-accent-700);
+	color: var(--kt-color-surface);
+}
+.kt-industry.kt-portal .kt-portal-dashboard {
+	border: 1px solid var(--kt-color-neutral-300);
+	background: var(--kt-color-surface);
+	color: var(--kt-color-text);
+}
+.kt-industry.kt-portal .kt-portal-get-started:hover,
+.kt-industry.kt-portal .kt-portal-dashboard:hover {
+	background: var(--kt-color-accent-100);
+	color: var(--kt-color-accent-800);
+}
+.kt-industry.kt-portal .kt-portal-get-started svg,
+.kt-industry.kt-portal .kt-portal-dashboard svg {
+	width: 16px;
+	height: 16px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
 /* Who is signed in: the same avatar, name and line beneath as Desk's user block */
 .kt-industry.kt-portal .kt-portal-identity-wrap {
 	position: relative;

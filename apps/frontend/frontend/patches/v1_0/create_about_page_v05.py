@@ -14,6 +14,7 @@ def create_about_page():
     page.route = "about"
     page.published = 1
     page.content_type = "HTML"
+    page.dynamic_template = 1
     page.full_width = 1
     page.show_title = 0
     page.main_section_html = PAGE_HTML
@@ -44,6 +45,8 @@ footer.web-footer { display: none !important; }
 }
 
 .navbar-blur { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,0.1); }
+.kt-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+@media (max-width:767px) { .kt-header-actions { display:none !important; } }
 #mainNav { display: flex !important; align-items: center; gap: 2rem; }
 @media (max-width: 767px) { #mainNav { display: none !important; } }
 
@@ -146,28 +149,14 @@ footer.web-footer { display: none !important; }
       </div>
     </div>
 
-    <div class="hidden md:block" style="display:block !important;">
-  <a href="/login" 
-     class="btn-primary text-sm"
-     style="display:inline-flex !important;
-            visibility:visible !important;
-            opacity:1 !important;
-            background:linear-gradient(135deg,#0047AB,#003580) !important;
-            color:#ffffff !important;
-            padding:12px 24px !important;
-            border-radius:10px !important;
-            font-weight:600 !important;
-            font-size:14px !important;
-            text-decoration:none !important;
-            align-items:center !important;
-            gap:8px !important;
-            white-space:nowrap !important;
-            min-width:180px !important;
-            justify-content:center !important;">
-    <i class="fas fa-rocket" style="color:#ffffff !important;"></i>
-    <span style="color:#ffffff !important;">Start Free Trial</span>
-  </a>
-</div>
+    <div class="kt-header-actions">
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
+      {% else %}
+      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+      {% endif %}
+    </div>
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
   </nav>
@@ -178,7 +167,12 @@ footer.web-footer { display: none !important; }
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
       <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
-      <a href="/login" class="btn-primary text-sm inline-block mt-2">Start Free Trial</a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
+      {% else %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
+      <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      {% endif %}
     </div>
   </div>
 </div>

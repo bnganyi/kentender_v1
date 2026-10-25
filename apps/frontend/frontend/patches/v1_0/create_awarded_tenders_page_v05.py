@@ -2,18 +2,19 @@ import frappe
 
 
 def execute():
-    create_all_tenders_page()
+    create_awarded_tenders_page()
 
 
-def create_all_tenders_page():
-    frappe.db.sql("DELETE FROM `tabWeb Page` WHERE name = 'tenders' OR route = 'tenders'")
+def create_awarded_tenders_page():
+    frappe.db.sql("DELETE FROM `tabWeb Page` WHERE name = 'contracts' OR route = 'contracts'")
     frappe.db.commit()
 
     page = frappe.new_doc("Web Page")
-    page.title = "All Tenders"
-    page.route = "tenders"
+    page.title = "Awarded Tenders"
+    page.route = "contracts"
     page.published = 1
     page.content_type = "HTML"
+    page.dynamic_template = 1
     page.full_width = 1
     page.show_title = 0
     page.main_section_html = PAGE_HTML
@@ -50,6 +51,8 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 ::-webkit-scrollbar-thumb:hover { background: var(--deep-blue); }
 
 .navbar-blur { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,0.1); }
+.kt-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+@media (max-width:767px) { .kt-header-actions { display:none !important; } }
 #mainNav { display:flex !important; align-items:center; gap:2rem; }
 @media (max-width:767px) { #mainNav { display:none !important; } }
 #mobileMenu:not(.hidden) { display:block !important; }
@@ -111,7 +114,7 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 .btn-secondary:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
 
 .badge { display:inline-block; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
-.badge-active { background: linear-gradient(135deg,#9edfc9,#aef7e0); color: rgb(15,15,15); }
+.badge-active { background: linear-gradient(135deg,#5db89a,#65c5a7); color:white; }
 .badge-category { background: linear-gradient(135deg, var(--deep-blue), var(--deep-blue)); color:white; }
 
 .card-hover { transition: all 0.4s cubic-bezier(0.4,0,0.2,.5); position:relative; overflow:hidden; }
@@ -133,7 +136,7 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
   background-size: 50px 50px;
 }
 
-.glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border:1px solid rgba(255,255,255,0.2); }
+.glass { backdrop-filter: blur(20px); border:1px solid rgba(255,255,255,0.2); }
 
 .blob { position:absolute; border-radius:50%; filter: blur(60px); opacity:0.3; animation: float 8s ease-in-out infinite; }
 .blob-1 { width:400px; height:400px; background: var(--primary-blue); top:-200px; right:-200px; }
@@ -156,15 +159,16 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 }
 #scrollTop.visible { opacity:1; visibility:visible; }
 #scrollTop:hover { transform: scale(1.1); }
+.neon-glow { box-shadow: 0 0 20px rgba(0,102,255,0.3), 0 0 40px rgba(0,102,255,0.2); }
 
 .filter-panel { transition: all 0.4s cubic-bezier(0.4,0,0.2,1); overflow:hidden; }
-.filter-panel.collapsed { max-height:10px; margin-bottom:24px; box-shadow:none; }
+.filter-panel.collapsed { max-height:80px; margin-bottom:2px; box-shadow:none; }
 .filter-panel.expanded { max-height:1200px; margin-bottom:48px; }
 .filter-content { transition: opacity 0.3s ease, transform 0.3s ease; }
 .filter-panel.collapsed .filter-content { opacity:0; transform: translateY(-20px); pointer-events:none; }
 .filter-panel.expanded .filter-content { opacity:1; transform: translateY(0); pointer-events:all; }
 .filter-toggle {
-  background: linear-gradient(135deg, #1f4fd8, #1f4fd8);
+  background: linear-gradient(135deg, var(--deep-blue), var(--deep-blue));
   color:white; border:none; padding:8px 24px; border-radius:12px;
   font-weight:600; cursor:pointer; transition: all 0.3s ease;
   display:flex; align-items:center; gap:8px;
@@ -240,28 +244,15 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       </div>
     </div>
 
-   <div class="hidden md:block" style="display:block !important;">
-  <a href="/login" 
-     class="btn-primary text-sm"
-     style="display:inline-flex !important;
-            visibility:visible !important;
-            opacity:1 !important;
-            background:linear-gradient(135deg,#0047AB,#003580) !important;
-            color:#ffffff !important;
-            padding:12px 24px !important;
-            border-radius:10px !important;
-            font-weight:600 !important;
-            font-size:14px !important;
-            text-decoration:none !important;
-            align-items:center !important;
-            gap:8px !important;
-            white-space:nowrap !important;
-            min-width:180px !important;
-            justify-content:center !important;">
-    <i class="fas fa-rocket" style="color:#ffffff !important;"></i>
-    <span style="color:#ffffff !important;">Start Free Trial</span>
-  </a>
-</div>
+    <div class="kt-header-actions">
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
+      {% else %}
+      <a href="/login" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+      {% endif %}
+    </div>
+
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
   </nav>
@@ -272,30 +263,35 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
       <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
-      <a href="/login" class="btn-primary text-sm inline-block mt-2">Start Free Trial</a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
+      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
+      {% else %}
+      <a href="/login" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      {% endif %}
     </div>
   </div>
 </div>
 
-<section class="relative py-20 overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50">
+<section class="relative py-24 overflow-hidden bg-gradient-to-br from-gray-50 to-green-50">
   <div class="absolute inset-0 pattern-grid opacity-50"></div>
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
 
-  <div class="container mx-auto relative mt-4 z-10 px-4">
+  <div class="container mx-auto relative z-10 px-4">
     <div class="text-center mb-16">
-      <h1 class="text-3xl md:text-5xl text-gray-600 font-bold mb-6">
-        All <span class="bg-gray-600 bg-clip-text text-transparent">Active Tenders</span>
+      <h1 class="text-3xl md:text-6xl font-bold text-gray-600 mb-6">
+        Awarded <span class="bg-gray-600 bg-clip-text text-transparent">Tenders</span>
       </h1>
       <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-        Browse thousands of verified government and private sector opportunities across Kenya
+        View recently awarded contracts across government and private sectors in Kenya
       </p>
     </div>
 
-    <div class="bg-black/5 py-4 px-4 rounded-3xl mb-4 flex justify-between items-center flex-wrap gap-3">
+    <div class="bg-black/5 py-4 px-4 rounded-3xl mb-8 flex justify-between items-center flex-wrap gap-3">
       <h2 class="flex items-center gap-2 font-bold text-lg">
         <i class="fas fa-filter text-green-600"></i>
-        <span>Active Tenders Filters</span>
+        <span>Awarded Tenders Filters</span>
       </h2>
       <button class="filter-toggle" id="filterToggle" type="button">
         <i class="fas fa-plus"></i>
@@ -303,7 +299,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       </button>
     </div>
 
-    <div class="filter-panel bg-[#0b1f3b]/5 rounded-2xl shadow-xl p-6 md:p-8" id="filterPanel">
+    <div class="filter-panel bg-[#0b1f3b]/5 shadow-xl rounded-2xl mb-8 p-6 md:p-8" id="filterPanel">
       <div class="filter-content" id="filterContent">
         <form class="space-y-6" onsubmit="event.preventDefault();">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -343,22 +339,22 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-2">Posting From</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
+              <label class="block text-sm font-medium mb-2">Award Date From</label>
+              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Posting To</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
+              <label class="block text-sm font-medium mb-2">Award Date To</label>
+              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Deadline From</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
+              <label class="block text-sm font-medium mb-2">Contract Start From</label>
+              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Deadline To</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
+              <label class="block text-sm font-medium mb-2">Contract End To</label>
+              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
               <label class="block text-sm font-medium mb-2">Value Range</label>
@@ -373,128 +369,133 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
           </div>
 
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 border-t-2 border-gray-200">
-            <button type="submit" class="btn-primary"><i class="fas fa-search"></i><span>Search For Tenders</span></button>
+            <button type="submit" class="btn-primary"><i class="fas fa-search"></i><span>Search Awarded Tenders</span></button>
             <button type="reset" class="btn-secondary"><i class="fas fa-redo"></i><span>Reset Filters</span></button>
           </div>
         </form>
       </div>
     </div>
-  </div>
 
-  <div class="container mx-auto flex flex-col gap-8 mb-16 px-4 relative z-10">
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">ICT</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">15 Mar 2026</div>
+    <div class="space-y-6 mb-16">
+      <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+            <div class="flex gap-2"><span class="badge badge-category text-xs">ROAD WORKS</span><span class="badge badge-active">Awarded</span></div>
+            <div class="flex items-center text-gray-600 gap-2">
+              <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Awarded Date:</div>
+              <div class="font-bold text-sm text-green-600 mono">12 Jan 2026</div>
+            </div>
+          </div>
+          <h3 class="text-xl font-bold mb-4 leading-tight">Rehabilitation of County Access Roads – Phase II</h3>
+          <div class="flex flex-col lg:flex-row justify-between gap-4">
+            <div class="flex flex-wrap gap-8">
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide mb-1">Winner</div><div class="font-bold text-green-700">Mavuno Roads Ltd</div></div>
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Kericho County</span></div>
+              <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Contract Value</div><div class="font-medium text-gray-800 mono">KES 412M</div></div>
+            </div>
+            <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
           </div>
         </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Supply &amp; Installation of Network Infrastructure</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Mombasa County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">KES 45M</div></div>
+      </div>
+
+      <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+            <div class="flex gap-2"><span class="badge badge-category text-xs">ICT</span><span class="badge badge-active">Awarded</span></div>
+            <div class="flex items-center text-gray-600 gap-2">
+              <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Awarded Date:</div>
+              <div class="font-bold text-sm text-green-600 mono">05 Feb 2026</div>
+            </div>
           </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
+          <h3 class="text-xl font-bold mb-4 leading-tight">Supply &amp; Configuration of Data Center Infrastructure</h3>
+          <div class="flex flex-col lg:flex-row justify-between gap-4">
+            <div class="flex flex-wrap gap-8">
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide mb-1">Winner</div><div class="font-bold text-green-700">Netcore Solutions Ltd</div></div>
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Nairobi County</span></div>
+              <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Contract Value</div><div class="font-medium text-gray-800 mono">KES 96M</div></div>
+            </div>
+            <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+            <div class="flex gap-2"><span class="badge badge-category text-xs">HEALTH</span><span class="badge badge-active">Awarded</span></div>
+            <div class="flex items-center text-gray-600 gap-2">
+              <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Awarded Date:</div>
+              <div class="font-bold text-sm text-green-600 mono">22 Dec 2025</div>
+            </div>
+          </div>
+          <h3 class="text-xl font-bold mb-4 leading-tight">Supply of Radiology &amp; Diagnostic Equipment</h3>
+          <div class="flex flex-col lg:flex-row justify-between gap-4">
+            <div class="flex flex-wrap gap-8">
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide mb-1">Winner</div><div class="font-bold text-green-700">Meditech Africa Ltd</div></div>
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Kisii County</span></div>
+              <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Contract Value</div><div class="font-medium text-gray-800 mono">KES 178M</div></div>
+            </div>
+            <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+            <div class="flex gap-2"><span class="badge badge-category text-xs">EDUCATION</span><span class="badge badge-active">Awarded</span></div>
+            <div class="flex items-center text-gray-600 gap-2">
+              <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Awarded Date:</div>
+              <div class="font-bold text-sm text-green-600 mono">18 Jan 2026</div>
+            </div>
+          </div>
+          <h3 class="text-xl font-bold mb-4 leading-tight">Construction of Technical Training Workshops</h3>
+          <div class="flex flex-col lg:flex-row justify-between gap-4">
+            <div class="flex flex-wrap gap-8">
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide mb-1">Winner</div><div class="font-bold text-green-700">Prime Builders Kenya</div></div>
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Nyeri County</span></div>
+              <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Contract Value</div><div class="font-medium text-gray-800 mono">KES 245M</div></div>
+            </div>
+            <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
+            <div class="flex gap-2"><span class="badge badge-category text-xs">AGRICULTURE</span><span class="badge badge-active">Awarded</span></div>
+            <div class="flex items-center text-gray-600 gap-2">
+              <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Awarded Date:</div>
+              <div class="font-bold text-sm text-green-600 mono">30 Nov 2025</div>
+            </div>
+          </div>
+          <h3 class="text-xl font-bold mb-4 leading-tight">Supply of Irrigation Pumps &amp; Farm Inputs</h3>
+          <div class="flex flex-col lg:flex-row justify-between gap-4">
+            <div class="flex flex-wrap gap-8">
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide mb-1">Winner</div><div class="font-bold text-green-700">GreenGrow Supplies Ltd</div></div>
+              <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Bungoma County</span></div>
+              <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Contract Value</div><div class="font-medium text-gray-800 mono">KES 89M</div></div>
+            </div>
+            <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">HEALTH</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">02 Apr 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Procurement of Diagnostic Medical Equipment</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Kisumu County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">Refer Document</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
+    <div class="flex justify-center items-center gap-2 flex-wrap animate-in">
+      <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
+      <button class="pagination-btn active">1</button>
+      <button class="pagination-btn">2</button>
+      <button class="pagination-btn">3</button>
+      <span class="text-gray-600">...</span>
+      <button class="pagination-btn">18</button>
+      <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
     </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">ROAD WORKS</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">20 Mar 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Rehabilitation of Urban Access Roads</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Nakuru County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">KES 120M</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">EDUCATION</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">10 Apr 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Construction of Modern Science Laboratories</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Machakos County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">KES 68M</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">AGRICULTURE</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">05 May 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Supply of Certified Maize &amp; Bean Seeds</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Trans Nzoia County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">Refer Document</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="flex justify-center items-center gap-2 flex-wrap animate-in relative z-10">
-    <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
-    <button class="pagination-btn active">1</button>
-    <button class="pagination-btn">2</button>
-    <button class="pagination-btn">3</button>
-    <span class="text-gray-600">...</span>
-    <button class="pagination-btn">24</button>
-    <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
   </div>
 </section>
 
-<button id="scrollTop">
+<button id="scrollTop" class="neon-glow">
   <i class="fas fa-arrow-up text-2xl"></i>
 </button>
 
@@ -589,7 +590,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
   if (filterPanel && filterToggle) {
     var toggleIcon = filterToggle.querySelector('i');
     var toggleText = filterToggle.querySelector('.toggle-text');
-    var saved = localStorage.getItem('filterPanelCollapsed');
+    var saved = localStorage.getItem('awardedFilterPanelCollapsed');
     if (saved !== 'false') collapse();
     filterToggle.addEventListener('click', function() {
       if (filterPanel.classList.contains('collapsed')) expand();
@@ -599,13 +600,13 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       filterPanel.classList.remove('expanded'); filterPanel.classList.add('collapsed');
       toggleIcon.classList.remove('fa-chevron-down'); toggleIcon.classList.add('fa-chevron-up');
       if (toggleText) toggleText.textContent = 'Show Filters';
-      localStorage.setItem('filterPanelCollapsed', 'true');
+      localStorage.setItem('awardedFilterPanelCollapsed', 'true');
     }
     function expand() {
       filterPanel.classList.remove('collapsed'); filterPanel.classList.add('expanded');
       toggleIcon.classList.remove('fa-chevron-up'); toggleIcon.classList.add('fa-chevron-down');
       if (toggleText) toggleText.textContent = 'Hide Filters';
-      localStorage.setItem('filterPanelCollapsed', 'false');
+      localStorage.setItem('awardedFilterPanelCollapsed', 'false');
     }
   }
 
