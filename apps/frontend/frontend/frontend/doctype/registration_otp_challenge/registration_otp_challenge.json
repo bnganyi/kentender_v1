@@ -1,0 +1,87 @@
+{
+  "doctype": "DocType",
+  "name": "Registration OTP Challenge",
+  "module": "Frontend",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 0,
+  "fields": [
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "email_otp_hash",
+      "label": "Email OTP Hash",
+      "fieldtype": "Data",
+      "hidden": 1
+    },
+    {
+      "fieldname": "sms_otp_hash",
+      "label": "SMS OTP Hash",
+      "fieldtype": "Data",
+      "hidden": 1
+    },
+    {
+      "fieldname": "email_verified",
+      "label": "Email Verified",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "sms_verified",
+      "label": "SMS Verified",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "email_attempts",
+      "label": "Email Attempts",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "sms_attempts",
+      "label": "SMS Attempts",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "expires_at",
+      "label": "Expires At",
+      "fieldtype": "Datetime",
+      "reqd": 1
+    },
+    {
+      "fieldname": "verification_token",
+      "label": "Verification Token",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1,
+      "hidden": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 0,
+      "export": 0,
+      "share": 0,
+      "print": 0,
+      "email": 0
+    }
+  ]
+}

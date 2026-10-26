@@ -26,7 +26,8 @@
       "fieldname": "phone",
       "label": "Phone",
       "fieldtype": "Data",
-      "reqd": 1
+      "reqd": 1,
+      "unique": 1
     },
     {
       "fieldname": "administrator_name",
@@ -38,19 +39,63 @@
       "fieldname": "email",
       "label": "Administrator Email",
       "fieldtype": "Data",
-      "reqd": 1
+      "reqd": 1,
+      "unique": 1
     },
     {
       "fieldname": "workspace_slug",
-      "label": "Workspace Slug",
+      "label": "Workspace Name",
       "fieldtype": "Data",
-      "reqd": 1
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "industry",
+      "label": "Industry",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "organization_size",
+      "label": "Organization Size",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "financial_year_start",
+      "label": "Financial Year Start",
+      "fieldtype": "Data",
+      "default": "07-01"
+    },
+    {
+      "fieldname": "currency",
+      "label": "Default Currency",
+      "fieldtype": "Link",
+      "options": "Currency"
+    },
+    {
+      "fieldname": "terms_accepted",
+      "label": "Terms and Privacy Accepted",
+      "fieldtype": "Check",
+      "reqd": 1,
+      "default": "0"
+    },
+    {
+      "fieldname": "terms_accepted_at",
+      "label": "Terms Accepted At",
+      "fieldtype": "Datetime"
     },
     {
       "fieldname": "tenant_site",
       "label": "Tenant Site",
       "fieldtype": "Data",
-      "reqd": 1
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "status_token",
+      "label": "Public Status Token",
+      "fieldtype": "Data",
+      "reqd": 0,
+      "hidden": 1
     },
     {
       "fieldname": "status",
