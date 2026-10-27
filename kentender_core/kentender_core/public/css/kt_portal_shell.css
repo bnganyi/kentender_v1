@@ -80,6 +80,7 @@
 .kt-industry.kt-portal .kt-portal-header-actions {
 	display: flex;
 	align-items: center;
+	gap: 12px;
 	flex-shrink: 0;
 	margin-left: var(--kt-space-4);
 }
@@ -102,9 +103,11 @@
 	color: var(--kt-color-surface);
 }
 .kt-industry.kt-portal .kt-portal-dashboard {
-	border: 1px solid var(--kt-color-neutral-300);
-	background: var(--kt-color-surface);
-	color: var(--kt-color-text);
+	margin-right: 8px;
+	border: 1px solid #e1e7ee;
+	border-radius: 10px;
+	background: #f1f3f5;
+	color: #344054;
 }
 .kt-industry.kt-portal .kt-portal-get-started:hover,
 .kt-industry.kt-portal .kt-portal-dashboard:hover {

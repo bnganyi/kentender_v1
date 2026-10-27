@@ -48,18 +48,20 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 40px 20px;
+		padding: 24px 20px;
 	}
 	.tenant-registration-card {
 		width: 100%;
-		max-width: 480px;
+		max-width: 520px;
 	}
 	.registration-stepper {
+		--step-dot-size: 30px;
+		--step-line-gap: 7px;
 		position: relative;
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
-		margin: 24px 0 30px;
-		padding: 14px 8px 0;
+		margin: 16px 0 20px;
+		padding: 8px 8px 0;
 		list-style: none;
 		isolation: isolate;
 	}
@@ -69,7 +71,7 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 9px;
+		gap: 6px;
 		min-width: 0;
 		color: #738196;
 		font-size: 12px;
@@ -79,13 +81,14 @@
 	.registration-stepper li::before {
 		position: absolute;
 		z-index: -1;
-		top: 15px;
-		left: -50%;
-		width: 100%;
+		top: calc(var(--step-dot-size) / 2);
+		left: calc(-50% + var(--step-dot-size) / 2 + var(--step-line-gap));
+		width: calc(100% - var(--step-dot-size) - var(--step-line-gap) - var(--step-line-gap));
 		height: 3px;
 		border-radius: 99px;
 		background: #e6ebf1;
 		content: "";
+		transform: translateY(-50%);
 	}
 	.registration-stepper li:first-child::before {
 		display: none;
@@ -93,8 +96,8 @@
 	.registration-step-number {
 		position: relative;
 		display: grid;
-		width: 34px;
-		height: 34px;
+		width: 30px;
+		height: 30px;
 		place-items: center;
 		border: 2px solid #dce4ec;
 		border-radius: 50%;
@@ -144,7 +147,7 @@
 	#registration-success h2 {
 		margin: 0 0 6px;
 		color: #0a1622;
-		font-size: 20px;
+		font-size: 18px;
 		font-weight: 700;
 	}
 	.registration-step-description {
@@ -156,7 +159,8 @@
 	.registration-step-content {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 16px;
+		column-gap: 14px;
+		row-gap: 10px;
 	}
 	.registration-step-content .full-width {
 		grid-column: 1 / -1;
@@ -165,11 +169,11 @@
 		display: flex;
 		justify-content: space-between;
 		gap: 12px;
-		margin-top: 24px;
+		margin-top: 16px;
 	}
 	.registration-actions button {
 		min-width: 120px;
-		height: 42px;
+		height: 38px;
 		border-radius: 999px;
 		font-weight: 600;
 	}
@@ -232,13 +236,13 @@
 	.tenant-registration-card h1 {
 		margin: 0 0 8px;
 		color: #0a1622;
-		font-size: 32px;
+		font-size: 28px;
 		line-height: 1.15;
 		font-weight: 700;
 		letter-spacing: 0;
 	}
 	.tenant-registration-card .text-muted {
-		margin: 0 0 28px;
+		margin: 0 0 16px;
 		color: #7c8796;
 		line-height: 1.5;
 	}
@@ -254,14 +258,14 @@
 	}
 	#tenant-registration-form label {
 		display: block;
-		margin: 0 0 8px;
+		margin: 0 0 5px;
 		color: #364152;
-		font-size: 13px;
+		font-size: 12px;
 		font-weight: 600;
 	}
 	#tenant-registration-form .form-control {
 		width: 100%;
-		height: 42px;
+		height: 38px;
 		border: 0;
 		border-radius: 999px;
 		padding: 0 18px;
@@ -280,7 +284,7 @@
 	}
 	#tenant-registration-form small {
 		display: block;
-		margin-top: 7px;
+		margin-top: 3px;
 	}
 	#submit-button {
 		width: 100%;
@@ -370,20 +374,13 @@
 			font-size: 27px;
 		}
 		.registration-stepper {
-			margin: 20px -4px 26px;
+			margin: 14px -4px 18px;
 			padding-right: 0;
 			padding-left: 0;
 		}
 		.registration-stepper li {
-			gap: 7px;
+			gap: 5px;
 			font-size: 10px;
-		}
-		.registration-step-number {
-			width: 30px;
-			height: 30px;
-		}
-		.registration-stepper li::before {
-			top: 14px;
 		}
 		.registration-actions button {
 			min-width: 0;
@@ -421,11 +418,9 @@
 					aria-labelledby="step-1-title"
 				>
 					<h2 id="step-1-title">Administrator account</h2>
-					<p class="registration-step-description">
-						Enter the organization and administrator details.
-					</p>
+
 					<div class="registration-step-content">
-						<div class="form-group full-width">
+						<div class="form-group">
 							<label for="company_name">Company / organization name</label
 							><input
 								class="form-control"
@@ -435,6 +430,18 @@
 								maxlength="140"
 								autocomplete="organization"
 								placeholder="Nairobi County Government"
+							/>
+						</div>
+						<div class="form-group">
+							<label for="email">Administrator email</label
+							><input
+								class="form-control"
+								id="email"
+								name="email"
+								type="email"
+								required
+								maxlength="140"
+								autocomplete="email"
 							/>
 						</div>
 						<div class="form-group">
@@ -494,18 +501,6 @@
 								required
 								maxlength="140"
 								autocomplete="name"
-							/>
-						</div>
-						<div class="form-group full-width">
-							<label for="email">Administrator email</label
-							><input
-								class="form-control"
-								id="email"
-								name="email"
-								type="email"
-								required
-								maxlength="140"
-								autocomplete="email"
 							/>
 						</div>
 						<div class="form-group">

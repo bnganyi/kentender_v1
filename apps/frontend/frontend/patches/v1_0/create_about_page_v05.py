@@ -46,6 +46,11 @@ footer.web-footer { display: none !important; }
 
 .navbar-blur { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,0.1); }
 .kt-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.kt-header-actions a[href="/app/home"], #mobileMenu a[href="/app/home"] {
+  background:#f1f3f5 !important; color:#344054 !important;
+  border:1px solid #e1e7ee !important; border-radius:10px !important;
+  padding:10px 16px !important; margin-right:8px !important;
+}
 @media (max-width:767px) { .kt-header-actions { display:none !important; } }
 #mainNav { display: flex !important; align-items: center; gap: 2rem; }
 @media (max-width: 767px) { #mainNav { display: none !important; } }

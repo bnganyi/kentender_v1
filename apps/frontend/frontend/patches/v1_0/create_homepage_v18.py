@@ -267,6 +267,11 @@ footer.web-footer { display: none !important; }
   display: inline-flex !important;
   align-items: center;
   gap: 8px;
+  margin-right: 8px !important;
+  padding: 12px 16px !important;
+  border: 1px solid #e1e7ee !important;
+  border-radius: 10px !important;
+  background: #f1f3f5 !important;
   color: #0047AB !important;
   font-weight: 600;
   text-decoration: none;
