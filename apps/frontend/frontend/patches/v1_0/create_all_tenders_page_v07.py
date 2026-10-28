@@ -250,9 +250,9 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
 
     <div class="kt-header-actions">
       {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
       <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
       {% else %}
-      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
       <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
       {% endif %}
     </div>
@@ -267,9 +267,9 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
       {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
       {% else %}
-      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
       {% endif %}
     </div>
