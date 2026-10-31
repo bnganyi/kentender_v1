@@ -212,10 +212,12 @@ footer.web-footer { display: none !important; }
         <i class="fas fa-table-columns"></i>
         <span>Go to Dashboard</span>
       </a>
+      {% if frappe.session.user == 'Guest' %}
       <a href="/tenant_registration" id="kt-start-trial" class="kt-action-button">
         <i class="fas fa-rocket"></i>
         <span>Get Started</span>
       </a>
+      {% endif %}
       {% if frappe.session.user != 'Guest' %}
       <div class="kt-profile-wrap">
         <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
@@ -247,7 +249,9 @@ footer.web-footer { display: none !important; }
       <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
       <div class="flex flex-wrap gap-3 pt-2">
         <a href="/app/home" class="kt-action-button"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+        {% if frappe.session.user == 'Guest' %}
         <a href="/tenant_registration" class="kt-action-button"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+        {% endif %}
       </div>
       {% if frappe.session.user != 'Guest' %}
       <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
