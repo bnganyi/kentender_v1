@@ -282,7 +282,7 @@ def _run_onboarding(bench, site, payload):
                 "--site",
                 site,
                 "execute",
-                "frontend.services.tenant_onboarding.initialize_tenant_from_file",
+                "kentender_core.services.tenant_onboarding.initialize_tenant_from_file",
             ],
             timeout=900,
             extra_env={
