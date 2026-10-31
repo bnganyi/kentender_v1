@@ -215,8 +215,8 @@ footer.web-footer { display: none !important; }
       </a>
       <div class="kt-profile-wrap">
         <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
-          <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.utils.get_fullname(frappe.session.user)[0:1]|upper }}</span>
-          <span>{{ frappe.utils.get_fullname(frappe.session.user) }}</span>
+          <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span>
+          <span>{{ frappe.session.user }}</span>
           <i class="fas fa-chevron-down kt-profile-chevron"></i>
         </button>
         <div id="kt-profile-menu" role="menu" hidden>
@@ -225,7 +225,7 @@ footer.web-footer { display: none !important; }
         </div>
       </div>
       {% else %}
-      <a href="/login" id="kt-start-trial">
+      <a href="/tenant_registration" id="kt-start-trial">
         <i class="fas fa-rocket"></i>
         <span>Get Started</span>
       </a>
@@ -250,7 +250,7 @@ footer.web-footer { display: none !important; }
       <a href="/app/home" class="btn-primary text-sm inline-block mt-2"><i class="fas fa-table-columns mr-2"></i>Go to Dashboard</a>
       <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
       {% else %}
-      <a href="/login" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
       {% endif %}
     </div>
   </div>
@@ -267,6 +267,11 @@ footer.web-footer { display: none !important; }
   display: inline-flex !important;
   align-items: center;
   gap: 8px;
+  margin-right: 8px !important;
+  padding: 12px 16px !important;
+  border: 1px solid #e1e7ee !important;
+  border-radius: 10px !important;
+  background: #f1f3f5 !important;
   color: #0047AB !important;
   font-weight: 600;
   text-decoration: none;

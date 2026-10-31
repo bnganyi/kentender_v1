@@ -209,6 +209,10 @@ footer.web-footer { display: none !important; }
 
     <div id="kt-header-actions" class="kt-header-actions">
       {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" id="kt-dashboard-button">
+        <i class="fas fa-table-columns"></i>
+        <span>Go to Dashboard</span>
+      </a>
       <div class="kt-profile-wrap">
         <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
           <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span>
@@ -221,10 +225,6 @@ footer.web-footer { display: none !important; }
         </div>
       </div>
       {% else %}
-      <a href="/app/home" id="kt-dashboard-button">
-        <i class="fas fa-table-columns"></i>
-        <span>Go to Dashboard</span>
-      </a>
       <a href="/tenant_registration" id="kt-start-trial">
         <i class="fas fa-rocket"></i>
         <span>Get Started</span>
@@ -247,9 +247,9 @@ footer.web-footer { display: none !important; }
       <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
       <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
       {% if frappe.session.user != 'Guest' %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2"><i class="fas fa-table-columns mr-2"></i>Go to Dashboard</a>
       <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
       {% else %}
-      <a href="/app/home" class="btn-primary text-sm inline-block mt-2"><i class="fas fa-table-columns mr-2"></i>Go to Dashboard</a>
       <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
       {% endif %}
     </div>
@@ -263,18 +263,19 @@ footer.web-footer { display: none !important; }
   opacity: 1 !important;
   flex-shrink: 0 !important;
 }
-#kt-dashboard-button {
+#kt-dashboard-button,
+#mobileMenu a[href="/app/home"] {
   display: inline-flex !important;
-  align-items: center;
+  align-items: center !important;
   gap: 8px;
   margin-right: 8px !important;
-  padding: 12px 16px !important;
+  padding: 10px 16px !important;
   border: 1px solid #e1e7ee !important;
   border-radius: 10px !important;
   background: #f1f3f5 !important;
-  color: #0047AB !important;
+  color: #344054 !important;
   font-weight: 600;
-  text-decoration: none;
+  text-decoration: none !important;
   white-space: nowrap;
 }
 .kt-profile-wrap { position: relative; }
