@@ -57,7 +57,7 @@
 	}
 	.tenant-registration-card {
 		width: 100%;
-		max-width: 560px;
+		max-width: 600px;
 		padding: 32px;
 		border: 1px solid #e8edf2;
 		border-radius: 16px;
@@ -69,7 +69,7 @@
 		--step-line-gap: 7px;
 		position: relative;
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(5, minmax(0, 1fr));
 		margin: 16px 0 20px;
 		padding: 8px 8px 0;
 		list-style: none;
@@ -200,11 +200,18 @@
 		background: #fff;
 		color: #344054;
 	}
+	#send-otp-button {
+		margin-bottom: 16px;
+	}
 	.otp-channel {
 		padding: 16px;
 		border: 1px solid #e5eaf0;
 		border-radius: 12px;
 		background: #fbfcfe;
+	}
+	.otp-panel:not([hidden]) {
+		display: grid;
+		gap: 16px;
 	}
 	.otp-channel label {
 		display: block;
@@ -275,7 +282,7 @@
 	}
 	#tenant-registration-form {
 		display: block;
-		max-width: 340px;
+		max-width: 476px;
 		margin: 0 auto;
 	}
 	#tenant-registration-form .form-group {
@@ -388,17 +395,17 @@
 
 	@media (min-width: 768px) {
 		.tenant-registration-card {
-			width: calc(100% + 24px);
+			width: calc(100% + 40px);
 			flex-shrink: 0;
 		}
 		html::before {
 			content: "";
 			position: fixed;
 			inset: 0 auto 0 0;
-			width: 50%;
+			width: 45%;
 			height: 100vh;
 			background-color: #0a1622;
-			background-image: url("/assets/frontend/images/kentender_login.png");
+			background-image: url("/assets/frontend/images/kentender_login.svg");
 			border-radius: 0 24px 24px 0;
 			background-repeat: no-repeat;
 			background-position: center;
@@ -411,7 +418,7 @@
 			z-index: 1;
 			left: 48px;
 			bottom: 220px;
-			width: calc(50% - 96px);
+			width: calc(45% - 96px);
 			color: #fff;
 			font-size: 28px;
 			font-weight: 700;
@@ -425,7 +432,7 @@
 			z-index: 1;
 			left: 48px;
 			bottom: 140px;
-			width: calc(50% - 96px);
+			width: calc(45% - 96px);
 			color: rgba(255, 255, 255, 0.82);
 			font-size: 20px;
 			line-height: 1.4;
@@ -435,8 +442,8 @@
 			z-index: 2;
 		}
 		.tenant-registration-form-wrap {
-			width: 50%;
-			margin-left: 50%;
+			width: 55%;
+			margin-left: 45%;
 		}
 	}
 	@media (max-width: 767px) {
@@ -490,10 +497,13 @@
 					<span class="registration-step-number">2</span><span>Organization</span>
 				</li>
 				<li data-step-indicator="3">
-					<span class="registration-step-number">3</span><span>Verify</span>
+					<span class="registration-step-number">3</span><span>Email</span>
 				</li>
 				<li data-step-indicator="4">
-					<span class="registration-step-number">4</span><span>Complete</span>
+					<span class="registration-step-number">4</span><span>SMS</span>
+				</li>
+				<li data-step-indicator="5">
+					<span class="registration-step-number">5</span><span>Complete</span>
 				</li>
 			</ol>
 			<form id="tenant-registration-form">
@@ -502,7 +512,6 @@
 					data-step-panel="1"
 					aria-labelledby="step-1-title"
 				>
-
 					<div class="registration-step-content">
 						<div class="form-group">
 							<label for="company_name">Organization name</label
@@ -708,13 +717,13 @@
 					aria-labelledby="step-3-title"
 					hidden
 				>
-					<h2 id="step-3-title">Verify your contact details</h2>
+					<h2 id="step-3-title">Verify your email</h2>
 					<p class="registration-step-description">
-						We’ll send a one-time code to the email and phone number you entered.
+						Enter the one-time code sent to your administrator email.
 					</p>
 					<input type="hidden" id="verification_token" name="verification_token" />
 					<button id="send-otp-button" class="btn btn-secondary" type="button">
-						Send email and SMS codes
+						Send verification codes
 					</button>
 					<div id="otp-panel" class="otp-panel" hidden>
 						<div class="otp-channel">
@@ -742,34 +751,54 @@
 								></span>
 							</div>
 						</div>
-						<div class="otp-channel">
-							<label for="sms_otp">SMS verification code</label
-							><input
-								class="form-control"
-								id="sms_otp"
-								inputmode="numeric"
-								maxlength="6"
-								pattern="[0-9]{6}"
-								autocomplete="one-time-code"
-								placeholder="6-digit code"
-							/>
-							<div class="otp-channel-actions">
-								<button
-									id="verify-sms-button"
-									class="btn btn-secondary"
-									type="button"
-								>
-									Verify phone</button
-								><span
-									id="sms-verified"
-									class="otp-verified"
-									aria-live="polite"
-								></span>
-							</div>
-						</div>
 					</div>
 					<div class="registration-actions">
 						<button class="btn btn-secondary" type="button" data-previous-step="2">
+							Back</button
+						><button
+							id="continue-to-sms-button"
+							class="btn btn-primary"
+							type="button"
+							data-next-step="4"
+							disabled
+						>
+							Continue to SMS
+						</button>
+					</div>
+				</section>
+				<section
+					class="registration-step"
+					data-step-panel="4"
+					aria-labelledby="step-4-title"
+					hidden
+				>
+					<h2 id="step-4-title">Verify your phone</h2>
+					<p class="registration-step-description">
+						Enter the one-time code sent by SMS to your contact phone.
+					</p>
+					<div class="otp-channel">
+						<label for="sms_otp">SMS verification code</label
+						><input
+							class="form-control"
+							id="sms_otp"
+							inputmode="numeric"
+							maxlength="6"
+							pattern="[0-9]{6}"
+							autocomplete="one-time-code"
+							placeholder="6-digit code"
+						/>
+						<div class="otp-channel-actions">
+							<button id="verify-sms-button" class="btn btn-secondary" type="button">
+								Verify phone</button
+							><span
+								id="sms-verified"
+								class="otp-verified"
+								aria-live="polite"
+							></span>
+						</div>
+					</div>
+					<div class="registration-actions">
+						<button class="btn btn-secondary" type="button" data-previous-step="3">
 							Back</button
 						><button id="submit-button" class="btn btn-primary" type="submit" disabled>
 							Create workspace
@@ -785,12 +814,12 @@
 			</form>
 			<section
 				id="registration-success"
-				data-step-panel="4"
-				aria-labelledby="step-4-title"
+				data-step-panel="5"
+				aria-labelledby="step-5-title"
 				hidden
 			>
 				<div class="registration-success-mark" aria-hidden="true">✓</div>
-				<h2 id="step-4-title">Workspace request received</h2>
+				<h2 id="step-5-title">Workspace request received</h2>
 				<p
 					id="registration-status"
 					class="registration-step-description"
@@ -811,5 +840,5 @@
 		</div>
 	</div>
 </div>
-<script src="/assets/frontend/js/tenant_registration.js?v=5"></script>
+<script src="/assets/frontend/js/tenant_registration.js?v=7"></script>
 {% endblock %}

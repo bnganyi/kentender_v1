@@ -22,6 +22,7 @@
 	const emailVerified = document.getElementById("email-verified");
 	const smsVerified = document.getElementById("sms-verified");
 	const sendOtpButton = document.getElementById("send-otp-button");
+	const continueToSmsButton = document.getElementById("continue-to-sms-button");
 
 	let emailOk = false;
 	let smsOk = false;
@@ -89,6 +90,7 @@
 
 	function updateSubmit() {
 		button.disabled = !(emailOk && smsOk && tokenField.value);
+		continueToSmsButton.disabled = !(emailOk && tokenField.value);
 	}
 
 	function showStep(step) {
@@ -98,9 +100,11 @@
 		});
 		stepIndicators.forEach((indicator) => {
 			const indicatorStep = Number(indicator.dataset.stepIndicator);
-			indicator.classList.toggle("is-active", indicatorStep === step);
-			indicator.classList.toggle("is-complete", indicatorStep < step);
-			if (indicatorStep === step) {
+			const isFinalComplete = step === 5 && indicatorStep === 5;
+			const isActive = indicatorStep === step && !isFinalComplete;
+			indicator.classList.toggle("is-active", isActive);
+			indicator.classList.toggle("is-complete", indicatorStep < step || isFinalComplete);
+			if (isActive) {
 				indicator.setAttribute("aria-current", "step");
 			} else {
 				indicator.removeAttribute("aria-current");
@@ -375,7 +379,7 @@
 			showMessage(error.message || "Could not send verification codes.", "error");
 		} finally {
 			sendOtpButton.disabled = false;
-			sendOtpButton.textContent = "Send email and SMS codes";
+			sendOtpButton.textContent = "Send verification codes";
 		}
 	});
 
@@ -460,7 +464,7 @@
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
 
-		if (currentStep !== 3 || !emailOk || !smsOk || !tokenField.value) {
+		if (currentStep !== 4 || !emailOk || !smsOk || !tokenField.value) {
 			showMessage("Verify both email and phone first.", "error");
 			return;
 		}
@@ -489,7 +493,7 @@
 			const result = await callApi("frontend.api.tenant_registration.register_tenant", args);
 
 			showMessage(result.message, "success", true);
-			showStep(4);
+			showStep(5);
 			statusBox.textContent = result.message;
 
 			if (result.status_token) {
