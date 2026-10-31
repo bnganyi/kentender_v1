@@ -2,61 +2,239 @@ import re
 import secrets
 import hashlib
 from datetime import datetime
+
 import frappe
 from frappe import _
 from frappe.utils import cint, now_datetime, validate_email_address
 
+
 REGISTRATION_DOCTYPE = "Tenant Registration"
+OTP_DOCTYPE = "Registration OTP Challenge"
+
+
+# ---------------------------------------------------------------------
+# NORMALIZATION
+# ---------------------------------------------------------------------
 
 def _normalize_email(value):
     return (value or "").strip().lower()
 
+
 def _normalize_phone(value):
-    # Keep a leading + and digits only. For production, consider phonenumbers
-    # to validate country-specific numbering plans.
     value = (value or "").strip()
-    return ("+" if value.startswith("+") else "") + re.sub(r"\D", "", value)
+    return ("+" if value.startswith("+") else "") + re.sub(r"\\D", "", value)
+
+
+def _phone_digits(value):
+    return re.sub(r"\\D", "", value or "")
+
 
 def _slugify(value):
     value = (value or "").strip().lower()
     value = re.sub(r"[^a-z0-9]+", "-", value).strip("-")
     return value[:50].strip("-")
 
+
+def _get_site_name(slug):
+    base_domain = (
+        frappe.conf.get("tenant_registration_base_domain") or "midas.co.ke"
+    ).strip(".").lower()
+    return f"{slug}.{base_domain}"
+
+
+def _phone_sql_expression(column_name):
+    expression = column_name
+    for character in (" ", "-", "(", ")", "+", ".", "/"):
+        expression = f"REPLACE({expression}, '{character}', '')"
+    return expression
+
+
+# ---------------------------------------------------------------------
+# DUPLICATE CHECKS
+# ---------------------------------------------------------------------
+
+def _phone_exists(phone):
+    """Compare phone numbers as digits only across registrations and contacts."""
+    digits = _phone_digits(phone)
+    if not digits:
+        return False
+
+    registration_expr = _phone_sql_expression("phone")
+    registration_match = frappe.db.sql(
+        f"""
+        SELECT name
+          FROM `tab{REGISTRATION_DOCTYPE}`
+         WHERE {registration_expr} = %s
+         LIMIT 1
+        """,
+        (digits,),
+    )
+    if registration_match:
+        return True
+
+    contact_expr = _phone_sql_expression("phone")
+    contact_match = frappe.db.sql(
+        f"""
+        SELECT parent
+          FROM `tabContact Phone`
+         WHERE {contact_expr} = %s
+         LIMIT 1
+        """,
+        (digits,),
+    )
+    return bool(contact_match)
+
+
 def _ensure_not_duplicate(company_name, email, phone, slug):
-    # Use database queries rather than trusting client-side validation.
     checks = [
         ("email", email, "An account with this email already exists."),
-        ("phone", phone, "An account with this phone number already exists."),
         ("workspace_slug", slug, "This workspace address is already registered."),
     ]
+
     for field, value, message in checks:
         if value and frappe.db.exists(REGISTRATION_DOCTYPE, {field: value}):
             frappe.throw(_(message), title=_("Already registered"))
 
-    # Check the central registry and the main ERPNext site's own records.
     existing = frappe.db.sql(
-        """select name from `tabTenant Registration`
-           where lower(company_name) = lower(%s) limit 1""",
+        """
+        SELECT name
+          FROM `tabTenant Registration`
+         WHERE LOWER(company_name) = LOWER(%s)
+         LIMIT 1
+        """,
         (company_name,),
     )
+
     if existing or frappe.db.exists("Company", {"company_name": company_name}):
-        frappe.throw(_("A workspace with this company name already exists."),
-                     title=_("Already registered"))
+        frappe.throw(
+            _("A workspace with this company name already exists."),
+            title=_("Already registered"),
+        )
 
     if frappe.db.exists("User", email):
-        frappe.throw(_("A user with this email already exists in the main tenant."),
-                     title=_("Already registered"))
+        frappe.throw(
+            _("A user with this email already exists in the main tenant."),
+            title=_("Already registered"),
+        )
 
-    # Check phone numbers recorded against Contacts in the main tenant.
-    phone_exists = frappe.db.sql(
-        """select parent from `tabContact Phone`
-           where replace(replace(replace(replace(phone, ' ', ''), '-', ''), '(', ''), ')', '') = %s
-           limit 1""",
-        (phone,),
+    if _phone_exists(phone):
+        frappe.throw(
+            _("This phone number already exists."),
+            title=_("Already registered"),
+        )
+
+
+# ---------------------------------------------------------------------
+# PRE-OTP VALIDATION
+# ---------------------------------------------------------------------
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def validate_registration(company_name, workspace_name, email, phone, country=None):
+    """
+    Check registration details before sending OTPs.
+    Does not create a registration record or send an OTP.
+    """
+
+    errors = {}
+
+    company_name = (company_name or "").strip()
+    workspace_name = (workspace_name or "").strip().lower()
+    email = _normalize_email(email)
+    phone = _normalize_phone(phone)
+
+    if not company_name:
+        errors["company_name"] = _("Company name is required.")
+    elif len(company_name) < 2 or len(company_name) > 140:
+        errors["company_name"] = _(
+            "Company name must be between 2 and 140 characters."
+        )
+
+    if not workspace_name:
+        errors["workspace_name"] = _("Workspace name is required.")
+
+    if not email:
+        errors["email"] = _("Email address is required.")
+    elif not validate_email_address(email, throw=False):
+        errors["email"] = _("Enter a valid email address.")
+
+    digits = _phone_digits(phone)
+    if not phone:
+        errors["phone"] = _("Phone number is required.")
+    elif len(digits) < 8 or len(digits) > 16:
+        errors["phone"] = _("Enter a valid phone number.")
+
+    if errors:
+        return {
+            "available": False,
+            "errors": errors,
+            "message": _("Please correct the highlighted fields."),
+        }
+
+    slug = _slugify(workspace_name)
+    if len(slug) < 3:
+        errors["workspace_name"] = _(
+            "Workspace name must contain at least three letters or numbers."
+        )
+    elif not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
+        errors["workspace_name"] = _(
+            "Use lowercase letters, numbers and single hyphens in the workspace name."
+        )
+
+    if errors:
+        return {
+            "available": False,
+            "errors": errors,
+            "message": _("Please correct the highlighted fields."),
+        }
+
+    site_name = _get_site_name(slug)
+
+    if site_name.lower() == (frappe.local.site or "").lower():
+        errors["workspace_name"] = _("This workspace name is reserved.")
+
+    if frappe.db.exists("User", email):
+        errors["email"] = _(
+            "A user with this email already exists in the main tenant."
+        )
+    elif frappe.db.exists(REGISTRATION_DOCTYPE, {"email": email}):
+        errors["email"] = _("This email is already registered.")
+
+    if _phone_exists(phone):
+        errors["phone"] = _("This phone number is already registered.")
+
+    existing_company = frappe.db.sql(
+        """
+        SELECT name
+          FROM `tabTenant Registration`
+         WHERE LOWER(company_name) = LOWER(%s)
+         LIMIT 1
+        """,
+        (company_name,),
     )
-    if phone_exists:
-        frappe.throw(_("This phone number already exists in the main tenant."),
-                     title=_("Already registered"))
+    if existing_company or frappe.db.exists("Company", {"company_name": company_name}):
+        errors["company_name"] = _("This company name is already registered.")
+
+    if frappe.db.exists(REGISTRATION_DOCTYPE, {"workspace_slug": slug}):
+        errors["workspace_name"] = _("This workspace address is already taken.")
+
+    if frappe.db.exists(REGISTRATION_DOCTYPE, {"tenant_site": site_name}):
+        errors["workspace_name"] = _("This workspace address is already registered.")
+
+    return {
+        "available": not bool(errors),
+        "errors": errors,
+        "workspace_url": site_name if not errors else None,
+        "message": (
+            _("Registration details are available.")
+            if not errors
+            else _("Please correct the highlighted fields.")
+        ),
+    }
+
+
+# ---------------------------------------------------------------------
+# FINAL REGISTRATION
+# ---------------------------------------------------------------------
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def register_tenant(
@@ -74,12 +252,20 @@ def register_tenant(
     financial_year_start="07-01",
     currency=None,
 ):
-    """Save a registration centrally and queue provisioning."""
+    """Save registration centrally and queue tenant provisioning."""
+
     ip = frappe.local.request_ip or "unknown"
-    if not all([company_name, workspace_name, country, phone, administrator_name, email, password]):
+
+    if not all([
+        company_name, workspace_name, country, phone,
+        administrator_name, email, password,
+    ]):
         frappe.throw(_("All fields are required."))
+
     if not cint(terms_accepted):
-        frappe.throw(_("Accept the Terms of Service and Privacy Policy to continue."))
+        frappe.throw(
+            _("Accept the Terms of Service and Privacy Policy to continue.")
+        )
 
     company_name = (company_name or "").strip()
     workspace_name = (workspace_name or "").strip().lower()
@@ -89,71 +275,114 @@ def register_tenant(
     phone = _normalize_phone(phone)
 
     if len(company_name) < 2 or len(company_name) > 140:
-        frappe.throw(_("Company/workspace name must be between 2 and 140 characters."))
+        frappe.throw(
+            _("Company/workspace name must be between 2 and 140 characters.")
+        )
+
     if len(administrator_name) < 2 or len(administrator_name) > 140:
         frappe.throw(_("Enter the administrator's full name."))
+
     if len(password) < 12 or len(password) > 256:
         frappe.throw(_("Use a password between 12 and 256 characters."))
+
     if not validate_email_address(email, throw=False):
         frappe.throw(_("Enter a valid email address."))
-    if len(phone) < 8 or len(phone) > 16:
-        frappe.throw(_("Enter a valid phone number, including country code where possible."))
+
+    phone_digits = _phone_digits(phone)
+    if len(phone_digits) < 8 or len(phone_digits) > 16:
+        frappe.throw(
+            _("Enter a valid phone number, including country code where possible.")
+        )
 
     slug = _slugify(workspace_name)
     if len(slug) < 3:
-        frappe.throw(_("Workspace name must contain at least three letters or numbers."))
+        frappe.throw(
+            _("Workspace name must contain at least three letters or numbers.")
+        )
+
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", slug):
-        frappe.throw(_("Use lowercase letters, numbers, and single hyphens in the workspace name."))
+        frappe.throw(
+            _("Use lowercase letters, numbers, and single hyphens in the workspace name.")
+        )
 
     financial_year_start = (financial_year_start or "07-01").strip()
     try:
         datetime.strptime(financial_year_start, "%m-%d")
     except ValueError:
         frappe.throw(_("Choose a valid financial year start date."))
+
     currency = (currency or "").strip().upper()
     if currency and not frappe.db.exists("Currency", currency):
         frappe.throw(_("Choose a supported currency."))
 
-    base_domain = (frappe.conf.get("tenant_registration_base_domain") or "midas.co.ke").strip(".").lower()
-    site_name = f"{slug}.{base_domain}"
-    if site_name.lower() == frappe.local.site.lower() or site_name.lower() == base_domain:
+    site_name = _get_site_name(slug)
+    if site_name.lower() == (frappe.local.site or "").lower():
         frappe.throw(_("This workspace name is reserved."))
 
-    # Require both channels to be verified against the exact submitted identities.
+    # Verify OTPs against the exact email and phone being registered.
     challenge_name = frappe.db.get_value(
-        "Registration OTP Challenge",
+        OTP_DOCTYPE,
         {"verification_token": verification_token},
         "name",
     )
     if not challenge_name:
         frappe.throw(_("Verify your email and phone before registering."))
-    challenge = frappe.get_doc("Registration OTP Challenge", challenge_name)
-    if challenge.expires_at < frappe.utils.now_datetime():
-        frappe.throw(_("Your verification session expired. Please verify again."))
-    if challenge.email != email or challenge.phone != phone:
-        frappe.throw(_("The verified email and phone must match the registration details."))
-    if not challenge.email_verified or not challenge.sms_verified:
-        frappe.throw(_("Verify both your email address and phone number before registering."))
 
-    # Acquire identity locks in stable order so simultaneous requests cannot
-    # both pass the duplicate checks for the same email, phone, or workspace.
+    challenge = frappe.get_doc(OTP_DOCTYPE, challenge_name)
+
+    if not challenge.expires_at or challenge.expires_at < now_datetime():
+        frappe.throw(_("Your verification session expired. Please verify again."))
+
+    if (
+        _normalize_email(challenge.email) != email
+        or _phone_digits(challenge.phone) != phone_digits
+    ):
+        frappe.throw(
+            _("The verified email and phone must match the registration details.")
+        )
+
+    if not challenge.email_verified or not challenge.sms_verified:
+        frappe.throw(
+            _("Verify both your email address and phone number before registering.")
+        )
+
+    # Stable lock ordering prevents concurrent submissions racing each other.
     lock_keys = sorted({
-        "tenant-reg:" + hashlib.sha256(f"email:{email}".encode()).hexdigest()[:48],
-        "tenant-reg:" + hashlib.sha256(f"phone:{phone}".encode()).hexdigest()[:48],
-        "tenant-reg:" + hashlib.sha256(f"slug:{slug}".encode()).hexdigest()[:48],
-        "tenant-reg:" + hashlib.sha256(f"company:{company_name.casefold()}".encode()).hexdigest()[:48],
+        "tenant-reg:" + hashlib.sha256(
+            f"email:{email}".encode()
+        ).hexdigest()[:48],
+        "tenant-reg:" + hashlib.sha256(
+            f"phone:{phone_digits}".encode()
+        ).hexdigest()[:48],
+        "tenant-reg:" + hashlib.sha256(
+            f"slug:{slug}".encode()
+        ).hexdigest()[:48],
+        "tenant-reg:" + hashlib.sha256(
+            f"company:{company_name.casefold()}".encode()
+        ).hexdigest()[:48],
     })
+
     acquired = []
     try:
         for lock_key in lock_keys:
-            lock_result = frappe.db.sql("select get_lock(%s, 5)", (lock_key,))
-            if not lock_result or lock_result[0][0] != 1:
-                frappe.throw(_("Registration is busy. Please try again in a moment."))
+            result = frappe.db.sql(
+                "SELECT GET_LOCK(%s, 5)",
+                (lock_key,),
+            )
+            if not result or result[0][0] != 1:
+                frappe.throw(
+                    _("Registration is busy. Please try again in a moment.")
+                )
             acquired.append(lock_key)
 
+        # Repeat all uniqueness checks at final submission.
         _ensure_not_duplicate(company_name, email, phone, slug)
+
         if frappe.db.exists(REGISTRATION_DOCTYPE, {"tenant_site": site_name}):
-            frappe.throw(_("This workspace address is already registered."), title=_("Already registered"))
+            frappe.throw(
+                _("This workspace address is already registered."),
+                title=_("Already registered"),
+            )
 
         doc = frappe.get_doc({
             "doctype": REGISTRATION_DOCTYPE,
@@ -175,52 +404,96 @@ def register_tenant(
             "admin_password": password,
             "request_ip": ip[:140],
         })
+
         doc.insert(ignore_permissions=True)
         frappe.db.commit()
 
-        # Consume the verification token so it cannot be reused.
-        frappe.delete_doc("Registration OTP Challenge", challenge.name, ignore_permissions=True, force=True)
+        # Consume the OTP challenge after the registration is saved.
+        frappe.delete_doc(
+            OTP_DOCTYPE,
+            challenge.name,
+            ignore_permissions=True,
+            force=True,
+        )
         frappe.db.commit()
 
-        frappe.enqueue(
-            "frontend.services.tenant_provisioner.provision_registration",
-            queue="long",
-            timeout=14400,
-            job_name=f"tenant-provision-{doc.name}",
-            registration_name=doc.name,
-        )
+        try:
+            frappe.enqueue(
+                "frontend.services.tenant_provisioner.provision_registration",
+                queue="long",
+                timeout=14400,
+                job_name=f"tenant-provision-{doc.name}",
+                registration_name=doc.name,
+            )
+        except Exception:
+            frappe.log_error(
+                frappe.get_traceback(),
+                "Tenant Provisioning Queue Error",
+            )
+            frappe.db.set_value(
+                REGISTRATION_DOCTYPE,
+                doc.name,
+                "status",
+                "Failed",
+            )
+            frappe.db.commit()
+            frappe.throw(
+                _(
+                    "Registration was saved but provisioning could not be queued. "
+                    "Please contact support with your registration reference."
+                )
+            )
+
         return {
             "ok": True,
             "registration_id": doc.name,
             "status_token": doc.status_token,
             "status": "Pending",
-            "message": _("Registration received. Your workspace is being prepared."),
+            "message": _(
+                "Registration received. Your workspace is being prepared."
+            ),
         }
+
     finally:
         for lock_key in reversed(acquired):
-            frappe.db.sql("select release_lock(%s)", (lock_key,))
+            frappe.db.sql("SELECT RELEASE_LOCK(%s)", (lock_key,))
+
+
+# ---------------------------------------------------------------------
+# REGISTRATION STATUS
+# ---------------------------------------------------------------------
 
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def registration_status(status_token):
-    """Return minimal status data; token is random and not a sequential record ID."""
+    """Return minimal registration status using its random status token."""
+
     if not status_token or len(status_token) > 100:
         frappe.throw(_("Registration status token is required."))
+
     doc = frappe.db.get_value(
         REGISTRATION_DOCTYPE,
         {"status_token": status_token},
         ["status", "tenant_site"],
         as_dict=True,
     )
+
     if not doc:
         frappe.throw(_("Registration not found."), frappe.DoesNotExistError)
 
     return {
         "status": doc.status,
-        "login_url": f"https://{doc.tenant_site}" if doc.status == "Active" else None,
+        "login_url": (
+            f"https://{doc.tenant_site}"
+            if doc.status == "Active"
+            else None
+        ),
         "message": {
             "Pending": _("Your registration is queued."),
             "Provisioning": _("Your workspace is being created."),
             "Active": _("Your workspace is ready."),
-            "Failed": _("Workspace creation failed. Please contact support with your registration reference."),
+            "Failed": _(
+                "Workspace creation failed. Please contact support with your registration reference."
+            ),
         }.get(doc.status, _("Registration status updated.")),
     }
+

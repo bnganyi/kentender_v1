@@ -4,7 +4,7 @@ app_publisher = "midas"
 app_description = "Ui customizations"
 app_email = "midas@midas.oo.ke"
 app_license = "mit"
-
+send_sms = ["frontend.api.talksasa.send_sms"]
 # Apps
 # ------------------
 
