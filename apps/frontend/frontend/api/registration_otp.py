@@ -8,8 +8,15 @@ import frappe
 from frappe import _
 from frappe.utils import now_datetime, add_to_date, validate_email_address
 
-from frappe.core.doctype.sms_settings.sms_settings import (
-    _send_sms as frappe_send_sms,
+from frappe.core.doctype.sms_settings import sms_settings
+
+# Use the internal gateway function when available.
+# Fall back to the public function on Frappe versions
+# that do not expose _send_sms.
+frappe_send_sms = getattr(
+    sms_settings,
+    "_send_sms",
+    sms_settings.send_sms,
 )
 
 

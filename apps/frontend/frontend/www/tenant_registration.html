@@ -18,6 +18,11 @@
 	body {
 		margin: 0 !important;
 		padding: 0 !important;
+		scrollbar-width: none;
+	}
+	html::-webkit-scrollbar,
+	body::-webkit-scrollbar {
+		display: none;
 	}
 	html {
 		background: #fff;
@@ -52,7 +57,7 @@
 	}
 	.tenant-registration-card {
 		width: 100%;
-		max-width: 520px;
+		max-width: 560px;
 		padding: 32px;
 		border: 1px solid #e8edf2;
 		border-radius: 16px;
@@ -202,7 +207,8 @@
 		background: #fbfcfe;
 	}
 	.otp-channel label {
-		margin-top: 14px !important;
+		display: block;
+		margin: 14px 0 10px !important;
 	}
 	.otp-channel-actions {
 		display: flex;
@@ -269,6 +275,8 @@
 	}
 	#tenant-registration-form {
 		display: block;
+		max-width: 340px;
+		margin: 0 auto;
 	}
 	#tenant-registration-form .form-group {
 		margin: 0;
@@ -379,6 +387,10 @@
 	}
 
 	@media (min-width: 768px) {
+		.tenant-registration-card {
+			width: calc(100% + 24px);
+			flex-shrink: 0;
+		}
 		html::before {
 			content: "";
 			position: fixed;
@@ -490,11 +502,10 @@
 					data-step-panel="1"
 					aria-labelledby="step-1-title"
 				>
-					<h2 id="step-1-title">Administrator account</h2>
 
 					<div class="registration-step-content">
 						<div class="form-group">
-							<label for="company_name">Company / organization name</label
+							<label for="company_name">Organization name</label
 							><input
 								class="form-control"
 								id="company_name"
