@@ -208,11 +208,15 @@ footer.web-footer { display: none !important; }
     </div>
 
     <div id="kt-header-actions" class="kt-header-actions">
-      {% if frappe.session.user != 'Guest' %}
       <a href="/app/home" id="kt-dashboard-button">
         <i class="fas fa-table-columns"></i>
         <span>Go to Dashboard</span>
       </a>
+      <a href="/tenant_registration" id="kt-start-trial">
+        <i class="fas fa-rocket"></i>
+        <span>Get Started</span>
+      </a>
+      {% if frappe.session.user != 'Guest' %}
       <div class="kt-profile-wrap">
         <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
           <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span>
@@ -224,11 +228,6 @@ footer.web-footer { display: none !important; }
           <button type="button" role="menuitem" onclick="frappe.logout(); return false;"><i class="fas fa-right-from-bracket"></i><span>Log out</span></button>
         </div>
       </div>
-      {% else %}
-      <a href="/tenant_registration" id="kt-start-trial">
-        <i class="fas fa-rocket"></i>
-        <span>Get Started</span>
-      </a>
       {% endif %}
     </div>
 
@@ -246,11 +245,10 @@ footer.web-footer { display: none !important; }
       <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
       <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
       <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
-      {% if frappe.session.user != 'Guest' %}
-      <a href="/app/home" class="btn-primary text-sm inline-block mt-2"><i class="fas fa-table-columns mr-2"></i>Go to Dashboard</a>
-      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
-      {% else %}
+      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
       {% endif %}
     </div>
   </div>
@@ -273,11 +271,12 @@ footer.web-footer { display: none !important; }
   border: 1px solid #e1e7ee !important;
   border-radius: 10px !important;
   background: #f1f3f5 !important;
-  color: #344054 !important;
+  color: #000 !important;
   font-weight: 600;
   text-decoration: none !important;
   white-space: nowrap;
 }
+#kt-dashboard-button *, #mobileMenu a[href="/app/home"] * { color: #000 !important; }
 .kt-profile-wrap { position: relative; }
 #kt-profile-button {
   display: inline-flex;

@@ -208,11 +208,15 @@ footer.web-footer { display: none !important; }
     </div>
 
     <div id="kt-header-actions" class="kt-header-actions">
-      {% if frappe.session.user != 'Guest' %}
-      <a href="/app/home" id="kt-dashboard-button">
+      <a href="/app/home" id="kt-dashboard-button" class="kt-action-button">
         <i class="fas fa-table-columns"></i>
         <span>Go to Dashboard</span>
       </a>
+      <a href="/tenant_registration" id="kt-start-trial" class="kt-action-button">
+        <i class="fas fa-rocket"></i>
+        <span>Get Started</span>
+      </a>
+      {% if frappe.session.user != 'Guest' %}
       <div class="kt-profile-wrap">
         <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
           <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span>
@@ -224,11 +228,6 @@ footer.web-footer { display: none !important; }
           <button type="button" role="menuitem" onclick="frappe.logout(); return false;"><i class="fas fa-right-from-bracket"></i><span>Log out</span></button>
         </div>
       </div>
-      {% else %}
-      <a href="/tenant_registration" id="kt-start-trial">
-        <i class="fas fa-rocket"></i>
-        <span>Get Started</span>
-      </a>
       {% endif %}
     </div>
 
@@ -246,11 +245,12 @@ footer.web-footer { display: none !important; }
       <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
       <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
       <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
+      <div class="flex flex-wrap gap-3 pt-2">
+        <a href="/app/home" class="kt-action-button"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+        <a href="/tenant_registration" class="kt-action-button"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+      </div>
       {% if frappe.session.user != 'Guest' %}
-      <a href="/app/home" class="btn-primary text-sm inline-block mt-2"><i class="fas fa-table-columns mr-2"></i>Go to Dashboard</a>
       <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
-      {% else %}
-      <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
       {% endif %}
     </div>
   </div>
@@ -259,24 +259,38 @@ footer.web-footer { display: none !important; }
 <style>
 #kt-header-actions {
   display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
   visibility: visible !important;
   opacity: 1 !important;
   flex-shrink: 0 !important;
 }
-#kt-dashboard-button {
+.kt-action-button {
   display: inline-flex !important;
-  align-items: center;
+  align-items: center !important;
+  justify-content: center !important;
   gap: 8px;
-  margin-right: 8px !important;
-  padding: 12px 16px !important;
-  border: 1px solid #e1e7ee !important;
+  padding: 12px 20px !important;
+  border: none !important;
   border-radius: 10px !important;
-  background: #f1f3f5 !important;
-  color: #0047AB !important;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
+  background: linear-gradient(135deg, #0047AB, #003580) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  transition: all 0.3s ease !important;
 }
+.kt-action-button * { color: #ffffff !important; }
+#kt-dashboard-button,
+#mobileMenu a[href="/app/home"] {
+  border: 1px solid #e1e7ee !important;
+  background: #f1f3f5 !important;
+  color: #000 !important;
+}
+#kt-dashboard-button *,
+#mobileMenu a[href="/app/home"] * { color: #000 !important; }
+.kt-action-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,102,255,0.3); }
 .kt-profile-wrap { position: relative; }
 #kt-profile-button {
   display: inline-flex;
@@ -327,34 +341,6 @@ footer.web-footer { display: none !important; }
   cursor: pointer;
 }
 #kt-profile-menu a:hover, #kt-profile-menu button:hover { background: #f3f4f6; color: #2563eb; }
-#kt-start-trial {
-  display: inline-flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  background: linear-gradient(135deg, #0047AB, #003580) !important;
-  color: #ffffff !important;
-  padding: 12px 24px !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  text-decoration: none !important;
-  white-space: nowrap !important;
-  min-width: 180px !important;
-  font-family: 'Outfit', sans-serif !important;
-  border: none !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-}
-#kt-start-trial i,
-#kt-start-trial span,
-#kt-start-trial * { color: #ffffff !important; }
-#kt-start-trial:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 10px 30px rgba(0,102,255,0.4) !important;
-}
 @media (max-width: 767px) {
   #kt-header-actions { display: none !important; }
 }

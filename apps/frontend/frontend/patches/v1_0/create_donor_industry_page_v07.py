@@ -53,10 +53,11 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 .navbar-blur { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,0.1); }
 .kt-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
 .kt-header-actions a[href="/app/home"], #mobileMenu a[href="/app/home"] {
-  background:#f1f3f5 !important; color:#344054 !important;
+  background:#f1f3f5 !important; color:#000 !important;
   border:1px solid #e1e7ee !important; border-radius:10px !important;
   padding:10px 16px !important; margin-right:8px !important;
 }
+.kt-header-actions a[href="/app/home"] *, #mobileMenu a[href="/app/home"] * { color:#000 !important; }
 @media (max-width:767px) { .kt-header-actions { display:none !important; } }
 #mainNav { display:flex !important; align-items:center; gap:2rem; }
 @media (max-width:767px) { #mainNav { display:none !important; } }
@@ -203,11 +204,10 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
     </div>
 
     <div class="kt-header-actions">
-      {% if frappe.session.user != 'Guest' %}
       <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
-      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
-      {% else %}
       <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
       {% endif %}
     </div>
 
@@ -220,11 +220,10 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
       <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
-      {% if frappe.session.user != 'Guest' %}
       <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
-      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
-      {% else %}
       <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
+      {% if frappe.session.user != 'Guest' %}
+      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
       {% endif %}
     </div>
   </div>

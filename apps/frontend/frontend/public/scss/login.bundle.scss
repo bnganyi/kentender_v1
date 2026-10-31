@@ -113,11 +113,13 @@ body::after {
 	z-index: 1;
 
 	.page-card {
-		padding: 0;
-		background-color: transparent;
+		padding: 32px;
+		background-color: #fff;
 		max-width: 380px;
 		margin: 0 auto;
-		border: none;
+		border: 1px solid #e8edf2;
+		border-radius: 16px;
+		box-shadow: 0 16px 48px rgba(10, 22, 34, 0.08);
 
 		form {
 			max-width: 320px;

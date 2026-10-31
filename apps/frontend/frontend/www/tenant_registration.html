@@ -53,6 +53,11 @@
 	.tenant-registration-card {
 		width: 100%;
 		max-width: 520px;
+		padding: 32px;
+		border: 1px solid #e8edf2;
+		border-radius: 16px;
+		background: #fff;
+		box-shadow: 0 16px 48px rgba(10, 22, 34, 0.08);
 	}
 	.registration-stepper {
 		--step-dot-size: 30px;
@@ -217,7 +222,7 @@
 		display: grid;
 		width: 56px;
 		height: 56px;
-		margin-bottom: 18px;
+		margin: 0 auto 18px;
 		place-items: center;
 		border-radius: 50%;
 		background: #e8f7ee;
@@ -232,6 +237,22 @@
 		background: #f7fafc;
 		font-weight: 600;
 		word-break: break-word;
+	}
+	#registration-success {
+		text-align: center;
+	}
+	.registration-success-actions {
+		display: flex;
+		justify-content: center;
+		margin-top: 24px;
+	}
+	.registration-home-button {
+		display: inline-flex;
+		min-width: 140px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		text-decoration: none;
 	}
 	.tenant-registration-card h1 {
 		margin: 0 0 8px;
@@ -372,6 +393,9 @@
 		}
 		.tenant-registration-card h1 {
 			font-size: 27px;
+		}
+		.tenant-registration-card {
+			padding: 20px;
 		}
 		.registration-stepper {
 			margin: 14px -4px 18px;
@@ -720,6 +744,9 @@
 					class="registration-workspace-url"
 					hidden
 				></div>
+				<div class="registration-success-actions">
+					<a class="btn btn-primary registration-home-button" href="/">Go Home</a>
+				</div>
 			</section>
 		</div>
 	</div>
