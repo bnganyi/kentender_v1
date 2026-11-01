@@ -20,13 +20,46 @@ def _normalize_email(value):
     return (value or "").strip().lower()
 
 
-def _normalize_phone(value):
-    value = (value or "").strip()
-    return ("+" if value.startswith("+") else "") + re.sub(r"\\D", "", value)
+def _country_is_kenya(country):
+    value = (country or "").strip().lower()
+    return value in {"kenya", "ke", "ken"}
+
+
+def _normalize_phone(value, country=None):
+    """
+    Normalize Kenyan phone numbers to E.164.
+
+    Kenya examples:
+      0711001122   -> +254711001122
+      254711001122 -> +254711001122
+      +254711001122 -> +254711001122
+      711001122    -> +254711001122
+
+    For other countries, preserve the supplied international country code.
+    """
+    raw = (value or "").strip()
+    digits = re.sub(r"\D", "", raw)
+
+    if not digits:
+        return ""
+
+    # Convert an international 00 prefix to its normal international form.
+    if digits.startswith("00"):
+        digits = digits[2:]
+
+    if _country_is_kenya(country):
+        if len(digits) == 10 and digits.startswith("0"):
+            digits = "254" + digits[1:]
+        elif len(digits) == 9 and digits.startswith(("7", "1")):
+            digits = "254" + digits
+        elif len(digits) == 12 and digits.startswith("254"):
+            pass
+
+    return "+" + digits
 
 
 def _phone_digits(value):
-    return re.sub(r"\\D", "", value or "")
+    return re.sub(r"\D", "", value or "")
 
 
 def _slugify(value):
@@ -53,21 +86,36 @@ def _phone_sql_expression(column_name):
 # DUPLICATE CHECKS
 # ---------------------------------------------------------------------
 
-def _phone_exists(phone):
-    """Compare phone numbers as digits only across registrations and contacts."""
-    digits = _phone_digits(phone)
+def _phone_exists(phone, country=None):
+    """
+    Compare phone numbers across registrations and Contacts.
+
+    For Kenya, compare E.164, local 0-prefixed, and national 9-digit
+    representations so older records are still detected as duplicates.
+    """
+    digits = _phone_digits(_normalize_phone(phone, country))
     if not digits:
         return False
+
+    candidates = {digits}
+
+    if _country_is_kenya(country) and digits.startswith("254") and len(digits) == 12:
+        national_number = digits[3:]
+        candidates.add("0" + national_number)
+        candidates.add(national_number)
+
+    candidates = sorted(candidates)
+    placeholders = ", ".join(["%s"] * len(candidates))
 
     registration_expr = _phone_sql_expression("phone")
     registration_match = frappe.db.sql(
         f"""
         SELECT name
           FROM `tab{REGISTRATION_DOCTYPE}`
-         WHERE {registration_expr} = %s
+         WHERE {registration_expr} IN ({placeholders})
          LIMIT 1
         """,
-        (digits,),
+        tuple(candidates),
     )
     if registration_match:
         return True
@@ -77,15 +125,15 @@ def _phone_exists(phone):
         f"""
         SELECT parent
           FROM `tabContact Phone`
-         WHERE {contact_expr} = %s
+         WHERE {contact_expr} IN ({placeholders})
          LIMIT 1
         """,
-        (digits,),
+        tuple(candidates),
     )
     return bool(contact_match)
 
 
-def _ensure_not_duplicate(company_name, email, phone, slug):
+def _ensure_not_duplicate(company_name, email, phone, slug, country=None):
     checks = [
         ("email", email, "An account with this email already exists."),
         ("workspace_slug", slug, "This workspace address is already registered."),
@@ -117,7 +165,7 @@ def _ensure_not_duplicate(company_name, email, phone, slug):
             title=_("Already registered"),
         )
 
-    if _phone_exists(phone):
+    if _phone_exists(phone, country):
         frappe.throw(
             _("This phone number already exists."),
             title=_("Already registered"),
@@ -140,7 +188,7 @@ def validate_registration(company_name, workspace_name, email, phone, country=No
     company_name = (company_name or "").strip()
     workspace_name = (workspace_name or "").strip().lower()
     email = _normalize_email(email)
-    phone = _normalize_phone(phone)
+    phone = _normalize_phone(phone, country)
 
     if not company_name:
         errors["company_name"] = _("Company name is required.")
@@ -160,6 +208,12 @@ def validate_registration(company_name, workspace_name, email, phone, country=No
     digits = _phone_digits(phone)
     if not phone:
         errors["phone"] = _("Phone number is required.")
+    elif _country_is_kenya(country) and not (
+        len(digits) == 12 and digits.startswith("254")
+    ):
+        errors["phone"] = _(
+            "Enter a valid Kenyan mobile number, for example 0711001122."
+        )
     elif len(digits) < 8 or len(digits) > 16:
         errors["phone"] = _("Enter a valid phone number.")
 
@@ -199,7 +253,7 @@ def validate_registration(company_name, workspace_name, email, phone, country=No
     elif frappe.db.exists(REGISTRATION_DOCTYPE, {"email": email}):
         errors["email"] = _("This email is already registered.")
 
-    if _phone_exists(phone):
+    if _phone_exists(phone, country):
         errors["phone"] = _("This phone number is already registered.")
 
     existing_company = frappe.db.sql(
@@ -272,7 +326,7 @@ def register_tenant(
     country = (country or "").strip()
     administrator_name = (administrator_name or "").strip()
     email = _normalize_email(email)
-    phone = _normalize_phone(phone)
+    phone = _normalize_phone(phone, country)
 
     if len(company_name) < 2 or len(company_name) > 140:
         frappe.throw(
@@ -289,6 +343,12 @@ def register_tenant(
         frappe.throw(_("Enter a valid email address."))
 
     phone_digits = _phone_digits(phone)
+    if _country_is_kenya(country) and not (
+        len(phone_digits) == 12 and phone_digits.startswith("254")
+    ):
+        frappe.throw(
+            _("Enter a valid Kenyan mobile number, for example 0711001122.")
+        )
     if len(phone_digits) < 8 or len(phone_digits) > 16:
         frappe.throw(
             _("Enter a valid phone number, including country code where possible.")
@@ -335,7 +395,7 @@ def register_tenant(
 
     if (
         _normalize_email(challenge.email) != email
-        or _phone_digits(challenge.phone) != phone_digits
+        or _phone_digits(_normalize_phone(challenge.phone, country)) != phone_digits
     ):
         frappe.throw(
             _("The verified email and phone must match the registration details.")
@@ -376,7 +436,7 @@ def register_tenant(
             acquired.append(lock_key)
 
         # Repeat all uniqueness checks at final submission.
-        _ensure_not_duplicate(company_name, email, phone, slug)
+        _ensure_not_duplicate(company_name, email, phone, slug, country)
 
         if frappe.db.exists(REGISTRATION_DOCTYPE, {"tenant_site": site_name}):
             frappe.throw(
