@@ -57,7 +57,7 @@
 	}
 	.tenant-registration-card {
 		width: 100%;
-		max-width: 600px;
+		max-width: 660px;
 		padding: 32px;
 		border: 1px solid #e8edf2;
 		border-radius: 16px;
@@ -169,8 +169,8 @@
 	.registration-step-content {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		column-gap: 14px;
-		row-gap: 10px;
+		column-gap: 28px;
+		row-gap: 16px;
 	}
 	.registration-step-content .full-width {
 		grid-column: 1 / -1;
@@ -280,9 +280,19 @@
 		color: #7c8796;
 		line-height: 1.5;
 	}
+	.registration-intro {
+		margin: 0 0 16px;
+	}
+	.registration-home-link {
+		margin-left: 8px;
+		color: #126ac2;
+		font-size: 14px;
+		font-weight: 600;
+		white-space: nowrap;
+	}
 	#tenant-registration-form {
 		display: block;
-		max-width: 476px;
+		max-width: 520px;
 		margin: 0 auto;
 	}
 	#tenant-registration-form .form-group {
@@ -298,6 +308,15 @@
 		color: #364152;
 		font-size: 12px;
 		font-weight: 600;
+	}
+	#tenant-registration-form .registration-consent {
+		display: flex;
+		align-items: flex-start;
+		gap: 8px;
+	}
+	#tenant-registration-form .registration-consent input {
+		flex: 0 0 auto;
+		margin: 2px 0 0;
 	}
 	#tenant-registration-form .form-control {
 		width: 100%;
@@ -342,6 +361,9 @@
 	}
 	#registration-message {
 		margin-top: 16px !important;
+	}
+	#registration-message:empty {
+		display: none;
 	}
 	#registration-toast-container {
 		position: fixed;
@@ -488,7 +510,10 @@
 	<div class="tenant-registration-form-wrap">
 		<div class="tenant-registration-card">
 			<h1>Create your Kentender workspace</h1>
-			<p class="text-muted">Set up your organization and administrator account.</p>
+			<p class="text-muted registration-intro">
+				Set up your organization and administrator account.
+				<a class="registration-home-link" href="/">Go Home</a>
+			</p>
 			<ol class="registration-stepper" aria-label="Registration progress">
 				<li class="is-active" data-step-indicator="1" aria-current="step">
 					<span class="registration-step-number">1</span><span>Account</span>
