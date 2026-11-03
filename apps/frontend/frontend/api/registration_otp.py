@@ -124,6 +124,112 @@ def _challenge_for(email, phone):
     return challenge
 
 
+def _challenge_from_token(token):
+    if not token:
+        frappe.throw(_("Verification session is invalid or expired."))
+
+    doc_name = frappe.db.get_value(
+        OTP_DOCTYPE,
+        {"verification_token": token},
+        "name",
+    )
+
+    if not doc_name:
+        frappe.throw(_("Verification session is invalid or expired."))
+
+    challenge = frappe.get_doc(OTP_DOCTYPE, doc_name)
+
+    if challenge.expires_at < now_datetime():
+        frappe.throw(_("The verification code has expired. Request a new code."))
+
+    return challenge
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def send_registration_email_otp(email, phone):
+    """Create a registration challenge and send only the email code."""
+
+    email = _email(email)
+    phone = _phone(phone)
+
+    if not email or not validate_email_address(email, throw=False):
+        frappe.throw(_("Enter a valid email address."))
+
+    if (
+        not phone.startswith("+")
+        or not phone[1:].isdigit()
+        or len(phone) < 9
+        or len(phone) > 16
+    ):
+        frappe.throw(
+            _(
+                "Enter a valid phone number in international format, "
+                "e.g. +254712345678."
+            )
+        )
+
+    challenge = _challenge_for(email, phone)
+    email_code = f"{secrets.randbelow(1_000_000):06d}"
+    challenge.email_otp_hash = _otp_hash(challenge.name, "email", email_code)
+    challenge.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    try:
+        _send_email(email, email_code)
+    except Exception:
+        frappe.log_error(
+            title="Registration Email OTP Failure",
+            message=frappe.get_traceback(),
+        )
+        frappe.db.delete(OTP_DOCTYPE, challenge.name)
+        frappe.db.commit()
+        frappe.throw(
+            _("We could not send the email verification code. Please try again later.")
+        )
+
+    return {
+        "verification_token": challenge.verification_token,
+        "message": _("Email verification code sent. It expires in five minutes."),
+    }
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def send_registration_sms_otp(token):
+    """Send the SMS code for an email-verified registration challenge."""
+
+    challenge = _challenge_from_token(token)
+    if not challenge.email_verified:
+        frappe.throw(_("Verify your email before requesting the SMS code."))
+    if challenge.sms_verified:
+        frappe.throw(_("This phone number is already verified."))
+
+    sms_code = f"{secrets.randbelow(1_000_000):06d}"
+    challenge.sms_otp_hash = _otp_hash(challenge.name, "sms", sms_code)
+    challenge.sms_attempts = 0
+    challenge.expires_at = add_to_date(now_datetime(), minutes=OTP_TTL_MINUTES)
+    challenge.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    try:
+        _send_sms(challenge.phone, sms_code)
+    except Exception:
+        frappe.log_error(
+            title="Registration SMS OTP Failure",
+            message=frappe.get_traceback(),
+        )
+        challenge.sms_otp_hash = ""
+        challenge.save(ignore_permissions=True)
+        frappe.db.commit()
+        frappe.throw(
+            _("We could not send the SMS verification code. Please try again later.")
+        )
+
+    return {
+        "verification_token": challenge.verification_token,
+        "message": _("SMS verification code sent. It expires in five minutes."),
+    }
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def send_registration_otps(email, phone):
     """
@@ -231,28 +337,7 @@ def _verify(token, channel, code):
     ):
         frappe.throw(_("Enter the six-digit verification code."))
 
-    # Find verification challenge.
-    doc_name = frappe.db.get_value(
-        OTP_DOCTYPE,
-        {"verification_token": token},
-        "name",
-    )
-
-    if not doc_name:
-        frappe.throw(
-            _("Verification session is invalid or expired.")
-        )
-
-    challenge = frappe.get_doc(
-        OTP_DOCTYPE,
-        doc_name,
-    )
-
-    # Check expiry.
-    if challenge.expires_at < now_datetime():
-        frappe.throw(
-            _("The verification code has expired. Request a new code.")
-        )
+    challenge = _challenge_from_token(token)
 
     verified_field = (
         "email_verified"

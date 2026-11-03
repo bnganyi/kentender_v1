@@ -6,7 +6,8 @@
 	const message = document.getElementById("registration-message");
 	const statusBox = document.getElementById("registration-status");
 	const statusUrl = document.getElementById("registration-workspace-url");
-	const otpPanel = document.getElementById("otp-panel");
+	const emailOtpPanel = document.getElementById("email-otp-panel");
+	const smsOtpPanel = document.getElementById("sms-otp-panel");
 	const tokenField = document.getElementById("verification_token");
 
 	const companyInput = document.getElementById("company_name");
@@ -21,7 +22,8 @@
 	const smsCode = document.getElementById("sms_otp");
 	const emailVerified = document.getElementById("email-verified");
 	const smsVerified = document.getElementById("sms-verified");
-	const sendOtpButton = document.getElementById("send-otp-button");
+	const sendEmailOtpButton = document.getElementById("send-otp-button");
+	const sendSmsOtpButton = document.getElementById("send-sms-otp-button");
 	const continueToSmsButton = document.getElementById("continue-to-sms-button");
 
 	let emailOk = false;
@@ -91,6 +93,7 @@
 	function updateSubmit() {
 		button.disabled = !(emailOk && smsOk && tokenField.value);
 		continueToSmsButton.disabled = !(emailOk && tokenField.value);
+		sendSmsOtpButton.disabled = !(emailOk && tokenField.value) || smsOk;
 	}
 
 	function showStep(step) {
@@ -193,7 +196,8 @@
 		smsCode.value = "";
 		emailVerified.textContent = "";
 		smsVerified.textContent = "";
-		otpPanel.hidden = true;
+		emailOtpPanel.hidden = true;
+		smsOtpPanel.hidden = true;
 		updateSubmit();
 	}
 
@@ -350,11 +354,11 @@
 		}
 	});
 
-	sendOtpButton.addEventListener("click", async () => {
+	sendEmailOtpButton.addEventListener("click", async () => {
 		if (!emailInput.reportValidity() || !phoneInput.reportValidity()) return;
 
-		sendOtpButton.disabled = true;
-		sendOtpButton.textContent = "Validating details…";
+		sendEmailOtpButton.disabled = true;
+		sendEmailOtpButton.textContent = "Validating details…";
 
 		try {
 			// Recheck immediately before OTP delivery, not only at step one.
@@ -365,27 +369,56 @@
 			}
 
 			resetVerification();
-			sendOtpButton.textContent = "Sending codes…";
+			sendEmailOtpButton.textContent = "Sending email code…";
 
-			const result = await callApi("frontend.api.registration_otp.send_registration_otps", {
-				email: emailInput.value,
-				phone: phoneInput.value,
-			});
+			const result = await callApi(
+				"frontend.api.registration_otp.send_registration_email_otp",
+				{
+					email: emailInput.value,
+					phone: phoneInput.value,
+				},
+			);
 
 			tokenField.value = result.verification_token;
-			otpPanel.hidden = false;
+			emailOtpPanel.hidden = false;
 			showMessage(result.message, "success", true);
 		} catch (error) {
-			showMessage(error.message || "Could not send verification codes.", "error");
+			showMessage(error.message || "Could not send the email verification code.", "error");
 		} finally {
-			sendOtpButton.disabled = false;
-			sendOtpButton.textContent = "Send verification codes";
+			sendEmailOtpButton.disabled = false;
+			sendEmailOtpButton.textContent = "Send email code";
+		}
+	});
+
+	sendSmsOtpButton.addEventListener("click", async () => {
+		if (!tokenField.value || !emailOk) {
+			showMessage("Verify your email before requesting the SMS code.", "error");
+			return;
+		}
+		if (!phoneInput.reportValidity()) return;
+
+		sendSmsOtpButton.disabled = true;
+		sendSmsOtpButton.textContent = "Sending SMS code…";
+
+		try {
+			const result = await callApi(
+				"frontend.api.registration_otp.send_registration_sms_otp",
+				{ token: tokenField.value },
+			);
+
+			smsOtpPanel.hidden = false;
+			showMessage(result.message, "success", true);
+		} catch (error) {
+			showMessage(error.message || "Could not send the SMS verification code.", "error");
+		} finally {
+			sendSmsOtpButton.textContent = smsOtpPanel.hidden ? "Send SMS code" : "Resend SMS code";
+			updateSubmit();
 		}
 	});
 
 	document.getElementById("verify-email-button").addEventListener("click", async () => {
 		if (!tokenField.value) {
-			showMessage("Request verification codes first.", "error");
+			showMessage("Request the email code first.", "error");
 			return;
 		}
 
@@ -411,7 +444,7 @@
 
 	document.getElementById("verify-sms-button").addEventListener("click", async () => {
 		if (!tokenField.value) {
-			showMessage("Request verification codes first.", "error");
+			showMessage("Request the SMS code first.", "error");
 			return;
 		}
 

@@ -84,35 +84,40 @@
 	flex-shrink: 0;
 	margin-left: var(--kt-space-4);
 }
-.kt-industry.kt-portal .kt-portal-get-started,
-.kt-industry.kt-portal .kt-portal-dashboard {
+.kt-industry.kt-portal .kt-portal-get-started:not(.btn):not(.kt-tab):not(.kt-add-child),
+.kt-industry.kt-portal .kt-portal-dashboard:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
 	min-height: 40px;
-	padding: 0 16px;
-	border-radius: 8px;
+	padding: 12px 20px;
+	border: 0;
+	border-radius: 10px;
+	background: linear-gradient(135deg, #0047ab, #003580);
+	color: #fff;
 	font-size: 14px;
-	font-weight: 700;
+	font-weight: 600;
+	line-height: 1.2;
 	text-decoration: none;
 	white-space: nowrap;
+	transition: all 0.3s ease;
 }
-.kt-industry.kt-portal .kt-portal-get-started {
-	background: var(--kt-color-accent-700);
-	color: var(--kt-color-surface);
+.kt-industry.kt-portal .kt-portal-get-started:not(.btn):not(.kt-tab):not(.kt-add-child) {
+	background: linear-gradient(135deg, #0047ab, #003580);
+	color: #fff;
 }
-.kt-industry.kt-portal .kt-portal-dashboard {
+.kt-industry.kt-portal .kt-portal-dashboard:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	margin-right: 8px;
 	border: 1px solid #e1e7ee;
 	border-radius: 10px;
 	background: #f1f3f5;
-	color: #344054;
+	color: #000;
 }
-.kt-industry.kt-portal .kt-portal-get-started:hover,
-.kt-industry.kt-portal .kt-portal-dashboard:hover {
-	background: var(--kt-color-accent-100);
-	color: var(--kt-color-accent-800);
+.kt-industry.kt-portal .kt-portal-get-started:not(.btn):not(.kt-tab):not(.kt-add-child):hover,
+.kt-industry.kt-portal .kt-portal-dashboard:not(.btn):not(.kt-tab):not(.kt-add-child):hover {
+	transform: translateY(-2px);
+	box-shadow: 0 10px 30px rgba(0, 102, 255, 0.3);
 }
 .kt-industry.kt-portal .kt-portal-get-started svg,
 .kt-industry.kt-portal .kt-portal-dashboard svg {
@@ -216,7 +221,7 @@
 .kt-industry.kt-portal .kt-portal-account-menu[hidden] {
 	display: none;
 }
-.kt-industry.kt-portal .kt-portal-account-menu-item {
+.kt-industry.kt-portal .kt-portal-account-menu-item:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	display: inline-flex;
 	align-items: center;
 	gap: 10px;
@@ -242,17 +247,22 @@
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
-.kt-industry.kt-portal .kt-portal-account-menu-item:hover,
-.kt-industry.kt-portal .kt-portal-account-menu-item:focus-visible {
+.kt-industry.kt-portal
+	.kt-portal-account-menu-item:not(.btn):not(.kt-tab):not(.kt-add-child):hover,
+.kt-industry.kt-portal
+	.kt-portal-account-menu-item:not(.btn):not(.kt-tab):not(.kt-add-child):focus-visible {
 	background: var(--kt-color-accent-100);
 	color: var(--kt-color-accent-800);
 	outline: none;
 }
-.kt-industry.kt-portal .kt-portal-account-menu-item.danger {
+.kt-industry.kt-portal
+	.kt-portal-account-menu-item.danger:not(.btn):not(.kt-tab):not(.kt-add-child) {
 	color: var(--kt-color-neutral-800);
 }
-.kt-industry.kt-portal .kt-portal-account-menu-item.danger:hover,
-.kt-industry.kt-portal .kt-portal-account-menu-item.danger:focus-visible {
+.kt-industry.kt-portal
+	.kt-portal-account-menu-item.danger:not(.btn):not(.kt-tab):not(.kt-add-child):hover,
+.kt-industry.kt-portal
+	.kt-portal-account-menu-item.danger:not(.btn):not(.kt-tab):not(.kt-add-child):focus-visible {
 	background: rgba(220, 38, 38, 0.08);
 	color: #b42318;
 }

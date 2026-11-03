@@ -200,7 +200,8 @@
 		background: #fff;
 		color: #344054;
 	}
-	#send-otp-button {
+	#send-otp-button,
+	#send-sms-otp-button {
 		margin-bottom: 16px;
 	}
 	.otp-channel {
@@ -748,9 +749,9 @@
 					</p>
 					<input type="hidden" id="verification_token" name="verification_token" />
 					<button id="send-otp-button" class="btn btn-secondary" type="button">
-						Send verification codes
+						Send email code
 					</button>
-					<div id="otp-panel" class="otp-panel" hidden>
+					<div id="email-otp-panel" class="otp-panel" hidden>
 						<div class="otp-channel">
 							<label for="email_otp">Email verification code</label
 							><input
@@ -801,25 +802,30 @@
 					<p class="registration-step-description">
 						Enter the one-time code sent by SMS to your contact phone.
 					</p>
-					<div class="otp-channel">
-						<label for="sms_otp">SMS verification code</label
-						><input
-							class="form-control"
-							id="sms_otp"
-							inputmode="numeric"
-							maxlength="6"
-							pattern="[0-9]{6}"
-							autocomplete="one-time-code"
-							placeholder="6-digit code"
-						/>
-						<div class="otp-channel-actions">
-							<button id="verify-sms-button" class="btn btn-secondary" type="button">
-								Verify phone</button
-							><span
-								id="sms-verified"
-								class="otp-verified"
-								aria-live="polite"
-							></span>
+					<button id="send-sms-otp-button" class="btn btn-secondary" type="button" disabled>
+						Send SMS code
+					</button>
+					<div id="sms-otp-panel" class="otp-panel" hidden>
+						<div class="otp-channel">
+							<label for="sms_otp">SMS verification code</label
+							><input
+								class="form-control"
+								id="sms_otp"
+								inputmode="numeric"
+								maxlength="6"
+								pattern="[0-9]{6}"
+								autocomplete="one-time-code"
+								placeholder="6-digit code"
+							/>
+							<div class="otp-channel-actions">
+								<button id="verify-sms-button" class="btn btn-secondary" type="button">
+									Verify phone</button
+								><span
+									id="sms-verified"
+									class="otp-verified"
+									aria-live="polite"
+								></span>
+							</div>
 						</div>
 					</div>
 					<div class="registration-actions">
