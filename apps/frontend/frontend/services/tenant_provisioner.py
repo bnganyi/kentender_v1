@@ -282,7 +282,7 @@ def _run_onboarding(bench, site, payload):
                 "--site",
                 site,
                 "execute",
-                "kentender_core.services.tenant_onboarding.initialize_tenant_from_file",
+                "kentender_core.services.tenant_onboarding.initialize_tenant_from_file",            
             ],
             timeout=900,
             extra_env={
@@ -434,16 +434,43 @@ def _create_hostafrica_dns_record(site):
 # SSL CONFIGURATION
 # ---------------------------------------------------------------------------
 
-def _configure_tls(site):
-    wrapper = "/usr/local/sbin/kentender-configure-tls"
 
+def _configure_tls(site):
+    bench = _bench_path()
+
+    # Configure the tenant hostname.
+    _run(
+        bench,
+        [
+            "--site", site,
+            "set-config",
+            "host_name",
+            site,
+        ],
+        timeout=120,
+    )
+
+    # Enforce HTTPS.
+    _run(
+        bench,
+        [
+            "--site", site,
+            "set-config",
+            "enforce_ssl",
+            "1",
+        ],
+        timeout=120,
+    )
+
+    # Execute the root-owned TLS wrapper.
     result = subprocess.run(
         [
             "sudo",
             "-n",
-            wrapper,
+            "/usr/local/sbin/kentender-configure-tls",
             site,
         ],
+        cwd=str(bench),
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -451,12 +478,14 @@ def _configure_tls(site):
         check=False,
     )
 
-    if result.returncode:
+    if result.returncode != 0:
         raise RuntimeError(
-            f"TLS setup failed (exit {result.returncode}). "
-            f"Output tail:\n{result.stdout[-5000:]}"
+            f"TLS setup failed for {site} "
+            f"(exit {result.returncode}):\n"
+            f"{result.stdout[-5000:]}"
         )
 
+    return result.stdout
 
 # ---------------------------------------------------------------------------
 # PROVISIONING ENTRY POINT
@@ -655,7 +684,7 @@ def _provision_registration_locked(registration_name):
                 site,
                 "set-config",
                 "host_name",
-                f"https://{site}",
+                site,
             ],
             timeout=120
         )
