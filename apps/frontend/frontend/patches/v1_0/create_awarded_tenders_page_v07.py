@@ -28,6 +28,7 @@ PAGE_HTML = r"""
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1">
 
 <style>
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -55,7 +56,7 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 .kt-header-actions a[href="/app/home"], #mobileMenu a[href="/app/home"] {
   background:#f1f3f5 !important; color:#000 !important;
   border:1px solid #e1e7ee !important; border-radius:10px !important;
-  padding:10px 16px !important; margin-right:8px !important;
+  padding:10px 16px !important;
 }
 .kt-header-actions a[href="/app/home"] *, #mobileMenu a[href="/app/home"] * { color:#000 !important; }
 @media (max-width:767px) { .kt-header-actions { display:none !important; } }
@@ -82,6 +83,11 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 .dropdown-menu.show { opacity:1; visibility:visible; transform:translateY(0); }
 .dropdown-item { display:block; padding:12px 20px; color:#1f2937; text-decoration:none; font-size:14px; transition: all 0.2s ease; }
 .dropdown-item:hover { background:#f3f4f6; color:#0066ff; padding-left:24px; }
+.dropdown-menu, #kt-profile-menu { background-color:#f3f4f6 !important; }
+.dropdown-item:hover, .dropdown-item:focus, .dropdown-item:active { background-color:#e5e7eb; }
+.dropdown-menu .dropdown-item.active { background-color:#e5e7eb !important; background-image:none !important; }
+select { color-scheme:light; }
+select option { background-color:#f3f4f6; color:#1f2937; }
 .dropdown-arrow { transition: transform 0.3s ease; font-size:0.75rem; }
 .dropdown-arrow.rotate-180 { transform: rotate(180deg); }
 
@@ -167,9 +173,9 @@ body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: 
 #scrollTop:hover { transform: scale(1.1); }
 .neon-glow { box-shadow: 0 0 20px rgba(0,102,255,0.3), 0 0 40px rgba(0,102,255,0.2); }
 
-.filter-panel { transition: all 0.4s cubic-bezier(0.4,0,0.2,1); overflow:hidden; }
-.filter-panel.collapsed { max-height:80px; margin-bottom:2px; box-shadow:none; }
-.filter-panel.expanded { max-height:1200px; margin-bottom:48px; }
+.filter-panel { margin-bottom:24px; }
+.filter-panel.collapsed { display:none; margin-bottom:0; }
+.filter-panel.expanded { margin-bottom:24px; }
 .filter-content { transition: opacity 0.3s ease, transform 0.3s ease; }
 .filter-panel.collapsed .filter-content { opacity:0; transform: translateY(-20px); pointer-events:none; }
 .filter-panel.expanded .filter-content { opacity:1; transform: translateY(0); pointer-events:all; }
@@ -203,10 +209,6 @@ body:not(.loading) { overflow:visible; }
 }
 body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
 
-@media (max-width:768px) {
-  .filter-panel.expanded { max-height: calc(100vh - 140px); overflow-y:auto; -webkit-overflow-scrolling:touch; }
-  .filter-panel.collapsed { max-height:100px; }
-}
 </style>
 
 <div id="loadingOverlay">
@@ -250,15 +252,25 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       </div>
     </div>
 
+    {% if frappe.session.user == 'Guest' %}
     <div class="kt-header-actions">
-      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
-      {% if frappe.session.user == 'Guest' %}
-      <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
-      {% endif %}
-      {% if frappe.session.user != 'Guest' %}
-      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
-      {% endif %}
+      <a href="/app/home" id="kt-dashboard-button" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <a href="/tenant_registration" id="kt-start-trial" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
     </div>
+    {% else %}
+    <div class="kt-header-actions">
+      <a href="/app/home" id="kt-dashboard-button" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <div class="kt-profile-wrap">
+        <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
+          <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span><span>{{ frappe.session.user }}</span><i class="fas fa-chevron-down kt-profile-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="kt-profile-menu" role="menu" aria-label="Account menu" hidden>
+          <a href="/account" role="menuitem"><i class="fas fa-user" aria-hidden="true"></i><span>Profile</span></a>
+          <button type="button" role="menuitem" data-kt-profile-logout><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
@@ -280,6 +292,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
     </div>
   </div>
 </div>
+<script src="/assets/frontend/js/public_profile_menu.js?v=1"></script>
 
 <section class="relative py-24 overflow-hidden bg-gradient-to-br from-gray-50 to-green-50">
   <div class="absolute inset-0 pattern-grid opacity-50"></div>
@@ -296,18 +309,18 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       </p>
     </div>
 
-    <div class="bg-black/5 py-4 px-4 rounded-3xl mb-8 flex justify-between items-center flex-wrap gap-3">
+    <div class="bg-black/5 py-4 px-4 rounded-3xl mb-4 flex justify-between items-center flex-wrap gap-3">
       <h2 class="flex items-center gap-2 font-bold text-lg">
         <i class="fas fa-filter text-green-600"></i>
         <span>Awarded Tenders Filters</span>
       </h2>
-      <button class="filter-toggle" id="filterToggle" type="button">
-        <i class="fas fa-plus"></i>
+      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="true">
+        <i class="fas fa-chevron-down"></i>
         <span class="toggle-text">Hide Filters</span>
       </button>
     </div>
 
-    <div class="filter-panel bg-[#0b1f3b]/5 shadow-xl rounded-2xl mb-8 p-6 md:p-8" id="filterPanel">
+    <div class="filter-panel expanded" id="filterPanel">
       <div class="filter-content" id="filterContent">
         <form class="space-y-6" onsubmit="event.preventDefault();">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -598,8 +611,9 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
   if (filterPanel && filterToggle) {
     var toggleIcon = filterToggle.querySelector('i');
     var toggleText = filterToggle.querySelector('.toggle-text');
-    var saved = localStorage.getItem('awardedFilterPanelCollapsed');
-    if (saved !== 'false') collapse();
+    var saved = localStorage.getItem('awardedFilterPanelCollapsedV2');
+    if (saved === 'true') collapse();
+    else expand();
     filterToggle.addEventListener('click', function() {
       if (filterPanel.classList.contains('collapsed')) expand();
       else collapse();
@@ -607,14 +621,16 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
     function collapse() {
       filterPanel.classList.remove('expanded'); filterPanel.classList.add('collapsed');
       toggleIcon.classList.remove('fa-chevron-down'); toggleIcon.classList.add('fa-chevron-up');
+      filterToggle.setAttribute('aria-expanded', 'false');
       if (toggleText) toggleText.textContent = 'Show Filters';
-      localStorage.setItem('awardedFilterPanelCollapsed', 'true');
+      localStorage.setItem('awardedFilterPanelCollapsedV2', 'true');
     }
     function expand() {
       filterPanel.classList.remove('collapsed'); filterPanel.classList.add('expanded');
       toggleIcon.classList.remove('fa-chevron-up'); toggleIcon.classList.add('fa-chevron-down');
+      filterToggle.setAttribute('aria-expanded', 'true');
       if (toggleText) toggleText.textContent = 'Hide Filters';
-      localStorage.setItem('awardedFilterPanelCollapsed', 'false');
+      localStorage.setItem('awardedFilterPanelCollapsedV2', 'false');
     }
   }
 

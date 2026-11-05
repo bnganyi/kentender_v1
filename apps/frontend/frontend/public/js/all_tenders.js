@@ -391,7 +391,7 @@
 			: "Show Filters";
 		filterToggle.querySelector("i").classList.toggle("fa-chevron-up", !expanded);
 		filterToggle.querySelector("i").classList.toggle("fa-chevron-down", expanded);
-		localStorage.setItem("allTendersFilterPanelCollapsed", expanded ? "false" : "true");
+		localStorage.setItem("allTendersFilterPanelCollapsedV2", expanded ? "false" : "true");
 	}
 
 	function updateOptions(select, options, fallback) {
@@ -486,7 +486,7 @@
 	filterToggle.addEventListener("click", () => {
 		setFiltersExpanded(filterPanel.classList.contains("collapsed"));
 	});
-	setFiltersExpanded(localStorage.getItem("allTendersFilterPanelCollapsed") === "false");
+	setFiltersExpanded(localStorage.getItem("allTendersFilterPanelCollapsedV2") !== "true");
 	retryButton.addEventListener("click", loadTenders);
 	results.addEventListener("click", (event) => {
 		const trigger = event.target.closest("[data-tender-detail]");

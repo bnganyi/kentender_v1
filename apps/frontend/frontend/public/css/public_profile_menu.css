@@ -1,0 +1,82 @@
+.kt-profile-wrap {
+	position: relative;
+	flex-shrink: 0;
+}
+
+#kt-profile-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border: 0;
+	background: transparent;
+	color: #0a1929;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.kt-profile-avatar {
+	display: inline-flex;
+	width: 36px;
+	height: 36px;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: #0047ab;
+	color: #fff;
+}
+
+.kt-profile-chevron {
+	font-size: 10px;
+	transition: transform 0.2s ease;
+}
+
+#kt-profile-button[aria-expanded="true"] .kt-profile-chevron {
+	transform: rotate(180deg);
+}
+
+#kt-profile-menu {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 10px);
+	z-index: 9999;
+	width: 180px;
+	padding: 6px;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	background: #fff;
+	box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+#kt-profile-menu[hidden] {
+	display: none !important;
+}
+
+#kt-profile-menu:not([hidden]) {
+	display: block !important;
+}
+
+#kt-profile-menu a,
+#kt-profile-menu button {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: #374151;
+	font: inherit;
+	text-align: left;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+#kt-profile-menu a:hover,
+#kt-profile-menu button:hover,
+#kt-profile-menu a:focus-visible,
+#kt-profile-menu button:focus-visible {
+	background: #f3f4f6;
+	color: #2563eb;
+	outline: none;
+}

@@ -28,6 +28,7 @@ PAGE_HTML = r"""
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1">
 
 <style>
 *, *::before, *::after { box-sizing: border-box; }
@@ -50,6 +51,12 @@ body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
 .dropdown-menu.show, .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
 .dropdown-item { display: block; padding: 10px 12px; border-radius: 6px; color: #1f2937; text-decoration: none; }
 .dropdown-item:hover { background: #f3f4f6; color: #2563eb; }
+.dropdown-menu, #kt-profile-menu { background-color: #f3f4f6 !important; }
+.dropdown-item:hover, .dropdown-item:focus, .dropdown-item:active { background-color: #e5e7eb; }
+.dropdown-menu .dropdown-item.active { background-color: #e5e7eb !important; background-image: none !important; }
+#mainNav .dropdown-menu .dropdown-item.active, #mainNav .dropdown-toggle.active, #mobileMenu a.active { color: #2563eb !important; font-weight: 700; }
+select { color-scheme: light; }
+select option { background-color: #f3f4f6; color: #1f2937; }
 .kt-header-actions { gap: 12px; }
 .kt-action-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border-radius: 10px; background: linear-gradient(135deg,#0047ab,#003580); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
 #kt-dashboard-button { border: 1px solid #e1e7ee; background: #f1f3f5; color: #000; }
@@ -66,13 +73,13 @@ body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
 .page-inner { position: relative; z-index: 10; width: min(1536px, 100%); margin: 0 auto; padding: 96px 16px; }
 .page-heading { margin: 0 0 24px; color: #4b5563; font-size: 30px; line-height: 1.15; font-weight: 700; }
 .page-intro { max-width: 768px; margin: 0 auto 64px; color: #4b5563; font-size: 20px; line-height: 1.5; }
-.filter-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; padding: 16px; border-radius: 24px; background: rgba(0,0,0,.05); }
+.filter-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding: 16px; border-radius: 24px; background: rgba(0,0,0,.05); }
 .filter-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; font-weight: 700; }
 .filter-heading p { margin: 0 auto 0 0; color: #4b5563; font-size: 14px; }
 .filter-heading h2 i { color: #16a34a; }
-.filter-panel { margin-bottom: 32px; padding: 24px; border-radius: 16px; background: rgba(11,31,59,.05); box-shadow: 0 20px 25px -5px rgba(0,0,0,.1); transition: all .4s cubic-bezier(.4,0,.2,1); overflow: hidden; }
-.filter-panel.collapsed { max-height: 80px; margin-bottom: 2px; box-shadow: none; }
-.filter-panel.expanded { max-height: 1200px; margin-bottom: 48px; }
+.filter-panel { margin-bottom: 24px; padding: 0; background: transparent; }
+.filter-panel.collapsed { display: none; margin-bottom: 0; }
+.filter-panel.expanded { margin-bottom: 24px; }
 .filter-content { transition: opacity .3s ease, transform .3s ease; }
 .filter-panel.collapsed .filter-content { opacity: 0; transform: translateY(-20px); pointer-events: none; }
 .filter-panel.expanded .filter-content { opacity: 1; transform: translateY(0); pointer-events: all; }
@@ -151,7 +158,7 @@ body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
 .footer-links a { color: #e4eaf3; text-decoration: none; }
 .footer-links a:hover { color: #fff; text-decoration: underline; }
 @media (min-width: 768px) { .page-heading { font-size: 60px; } .tender-card-meta { flex-direction: row; } }
-@media (max-width: 900px) { #mainNav { gap: 14px; } .kt-header-actions { gap: 8px; } #site-nav { gap: 14px; } }
+@media (max-width: 900px) { #mainNav { gap: 14px; } #site-nav { gap: 14px; } }
 @media (max-width: 767px) { #mainNav, .kt-header-actions { display: none; } #mobileMenuBtn { display: inline-flex; } .filter-grid { grid-template-columns: 1fr 1fr; } .filter-actions { grid-column: 1 / -1; } }
 @media (max-width: 560px) { .page-heading { font-size: 30px; } .filter-grid { grid-template-columns: 1fr; } .tender-card-top, .tender-load-error { align-items: flex-start; flex-direction: column; } .tender-deadline { text-align: left; } .filter-actions { align-items: stretch; flex-direction: column; } .footer-inner { align-items: flex-start; flex-direction: column; } }
 </style>
@@ -165,10 +172,25 @@ body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
       <div class="dropdown"><button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down" aria-hidden="true"></i></button><div class="dropdown-menu"><a href="/all-tenders" class="dropdown-item">All Tenders</a><a href="/contracts" class="dropdown-item">Awarded Contracts</a></div></div>
       <div class="dropdown"><button class="dropdown-toggle" type="button">Industries <i class="fas fa-chevron-down" aria-hidden="true"></i></button><div class="dropdown-menu"><a href="/industry/public" class="dropdown-item">Public Sector</a><a href="/industry/private" class="dropdown-item">Private Sector</a><a href="/industry/donor" class="dropdown-item">Donor Funded</a></div></div>
     </div>
-    <div class="kt-header-actions"><a id="kt-dashboard-button" class="kt-action-button" href="/app/home"><i class="fas fa-table-columns" aria-hidden="true"></i><span>Go to Dashboard</span></a>{% if frappe.session.user == 'Guest' %}<a class="kt-action-button" href="/tenant_registration"><i class="fas fa-rocket" aria-hidden="true"></i><span>Get Started</span></a>{% endif %}</div>
+    {% if frappe.session.user == 'Guest' %}
+    <div class="kt-header-actions"><a id="kt-dashboard-button" class="kt-action-button" href="/app/home"><i class="fas fa-table-columns" aria-hidden="true"></i><span>Go to Dashboard</span></a><a id="kt-start-trial" class="kt-action-button" href="/tenant_registration"><i class="fas fa-rocket" aria-hidden="true"></i><span>Get Started</span></a></div>
+    {% else %}
+    <div class="kt-header-actions">
+      <a id="kt-dashboard-button" class="kt-action-button" href="/app/home"><i class="fas fa-table-columns" aria-hidden="true"></i><span>Go to Dashboard</span></a>
+      <div class="kt-profile-wrap">
+        <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
+          <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span><span>{{ frappe.session.user }}</span><i class="fas fa-chevron-down kt-profile-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="kt-profile-menu" role="menu" aria-label="Account menu" hidden>
+          <a href="/account" role="menuitem"><i class="fas fa-user" aria-hidden="true"></i><span>Profile</span></a>
+          <button type="button" role="menuitem" data-kt-profile-logout><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
     <button id="mobileMenuBtn" type="button" aria-label="Open menu"><i class="fas fa-bars" aria-hidden="true"></i></button>
   </nav>
-  <nav id="mobileMenu" hidden aria-label="Mobile navigation"><div id="mobileMenu-inner"><a href="/">Home</a><a href="/about">About</a><a href="/all-tenders">All Tenders</a><a href="/contracts">Awarded Contracts</a><a href="/app/home">Go to Dashboard</a>{% if frappe.session.user == 'Guest' %}<a href="/tenant_registration">Get Started</a>{% endif %}</div></nav>
+  <nav id="mobileMenu" hidden aria-label="Mobile navigation"><div id="mobileMenu-inner"><a href="/">Home</a><a href="/about">About</a><a href="/all-tenders">All Tenders</a><a href="/contracts">Awarded Contracts</a><a href="/app/home">Go to Dashboard</a>{% if frappe.session.user == 'Guest' %}<a href="/tenant_registration">Get Started</a>{% else %}<a href="/account">Profile</a>{% endif %}</div></nav>
 </div>
 
 <main class="all-tenders-main">
@@ -247,6 +269,16 @@ body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
   setInterval(updateTime, 30000);
   document.querySelectorAll('.dropdown-toggle').forEach(function(button) { button.addEventListener('click', function(event) { event.stopPropagation(); var menu = button.nextElementSibling; document.querySelectorAll('.dropdown-menu').forEach(function(item) { if (item !== menu) item.classList.remove('show'); }); menu.classList.toggle('show'); }); });
   document.addEventListener('click', function(event) { if (!event.target.closest('.dropdown')) document.querySelectorAll('.dropdown-menu').forEach(function(menu) { menu.classList.remove('show'); }); });
+  var currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+  document.querySelectorAll('#mainNav a, #mobileMenu a').forEach(function(link) {
+    var href = (link.getAttribute('href') || '').replace(/\/$/, '') || '/';
+    if (href !== currentPath) return;
+    link.classList.add('active');
+    link.setAttribute('aria-current', 'page');
+    var dropdown = link.closest('.dropdown');
+    var toggle = dropdown && dropdown.querySelector('.dropdown-toggle');
+    if (toggle) toggle.classList.add('active');
+  });
   var mobileButton = document.getElementById('mobileMenuBtn');
   var mobileMenu = document.getElementById('mobileMenu');
   mobileButton.addEventListener('click', function() { mobileMenu.hidden = !mobileMenu.hidden; });
@@ -255,5 +287,6 @@ body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
   scrollTop.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 })();
 </script>
-<script src="/assets/frontend/js/all_tenders.js?v=7"></script>
+<script src="/assets/frontend/js/all_tenders.js?v=8"></script>
+<script src="/assets/frontend/js/public_profile_menu.js?v=1"></script>
 """

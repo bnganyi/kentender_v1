@@ -133,20 +133,32 @@ kt_portal_surfaces = [
 		"bundle": "bid_portal.bundle.js",
 		"css": [
 			# f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}",
-   			f"/assets/kentender_procurement/css/overrides/bds_available_tenders.css?v={_asset_version('public/css/overrides/bds_available_tenders.css')}",
-         	f"/assets/kentender_procurement/css/overrides/bds_tender_overview.css?v={_asset_version('public/css/overrides/bds_tender_overview.css')}",
-			f"/assets/kentender_procurement/css/overrides/bds_my_bids.css?v={_asset_version('public/css/overrides/bds_my_bids.css')}",
+			f"/assets/kentender_procurement/css/overrides/bds_available_tenders.css?v={_asset_version('public/css/overrides/bds_available_tenders.css') + 6}",
+			f"/assets/kentender_procurement/css/overrides/bds_tender_overview.css?v={_asset_version('public/css/overrides/bds_tender_overview.css') + 3}",
+			f"/assets/kentender_procurement/css/overrides/bds_my_bids.css?v={_asset_version('public/css/overrides/bds_my_bids.css') + 3}",
 			f"/assets/kentender_procurement/css/overrides/bid_company_task.css?v={_asset_version('public/css/overrides/bid_company_task.css')}",
 			f"/assets/kentender_procurement/css/overrides/bid_documents_task.css?v={_asset_version('public/css/overrides/bid_documents_task.css')}",
 		],
 	},
 	# BDS-DES-05 My bids and BDS-DES-17 receipt history — the same app and
 	# bundle; `/account/receipts` outranks Supplier Accounts' `/account`.
-	*(
-		{"key": "tenders", "prefix": prefix, "resolver": "kentender_procurement.bid_submission.portal.resolve", "bundle": "bid_portal.bundle.js",
-		 "css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"]}
-		for prefix in ("/my-bids", "/account/receipts")
-	),
+	{
+		"key": "tenders",
+		"prefix": "/my-bids",
+		"resolver": "kentender_procurement.bid_submission.portal.resolve",
+		"bundle": "bid_portal.bundle.js",
+		"css": [
+			f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}",
+			f"/assets/kentender_procurement/css/overrides/bds_my_bids.css?v={_asset_version('public/css/overrides/bds_my_bids.css') + 1}",
+		],
+	},
+	{
+		"key": "tenders",
+		"prefix": "/account/receipts",
+		"resolver": "kentender_procurement.bid_submission.portal.resolve",
+		"bundle": "bid_portal.bundle.js",
+		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"]
+	},
 	# AWD-CHG-001 v0.4 plan D14 — the supplier's own award notice.
 	{
 		"key": "supplier-awards",

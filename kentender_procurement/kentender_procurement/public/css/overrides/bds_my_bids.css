@@ -1,55 +1,118 @@
 /* My bids — customer-facing list. Layers over bid_portal.css. */
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] {
-	--kt-ink: #0f2e2b;
-	--kt-muted: #5a6f6b;
-	--kt-line: #e3ebe8;
-	--kt-soft: #f4f8f6;
-	--kt-accent: #187a6b;
-	--kt-accent-hover: #136255;
+	--kt-ink: #0a1929;
+	--kt-muted: #4b5563;
+	--kt-line: #e5e7eb;
+	--kt-soft: #f1f5f9;
+	--kt-accent: #0047ab;
+	--kt-accent-hover: #003580;
 	--kt-white: #fff;
-	--kt-shadow: 0 2px 8px rgb(15 46 43 / 5%), 0 8px 24px rgb(15 46 43 / 6%);
-	--kt-radius: 14px;
-	max-width: 1080px;
-	margin: 0 24px 24px;
-	padding: 8px 0 32px;
+	--kt-shadow: 0 8px 24px rgb(11 31 59 / 8%);
+	--kt-radius: 12px;
+	max-width: none;
+	margin: 0;
+	padding: 0 0 32px;
+	background: transparent;
+	color: var(--kt-ink);
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) {
+	background: #f8fafc;
+	color: #0a1929;
+}
+
+.kt-industry.kt-portal .kt-portal-body:has(.kt-page[data-testid="bds-my-bids"]) {
+	width: min(1536px, calc(100% - 32px));
+	max-width: none;
+	padding: 72px 16px;
+}
+
+body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-bar {
+	justify-content: flex-start;
+	gap: 12px;
+}
+
+body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-nav {
+	flex: 1 1 auto;
+	justify-content: center;
+	margin-left: 0;
+}
+
+body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-header-actions {
+	gap: 0;
+	margin-left: 0;
+}
+
+body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-dashboard {
+	margin-right: 0 !important;
+}
+
+body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-identity-wrap {
+	margin-left: 0;
 }
 
 /* Header */
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-head {
-	margin: 0 24px 24px;
+	display: block;
+	margin: 0 0 24px;
 	padding: 28px 32px;
-	background: linear-gradient(145deg, #f7fbf9 0%, #eef5f3 100%);
-	border: 1px solid var(--kt-line);
+	background: linear-gradient(135deg, #0b1f3b 0%, #1e3a5f 60%, #0066ff 100%);
+	border: 1px solid rgba(255, 255, 255, 0.24);
 	border-radius: var(--kt-radius);
+	box-shadow: 0 14px 30px rgb(0 71 171 / 16%);
+	text-align: center;
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-title {
 	margin: 0;
-	color: var(--kt-ink);
-	font-size: 32px;
-	font-weight: 750;
-	letter-spacing: -0.04em;
-	line-height: 1.15;
+	color: #fff;
+	font-size: 48px;
+	font-weight: 700;
+	letter-spacing: 0;
+	line-height: 1.1;
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-desc {
-	margin: 8px 0 0;
-	max-width: 50ch;
-	color: var(--kt-muted);
-	font-size: 16px;
+	margin: 16px auto 0;
+	max-width: 768px;
+	color: rgba(255, 255, 255, 0.9);
+	font-size: 18px;
 	line-height: 1.5;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
+	padding: 40px 24px;
+	background: rgb(255 255 255 / 88%);
+	border: 1px solid var(--kt-line);
+	border-radius: var(--kt-radius);
+	box-shadow: var(--kt-shadow);
+	text-align: center;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-empty .btn-primary {
+	background: linear-gradient(135deg, #0047ab, #003580);
 }
 
 /* Filters */
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
 	display: grid;
-	grid-template-columns: 1.6fr 1fr auto;
-	gap: 12px 14px;
+	grid-template-columns: minmax(240px, 1.6fr) minmax(180px, 1fr) auto;
+	gap: 14px;
 	align-items: end;
-	margin: 0 24px 20px;
-	padding: 0;
-	background: transparent;
-	border: 0;
+	margin: 0 0 24px;
+	padding: 20px;
+	background: rgb(255 255 255 / 88%);
+	border: 1px solid var(--kt-line);
+	border-radius: var(--kt-radius);
+	box-shadow: var(--kt-shadow);
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .field > label {
@@ -67,7 +130,7 @@
 	width: 100%;
 	height: 42px;
 	padding: 0 12px;
-	border: 1px solid #d4e0dc;
+	border: 1px solid #cbd5e1;
 	border-radius: 10px;
 	background: var(--kt-white);
 	color: var(--kt-ink);
@@ -82,7 +145,7 @@
 	select.input:focus-visible {
 	border-color: var(--kt-accent);
 	outline: none;
-	box-shadow: 0 0 0 3px rgb(24 122 107 / 15%);
+	box-shadow: 0 0 0 3px rgb(0 71 171 / 16%);
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .btn {
@@ -91,14 +154,14 @@
 	border-radius: 10px;
 	font-size: 14px;
 	font-weight: 600;
-	border: 1px solid #d4e0dc;
+	border: 1px solid #cbd5e1;
 	background: var(--kt-white);
 	color: var(--kt-ink);
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar .btn:hover {
-	background: #fafcfb;
-	border-color: #c5d4cf;
+	background: #f1f5f9;
+	border-color: #94a3b8;
 }
 
 /* Bid cards */
@@ -131,10 +194,10 @@
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table tbody tr:hover {
-	border-color: #c8dad5;
+	border-color: #bfdbfe;
 	box-shadow:
-		0 4px 12px rgb(15 46 43 / 6%),
-		0 12px 32px rgb(15 46 43 / 8%);
+		0 4px 12px rgb(11 31 59 / 6%),
+		0 12px 32px rgb(11 31 59 / 10%);
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table td {
@@ -220,7 +283,7 @@
 	min-width: 120px;
 	height: 38px;
 	padding: 0 16px;
-	background: var(--kt-accent);
+	background: linear-gradient(135deg, #0047ab, #003580);
 	color: #fff;
 	font-size: 14px;
 	font-weight: 650;
@@ -232,7 +295,7 @@
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-row-actions .btn:hover {
-	background: var(--kt-accent-hover);
+	background: #003580;
 	color: #fff;
 }
 
@@ -251,7 +314,7 @@
 /* Responsive */
 @media (max-width: 980px) {
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] {
-		margin: 0 16px 20px;
+		margin: 0;
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
 		grid-template-columns: 1fr 1fr;
@@ -271,16 +334,21 @@
 
 @media (max-width: 680px) {
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] {
-		margin: 0 12px 16px;
+		margin: 0;
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-head {
 		padding: 22px 20px;
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-page-title {
-		font-size: 26px;
+		font-size: 32px;
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
 		grid-template-columns: 1fr;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar.bds-filter-stack {
+		grid-template-columns: minmax(0, 1fr) !important;
+		grid-auto-flow: row !important;
+		grid-auto-columns: minmax(0, 1fr) !important;
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table tbody tr {
 		grid-template-columns: 1fr;
@@ -310,5 +378,41 @@
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-row-actions .btn {
 		width: 100%;
 		margin-top: 4px;
+	}
+}
+
+@media (max-width: 600px) {
+	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-bar {
+		height: auto;
+		min-height: 52px;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		gap: 12px;
+		padding-top: 8px;
+		padding-bottom: 8px;
+	}
+	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-brand {
+		order: 1;
+		flex: 1 0 100%;
+	}
+	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-nav {
+		order: 2;
+		flex: 1 0 100%;
+		justify-content: space-between;
+		gap: 8px;
+		margin: 0;
+	}
+	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-header-actions {
+		order: 3;
+		gap: 0;
+		margin: 0;
+	}
+	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-identity-wrap {
+		order: 4;
+		margin: 0;
+	}
+	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-body {
+		padding-top: 48px;
+		padding-bottom: 48px;
 	}
 }

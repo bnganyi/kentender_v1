@@ -16,6 +16,7 @@ frontend.patches.v1_0.sync_public_page_headers_v01
 frontend.patches.v1_0.sync_public_page_headers_v02
 frontend.patches.v1_0.sync_public_page_headers_v03
 frontend.patches.v1_0.sync_public_page_headers_v04
+frontend.patches.v1_0.sync_public_page_headers_v05
 frontend.patches.v1_0.sync_public_all_tenders_links_v01
 frontend.patches.v1_0.sync_all_tenders_page_v01
 frontend.patches.v1_0.sync_all_tenders_page_v02
@@ -27,5 +28,10 @@ frontend.patches.v1_0.sync_all_tenders_page_v07
 frontend.patches.v1_0.sync_all_tenders_page_v08
 frontend.patches.v1_0.sync_all_tenders_page_v09
 frontend.patches.v1_0.sync_all_tenders_page_v10
+frontend.patches.v1_0.sync_public_page_headers_v06
+frontend.patches.v1_0.sync_public_page_headers_v07
+frontend.patches.v1_0.sync_public_page_headers_v08
+frontend.patches.v1_0.sync_public_page_headers_v09
+frontend.patches.v1_0.sync_public_page_headers_v10
 
 

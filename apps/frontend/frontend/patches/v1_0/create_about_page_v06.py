@@ -28,6 +28,7 @@ PAGE_HTML = r"""
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1">
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -49,7 +50,7 @@ footer.web-footer { display: none !important; }
 .kt-header-actions a[href="/app/home"], #mobileMenu a[href="/app/home"] {
   background:#f1f3f5 !important; color:#000 !important;
   border:1px solid #e1e7ee !important; border-radius:10px !important;
-  padding:10px 16px !important; margin-right:8px !important;
+  padding:10px 16px !important;
 }
 .kt-header-actions a[href="/app/home"] *, #mobileMenu a[href="/app/home"] * { color:#000 !important; }
 @media (max-width:767px) { .kt-header-actions { display:none !important; } }
@@ -74,6 +75,11 @@ footer.web-footer { display: none !important; }
 .dropdown-menu.show { opacity: 1; visibility: visible; transform: translateY(0); }
 .dropdown-item { display: block; padding: 12px 20px; color: #1f2937; text-decoration: none; font-size: 14px; transition: all 0.2s ease; }
 .dropdown-item:hover { background: #f3f4f6; color: #0066ff; padding-left: 24px; }
+.dropdown-menu, #kt-profile-menu { background-color: #f3f4f6 !important; }
+.dropdown-item:hover, .dropdown-item:focus, .dropdown-item:active { background-color: #e5e7eb; }
+.dropdown-menu .dropdown-item.active { background-color: #e5e7eb !important; background-image: none !important; }
+select { color-scheme: light; }
+select option { background-color: #f3f4f6; color: #1f2937; }
 .dropdown-arrow { transition: transform 0.3s ease; font-size: 0.75rem; }
 .dropdown-arrow.rotate-180 { transform: rotate(180deg); }
 
@@ -155,15 +161,25 @@ footer.web-footer { display: none !important; }
       </div>
     </div>
 
+    {% if frappe.session.user == 'Guest' %}
     <div class="kt-header-actions">
-      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
-      {% if frappe.session.user == 'Guest' %}
-      <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
-      {% endif %}
-      {% if frappe.session.user != 'Guest' %}
-      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
-      {% endif %}
+      <a href="/app/home" id="kt-dashboard-button" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <a href="/tenant_registration" id="kt-start-trial" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
     </div>
+    {% else %}
+    <div class="kt-header-actions">
+      <a href="/app/home" id="kt-dashboard-button" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+      <div class="kt-profile-wrap">
+        <button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
+          <span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span><span>{{ frappe.session.user }}</span><i class="fas fa-chevron-down kt-profile-chevron" aria-hidden="true"></i>
+        </button>
+        <div id="kt-profile-menu" role="menu" aria-label="Account menu" hidden>
+          <a href="/account" role="menuitem"><i class="fas fa-user" aria-hidden="true"></i><span>Profile</span></a>
+          <button type="button" role="menuitem" data-kt-profile-logout><i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Log out</span></button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
   </nav>
@@ -184,6 +200,7 @@ footer.web-footer { display: none !important; }
     </div>
   </div>
 </div>
+<script src="/assets/frontend/js/public_profile_menu.js?v=1"></script>
 
 <section class="relative py-24 overflow-hidden">
   <div class="absolute inset-0 pattern-grid opacity-90"></div>

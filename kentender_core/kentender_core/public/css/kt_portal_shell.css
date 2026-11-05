@@ -447,10 +447,10 @@
 	background: rgba(255, 255, 255, 0.18);
 }
 .kt-industry.kt-portal .kt-portal-footer-inner {
-	width: 1200px;
+	width: 1536px;
 	max-width: calc(100% - 32px);
 	margin: 0 auto;
-	padding: 18px 0 24px;
+	padding: 18px 16px 24px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
