@@ -411,7 +411,9 @@
 		} catch (error) {
 			showMessage(error.message || "Could not send the SMS verification code.", "error");
 		} finally {
-			sendSmsOtpButton.textContent = smsOtpPanel.hidden ? "Send SMS code" : "Resend SMS code";
+			sendSmsOtpButton.textContent = smsOtpPanel.hidden
+				? "Send SMS code"
+				: "Resend SMS code";
 			updateSubmit();
 		}
 	});

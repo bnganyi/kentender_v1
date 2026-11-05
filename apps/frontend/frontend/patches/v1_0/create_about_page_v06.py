@@ -141,7 +141,7 @@ footer.web-footer { display: none !important; }
       <div class="dropdown">
         <button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down dropdown-arrow"></i></button>
         <div class="dropdown-menu">
-          <a href="/tenders" class="dropdown-item">All Tenders</a>
+          <a href="/all-tenders" class="dropdown-item">All Tenders</a>
           <a href="/contracts" class="dropdown-item">Awarded Contracts</a>
         </div>
       </div>
@@ -172,7 +172,7 @@ footer.web-footer { display: none !important; }
     <div class="container mx-auto px-4 py-4 space-y-3">
       <a href="/" class="block text-gray-700 font-medium py-2">Home</a>
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
-      <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
+      <a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
       <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       {% if frappe.session.user == 'Guest' %}

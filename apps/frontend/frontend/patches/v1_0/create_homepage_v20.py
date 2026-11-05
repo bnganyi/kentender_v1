@@ -190,7 +190,7 @@ footer.web-footer { display: none !important; }
           Tenders <i class="fas fa-chevron-down dropdown-arrow"></i>
         </button>
         <div class="dropdown-menu">
-          <a href="/tenders" class="dropdown-item">All Tenders</a>
+          <a href="/all-tenders" class="dropdown-item">All Tenders</a>
           <a href="/contracts" class="dropdown-item">Awarded Contracts</a>
         </div>
       </div>
@@ -242,7 +242,7 @@ footer.web-footer { display: none !important; }
     <div class="container mx-auto px-4 py-4 space-y-3">
       <a href="/" class="block text-gray-700 font-medium py-2">Home</a>
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
-      <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
+      <a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
       <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
       <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>

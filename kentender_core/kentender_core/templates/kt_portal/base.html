@@ -41,6 +41,26 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 	>
 		<a class="kt-portal-skip" href="#kt-portal-main">{{ _("Skip to main content") }}</a>
 		<header class="kt-portal-header">
+			<div class="kt-portal-topbar">
+				<div class="kt-portal-topbar-inner">
+					<span class="kt-portal-topbar-clock">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<circle cx="12" cy="12" r="9" />
+							<path d="M12 7v5l3 2" />
+						</svg>
+						<time id="kt-portal-live-time">Loading...</time>
+					</span>
+					<span class="kt-portal-topbar-divider" aria-hidden="true">|</span>
+					<span class="kt-portal-topbar-contact">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path
+								d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.19 18a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.09 3.18 2 2 0 0 1 4.08 1h3a2 2 0 0 1 2 1.72c.12.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.11L8.06 8.94a16 16 0 0 0 6 6l1.31-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.58 2.8.7A2 2 0 0 1 22 16.92z"
+							/>
+						</svg>
+						+254 700 000 000
+					</span>
+				</div>
+			</div>
 			<div class="kt-portal-bar">
 				<a class="kt-portal-brand" href="/tenders" aria-label="KenTender home">
 					<img
@@ -227,6 +247,24 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		<script>
 			frappe.boot = {{ frappe.utils.orjson_dumps(boot, default=frappe.json_handler) }};
 			frappe.sys_defaults = frappe.boot.sysdefaults;
+			(function () {
+				var clock = document.getElementById("kt-portal-live-time");
+				if (!clock) return;
+
+				function updateClock() {
+					clock.textContent = new Date().toLocaleString("en-KE", {
+						weekday: "short",
+						year: "numeric",
+						month: "short",
+						day: "numeric",
+						hour: "2-digit",
+						minute: "2-digit",
+					});
+				}
+
+				updateClock();
+				window.setInterval(updateClock, 30000);
+			})();
 			function ktPortalLogout() {
 				if (typeof frappe.logout === "function") {
 					frappe.logout();

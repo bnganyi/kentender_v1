@@ -1,11 +1,11 @@
 /* Rail header. Layers over desk styles. */
 .kt-rail {
-	--kt-ink: #0f2e2b !important;
-	--kt-muted: #5a6f6b !important;
-	--kt-line: #e3ebe8 !important;
-	--kt-soft: #f4f8f6 !important;
-	--kt-accent: #187a6b !important;
-	--kt-accent-soft: #e7f4f1 !important;
+	--kt-ink: #0a1929 !important;
+	--kt-muted: #667085 !important;
+	--kt-line: #e1e7ee !important;
+	--kt-soft: #eff6ff !important;
+	--kt-accent: #2563eb !important;
+	--kt-accent-soft: #eff6ff !important;
 	--kt-white: #fff !important;
 	display: flex !important;
 	align-items: center !important;
@@ -13,7 +13,8 @@
 	height: 56px !important;
 	padding: 0 16px !important;
 	background: var(--kt-white) !important;
-	border-bottom: 1px solid var(--kt-line) !important;
+	border-bottom: 1px solid rgba(0, 102, 255, 0.1) !important;
+	backdrop-filter: blur(20px) !important;
 	box-sizing: border-box !important;
 }
 
@@ -30,7 +31,7 @@
 .kt-rail .kt-rail-crumb-current {
 	color: var(--kt-ink) !important;
 	font-weight: 650 !important;
-	letter-spacing: -0.01em !important;
+	letter-spacing: 0 !important;
 }
 
 /* Actions */
@@ -53,7 +54,9 @@
 	background: transparent !important;
 	color: var(--kt-muted) !important;
 	cursor: pointer !important;
-	transition: background 0.12s, color 0.12s !important;
+	transition:
+		background 0.12s,
+		color 0.12s !important;
 }
 
 .kt-rail .kt-rail-btn:hover {
@@ -63,7 +66,7 @@
 
 .kt-rail .kt-rail-btn:focus-visible {
 	outline: none !important;
-	box-shadow: 0 0 0 3px rgb(24 122 107 / 15%) !important;
+	box-shadow: 0 0 0 3px rgb(0 102 255 / 15%) !important;
 }
 
 .kt-rail .kt-rail-btn svg {
@@ -116,7 +119,7 @@
 
 .kt-rail .kt-rail-user:focus-visible {
 	outline: none !important;
-	box-shadow: 0 0 0 3px rgb(24 122 107 / 15%) !important;
+	box-shadow: 0 0 0 3px rgb(0 102 255 / 15%) !important;
 }
 
 .kt-rail .kt-rail-user-text {

@@ -190,7 +190,7 @@ footer.web-footer { display: none !important; }
           Tenders <i class="fas fa-chevron-down dropdown-arrow"></i>
         </button>
         <div class="dropdown-menu">
-          <a href="/tenders" class="dropdown-item">All Tenders</a>
+          <a href="/all-tenders" class="dropdown-item">All Tenders</a>
           <a href="/contracts" class="dropdown-item">Awarded Contracts</a>
         </div>
       </div>
@@ -242,7 +242,7 @@ footer.web-footer { display: none !important; }
     <div class="container mx-auto px-4 py-4 space-y-3">
       <a href="/" class="block text-gray-700 font-medium py-2">Home</a>
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
-      <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
+      <a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
       <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
       <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
@@ -462,7 +462,7 @@ footer.web-footer { display: none !important; }
         <h2 class="text-4xl md:text-5xl font-bold mb-2">Latest Tenders</h2>
         <p class="text-gray-600 text-lg">Fresh opportunities updated daily</p>
       </div>
-      <a href="/tenders" class="flex items-center text-blue-600 font-semibold hover:text-blue-700 transition-colors">
+      <a href="/all-tenders" class="flex items-center text-blue-600 font-semibold hover:text-blue-700 transition-colors">
         View All <i class="fas fa-arrow-right ml-2"></i>
       </a>
     </div>
@@ -484,7 +484,7 @@ footer.web-footer { display: none !important; }
           </div>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-center text-gray-600"><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-sm">Ghana</span></div>
-            <a href="/tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
+            <a href="/all-tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
           </div>
         </div>
       </div>
@@ -505,7 +505,7 @@ footer.web-footer { display: none !important; }
           </div>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-center text-gray-600"><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-sm">Kiambu County, Kenya</span></div>
-            <a href="/tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
+            <a href="/all-tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
           </div>
         </div>
       </div>
@@ -526,7 +526,7 @@ footer.web-footer { display: none !important; }
           </div>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-center text-gray-600"><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-sm">Mirangine Ward, Kenya</span></div>
-            <a href="/tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
+            <a href="/all-tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
           </div>
         </div>
       </div>
@@ -547,7 +547,7 @@ footer.web-footer { display: none !important; }
           </div>
           <div class="flex justify-between items-center flex-wrap gap-2">
             <div class="flex items-center text-gray-600"><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-sm">Karuri, Kenya</span></div>
-            <a href="/tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
+            <a href="/all-tenders" class="btn-primary text-sm py-2 px-5">View Details <i class="fas fa-arrow-right ml-2"></i></a>
           </div>
         </div>
       </div>
@@ -704,9 +704,9 @@ footer.web-footer { display: none !important; }
         <h4 class="text-lg font-bold mb-6 text-white">Quick Links</h4>
         <ul class="space-y-3">
           <li><a href="/about" class="text-gray-400 hover:text-white">About Us</a></li>
-          <li><a href="/tenders" class="text-gray-400 hover:text-white">All Tenders</a></li>
+          <li><a href="/all-tenders" class="text-gray-400 hover:text-white">All Tenders</a></li>
           <li><a href="/contracts" class="text-gray-400 hover:text-white">Contract Awards</a></li>
-          <li><a href="/tenders" class="text-gray-400 hover:text-white">Advanced Search</a></li>
+          <li><a href="/all-tenders" class="text-gray-400 hover:text-white">Advanced Search</a></li>
           <li><a href="#" class="text-gray-400 hover:text-white">Pricing Plans</a></li>
           <li><a href="#" class="text-gray-400 hover:text-white">Blogs & News</a></li>
         </ul>

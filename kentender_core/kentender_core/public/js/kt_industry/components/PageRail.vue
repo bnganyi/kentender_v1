@@ -405,14 +405,16 @@ function logout() {
 
 <style scoped>
 .kt-rail {
+	border-top: 3px solid #0b1f3b;
 	display: flex;
 	align-items: center;
 	gap: 24px;
 	height: 64px;
 	flex: none;
 	padding: 0 32px;
-	border-bottom: 1px solid var(--kt-color-divider);
-	background: #f2f4f6;
+	border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+	background: rgba(255, 255, 255, 0.97);
+	backdrop-filter: blur(20px);
 	position: sticky;
 	top: 0;
 	z-index: 20;
@@ -428,11 +430,11 @@ function logout() {
 }
 .kt-rail-crumb-link {
 	text-decoration: none;
-	color: color-mix(in srgb, var(--kt-color-text) 62%, transparent);
+	color: #374151;
 	white-space: nowrap;
 }
 .kt-rail-crumb-link:hover {
-	color: var(--kt-color-text);
+	color: #2563eb;
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
@@ -444,7 +446,7 @@ function logout() {
 	font-weight: var(--kt-font-heading-weight);
 	font-size: 17px;
 	letter-spacing: 0.01em;
-	color: var(--kt-color-text);
+	color: #0a1929;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -559,14 +561,14 @@ function logout() {
 	place-items: center;
 	border: 0;
 	background: none;
-	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+	color: #374151;
 	cursor: pointer;
 	border-radius: var(--kt-radius-md);
 	position: relative;
 }
 .kt-rail-btn:hover {
-	background: var(--kt-color-accent-100);
-	color: var(--kt-color-accent-800);
+	background: #eff6ff;
+	color: #2563eb;
 }
 .kt-rail-div {
 	width: 1px;
@@ -590,7 +592,7 @@ function logout() {
 	border-radius: var(--kt-radius-md);
 }
 .kt-rail-user:hover {
-	background: var(--kt-color-accent-100);
+	background: #eff6ff;
 }
 .kt-rail-user-menu {
 	position: absolute;
@@ -622,7 +624,8 @@ function logout() {
 }
 .kt-rail-user-menu-item:hover,
 .kt-rail-user-menu-item:focus-visible {
-	background: var(--kt-color-accent-100);
+	background: #eff6ff;
+	color: #2563eb;
 	outline: none;
 }
 .kt-rail-user-menu-item.danger {
@@ -655,7 +658,7 @@ function logout() {
 	font-weight: var(--kt-font-heading-weight);
 	font-size: 15px;
 	letter-spacing: 0.01em;
-	color: var(--kt-color-text);
+	color: #0a1929;
 }
 .kt-rail-user-role {
 	font-size: 11px;

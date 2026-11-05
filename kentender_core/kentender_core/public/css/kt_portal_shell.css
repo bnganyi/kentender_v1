@@ -29,17 +29,57 @@
 }
 
 .kt-industry.kt-portal .kt-portal-header {
-	background: var(--kt-color-surface);
-	border-bottom: 1px solid var(--kt-color-neutral-300);
+	background: rgba(255, 255, 255, 0.97);
+	backdrop-filter: blur(20px);
+	border-bottom: 1px solid rgba(0, 102, 255, 0.1);
+}
+.kt-industry.kt-portal .kt-portal-topbar {
+	min-height: 36px;
+	background-color: #0b1f3b;
+	background-image: radial-gradient(circle, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+	background-size: 30px 30px;
+	color: #fff;
+}
+.kt-industry.kt-portal .kt-portal-topbar-inner {
+	width: 1536px;
+	max-width: calc(100% - 32px);
+	min-height: 36px;
+	margin: 0 auto;
+	padding: 0 16px;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 16px;
+	font-size: 13px;
+}
+.kt-industry.kt-portal .kt-portal-topbar-clock,
+.kt-industry.kt-portal .kt-portal-topbar-contact {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+.kt-industry.kt-portal .kt-portal-topbar-clock {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.kt-industry.kt-portal .kt-portal-topbar svg {
+	width: 14px;
+	height: 14px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
 }
 .kt-industry.kt-portal .kt-portal-bar {
-	width: 1200px;
+	width: 1536px;
 	max-width: calc(100% - 32px);
 	margin: 0 auto;
-	height: 56px;
+	height: 81px;
+	padding: 0 16px;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	box-sizing: border-box;
 }
 /* Header and footer links sit outside the Industry link colour (the board
    draws them in text / neutral-800); `.kt-portal-header`/`.kt-portal-footer`
@@ -56,9 +96,14 @@
 	color: var(--kt-color-text);
 	text-decoration: none;
 }
-.kt-industry.kt-portal .kt-portal-brand img,
+.kt-industry.kt-portal .kt-portal-brand img {
+	width: auto;
+	height: 48px;
+	object-fit: contain;
+	display: block;
+}
 .kt-industry.kt-portal .kt-portal-footer-brand img {
-	width: 100%;
+	width: auto;
 	height: 40px;
 	object-fit: contain;
 	display: block;
@@ -69,20 +114,26 @@
 	font-size: 14px;
 }
 .kt-industry.kt-portal .kt-portal-header .kt-portal-nav a {
-	color: var(--kt-color-neutral-800);
+	color: #374151;
 	text-decoration: none;
-	padding: 17px 0 15px;
+	padding: 4px 0;
 	border-bottom: 2px solid transparent;
+	transition:
+		color 0.3s ease,
+		border-color 0.3s ease;
+}
+.kt-industry.kt-portal .kt-portal-header .kt-portal-nav a:hover {
+	color: #2563eb;
 }
 .kt-industry.kt-portal .kt-portal-nav {
-	margin-left: auto;
+	margin-left: 0;
 }
 .kt-industry.kt-portal .kt-portal-header-actions {
 	display: flex;
 	align-items: center;
 	gap: 12px;
 	flex-shrink: 0;
-	margin-left: var(--kt-space-4);
+	margin-left: 0;
 }
 .kt-industry.kt-portal .kt-portal-get-started:not(.btn):not(.kt-tab):not(.kt-add-child),
 .kt-industry.kt-portal .kt-portal-dashboard:not(.btn):not(.kt-tab):not(.kt-add-child) {
@@ -98,7 +149,6 @@
 	color: #fff;
 	font-size: 14px;
 	font-weight: 600;
-	line-height: 1.2;
 	text-decoration: none;
 	white-space: nowrap;
 	transition: all 0.3s ease;
@@ -267,9 +317,9 @@
 	color: #b42318;
 }
 .kt-industry.kt-portal .kt-portal-header .kt-portal-nav a[aria-current="page"] {
-	color: var(--kt-color-accent);
+	color: #2563eb;
 	font-weight: 600;
-	/* border-bottom-color: var(--kt-color-accent); */
+	border-bottom-color: #2563eb;
 }
 
 .kt-industry.kt-portal .kt-portal-breadcrumbs {
@@ -429,11 +479,23 @@
 
 /* 390 × 844 frame — the board's narrow shell. */
 @media (max-width: 600px) {
+	.kt-industry.kt-portal .kt-portal-topbar-inner {
+		max-width: calc(100% - 32px);
+	}
+	.kt-industry.kt-portal .kt-portal-topbar-contact {
+		display: none;
+	}
+	.kt-industry.kt-portal .kt-portal-topbar-divider {
+		display: none;
+	}
 	.kt-industry.kt-portal .kt-portal-bar {
 		width: auto;
 		max-width: none;
-		height: 48px;
+		height: 52px;
 		padding: 0 16px;
+	}
+	.kt-industry.kt-portal .kt-portal-brand img {
+		height: 40px;
 	}
 	.kt-industry.kt-portal .kt-portal-header a.kt-portal-brand {
 		font-size: 17px;
@@ -441,6 +503,7 @@
 	.kt-industry.kt-portal .kt-portal-nav {
 		gap: 14px;
 		font-size: 13px;
+		margin-left: 16px;
 	}
 	.kt-industry.kt-portal .kt-portal-identity {
 		margin-left: 12px;

@@ -6,12 +6,12 @@ def execute():
 
 
 def create_all_tenders_page():
-    frappe.db.sql("DELETE FROM `tabWeb Page` WHERE name = 'tenders' OR route = 'tenders'")
+    frappe.db.sql("DELETE FROM `tabWeb Page` WHERE name = 'all-tenders' OR route = 'all-tenders'")
     frappe.db.commit()
 
     page = frappe.new_doc("Web Page")
     page.title = "All Tenders"
-    page.route = "tenders"
+    page.route = "all-tenders"
     page.published = 1
     page.content_type = "HTML"
     page.dynamic_template = 1
@@ -30,633 +30,230 @@ PAGE_HTML = r"""
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-html, body { margin:0 !important; padding:0 !important; width:100%; overflow-x:hidden; }
-
-:root {
-  --primary-blue:#0066FF;
-  --deep-blue:#0047AB;
-  --midnight:#0A1929;
-  --ghost-white:#F8FAFC;
-}
-
-.navbar, nav.navbar, .navbar-light, header.navbar,
-.web-footer, .page-header-wrapper, .page-breadcrumbs { display:none !important; }
-
-body { font-family:'Outfit', sans-serif; background: var(--ghost-white); color: var(--midnight); overflow-x:hidden; }
-
-::-webkit-scrollbar { width:10px; }
-::-webkit-scrollbar-track { background: var(--ghost-white); }
-::-webkit-scrollbar-thumb { background: var(--primary-blue); border-radius:5px; }
-::-webkit-scrollbar-thumb:hover { background: var(--deep-blue); }
-
-.navbar-blur { background: rgba(255,255,255,0.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,0.1); }
-.kt-header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
-.kt-header-actions a[href="/app/home"], #mobileMenu a[href="/app/home"] {
-  background:#f1f3f5 !important; color:#000 !important;
-  border:1px solid #e1e7ee !important; border-radius:10px !important;
-  padding:10px 16px !important; margin-right:8px !important;
-}
-.kt-header-actions a[href="/app/home"] *, #mobileMenu a[href="/app/home"] * { color:#000 !important; }
-@media (max-width:767px) { .kt-header-actions { display:none !important; } }
-#mainNav { display:flex !important; align-items:center; gap:2rem; }
-@media (max-width:767px) { #mainNav { display:none !important; } }
-#mobileMenu:not(.hidden) { display:block !important; }
-
-.dropdown { position:relative; display:inline-block; }
-.dropdown-toggle {
-  color:#374151; font-weight:500; cursor:pointer;
-  display:flex; align-items:center; gap:6px;
-  background:none; border:none; padding:0; font-size:1rem;
-  transition: color 0.2s ease;
-}
-.dropdown-toggle:hover { color:#2563eb; }
-.dropdown-menu {
-  position:absolute; top:100%; left:0;
-  background:white; border:1px solid #e5e7eb; border-radius:8px;
-  box-shadow:0 10px 25px rgba(0,0,0,0.1);
-  min-width:200px; padding:8px 0; margin-top:8px;
-  opacity:0; visibility:hidden; transform:translateY(-10px);
-  transition:all 0.3s ease; z-index:9999;
-}
-.dropdown-menu.show { opacity:1; visibility:visible; transform:translateY(0); }
-.dropdown-item { display:block; padding:12px 20px; color:#1f2937; text-decoration:none; font-size:14px; transition: all 0.2s ease; }
-.dropdown-item:hover { background:#f3f4f6; color:#0066ff; padding-left:24px; }
-.dropdown-arrow { transition: transform 0.3s ease; font-size:0.75rem; }
-.dropdown-arrow.rotate-180 { transform: rotate(180deg); }
-
-@media (min-width: 768px) {
-  .dropdown:hover .dropdown-menu { opacity:1 !important; visibility:visible !important; transform:translateY(0) !important; }
-  .dropdown:hover .dropdown-arrow { transform: rotate(180deg); }
-}
-
-.btn-primary, a.btn-primary, button.btn-primary {
-  background: linear-gradient(135deg, #0047AB, #003580) !important;
-  color: #ffffff !important;
-  padding: 12px 24px !important;
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-  border: none !important;
-  cursor: pointer !important;
-  text-decoration: none !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  white-space: nowrap !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  transition: all 0.3s ease !important;
-}
-.btn-primary:hover, a.btn-primary:hover { transform: translateY(-2px) !important; box-shadow: 0 10px 30px rgba(0,102,255,0.4) !important; }
-.btn-primary i, a.btn-primary i { color: #ffffff !important; }
-
-.btn-secondary {
-  background:white; color:#374151; border:2px solid #e5e7eb;
-  padding:12px 28px; border-radius:10px; font-weight:600;
-  cursor:pointer; transition: all 0.3s ease;
-  display:inline-flex; align-items:center; gap:8px;
-}
-.btn-secondary:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
-
-.badge { display:inline-block; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
-.badge-active { background: linear-gradient(135deg,#9edfc9,#aef7e0); color: rgb(15,15,15); }
-.badge-category { background: linear-gradient(135deg, var(--deep-blue), var(--deep-blue)); color:white; }
-
-.card-hover { transition: all 0.4s cubic-bezier(0.4,0,0.2,.5); position:relative; overflow:hidden; }
-.card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(22,95,206,0.2); }
-
-.input-modern {
-  background: rgba(255,255,255,0.95);
-  border: 2px solid transparent; border-radius:12px;
-  padding:14px 18px; font-size:15px;
-  transition: all 0.3s ease; outline:none; width:100%;
-}
-.input-modern:focus { border-color: var(--primary-blue); box-shadow: 0 0 0 4px rgba(0,102,255,0.1); background: white; }
-
-.pattern-dots { background-image: radial-gradient(circle, rgba(0,102,255,0.1) 1px, transparent 1px); background-size: 30px 30px; }
-.pattern-grid {
-  background-image:
-    linear-gradient(rgba(0,102,255,0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,102,255,0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-.glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); border:1px solid rgba(255,255,255,0.2); }
-
-.blob { position:absolute; border-radius:50%; filter: blur(60px); opacity:0.3; animation: float 8s ease-in-out infinite; }
-.blob-1 { width:400px; height:400px; background: var(--primary-blue); top:-200px; right:-200px; }
-.blob-2 { width:300px; height:300px; background: var(--deep-blue); bottom:-150px; left:-150px; animation-delay:-4s; }
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width: 100%; margin: 0 !important; padding: 0 !important; overflow-x: hidden; }
+body { color: #0a1929; background: #f8fafc; font-family: 'Outfit', sans-serif; }
+.navbar, nav.navbar, .navbar-light, header.navbar, .web-footer, .page-header-wrapper, .page-breadcrumbs { display: none !important; }
+.navbar-blur { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.97); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,102,255,.1); }
+#topBar { position: relative; overflow: hidden; background: #0b1f3b; color: #fff; }
+.pattern-dots { background-image: radial-gradient(circle, rgba(255,255,255,.15) 1px, transparent 1px); background-size: 30px 30px; }
+#topBar-inner, #site-nav, #mobile-menu-inner { width: min(1536px, calc(100% - 32px)); margin: 0 auto; padding-right: 16px; padding-left: 16px; }
+#topBar-inner { position: relative; z-index: 10; min-height: 36px; display: flex; align-items: center; gap: 16px; font: 12px 'Space Mono', monospace; }
+#site-nav { min-height: 80px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+#site-logo img { display: block; width: auto; height: 48px; object-fit: contain; }
+#mainNav, .kt-header-actions { display: flex; align-items: center; gap: 32px; }
+#mainNav a, .dropdown-toggle { color: #374151; font-size: 15px; font-weight: 500; text-decoration: none; }
+#mainNav a:hover, .dropdown-toggle:hover { color: #2563eb; }
+.dropdown { position: relative; }
+.dropdown-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.dropdown-menu { position: absolute; top: calc(100% + 10px); left: 0; z-index: 60; min-width: 200px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; box-shadow: 0 10px 25px rgba(0,0,0,.1); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: .2s ease; }
+.dropdown-menu.show, .dropdown:hover .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.dropdown-item { display: block; padding: 10px 12px; border-radius: 6px; color: #1f2937; text-decoration: none; }
+.dropdown-item:hover { background: #f3f4f6; color: #2563eb; }
+.kt-header-actions { gap: 12px; }
+.kt-action-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border-radius: 10px; background: linear-gradient(135deg,#0047ab,#003580); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+#kt-dashboard-button { border: 1px solid #e1e7ee; background: #f1f3f5; color: #000; }
+#mobileMenuBtn { display: none; border: 0; background: transparent; color: #374151; font-size: 22px; }
+#mobileMenu { border-top: 1px solid #e5e7eb; background: #fff; }
+#mobileMenu-inner { display: grid; gap: 12px; padding: 16px 0; }
+#mobileMenu[hidden] { display: none !important; }
+.pattern-grid { background-image: linear-gradient(rgba(0,102,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,102,255,.05) 1px, transparent 1px); background-size: 50px 50px; }
+.blob { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .3; animation: float 8s ease-in-out infinite; }
+.blob-1 { width: 400px; height: 400px; top: -200px; right: -200px; background: #0066ff; }
+.blob-2 { width: 300px; height: 300px; bottom: -150px; left: -150px; background: #0047ab; animation-delay: -4s; }
 @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-
-@keyframes fadeInUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
-.animate-in { animation: fadeInUp 0.8s ease-out forwards; }
-
-.mono { font-family:'Space Mono', monospace; }
-
-#scrollTop {
-  position:fixed; bottom:32px; right:32px;
-  width:56px; height:56px; border-radius:50%;
-  background: linear-gradient(135deg, var(--deep-blue), var(--deep-blue));
-  color:white; border:none; cursor:pointer;
-  display:flex; align-items:center; justify-content:center;
-  box-shadow: 0 10px 30px rgba(0,102,255,0.4);
-  z-index:50; opacity:0; visibility:hidden; transition: all 0.3s ease;
-}
-#scrollTop.visible { opacity:1; visibility:visible; }
+.all-tenders-main { position: relative; min-height: 60vh; overflow: hidden; background: linear-gradient(135deg,#f9fafb,#f0fdf4); }
+.page-inner { position: relative; z-index: 10; width: min(1536px, 100%); margin: 0 auto; padding: 96px 16px; }
+.page-heading { margin: 0 0 24px; color: #4b5563; font-size: 30px; line-height: 1.15; font-weight: 700; }
+.page-intro { max-width: 768px; margin: 0 auto 64px; color: #4b5563; font-size: 20px; line-height: 1.5; }
+.filter-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; padding: 16px; border-radius: 24px; background: rgba(0,0,0,.05); }
+.filter-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; font-weight: 700; }
+.filter-heading p { margin: 0 auto 0 0; color: #4b5563; font-size: 14px; }
+.filter-heading h2 i { color: #16a34a; }
+.filter-panel { margin-bottom: 32px; padding: 24px; border-radius: 16px; background: rgba(11,31,59,.05); box-shadow: 0 20px 25px -5px rgba(0,0,0,.1); transition: all .4s cubic-bezier(.4,0,.2,1); overflow: hidden; }
+.filter-panel.collapsed { max-height: 80px; margin-bottom: 2px; box-shadow: none; }
+.filter-panel.expanded { max-height: 1200px; margin-bottom: 48px; }
+.filter-content { transition: opacity .3s ease, transform .3s ease; }
+.filter-panel.collapsed .filter-content { opacity: 0; transform: translateY(-20px); pointer-events: none; }
+.filter-panel.expanded .filter-content { opacity: 1; transform: translateY(0); pointer-events: all; }
+.filter-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 24px; border: 0; border-radius: 12px; background: linear-gradient(135deg,#0047ab,#0047ab); color: #fff; font-weight: 600; cursor: pointer; transition: all .3s ease; }
+.filter-toggle:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,102,255,.3); }
+.input-modern { width: 100%; padding: 14px 18px; border: 2px solid transparent; border-radius: 12px; outline: none; background: rgba(255,255,255,.95); font-size: 15px; transition: all .3s ease; }
+.input-modern:focus { border-color: #0066ff; background: #fff; box-shadow: 0 0 0 4px rgba(0,102,255,.1); }
+#tender-filters { display: grid; gap: 24px; }
+.filter-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.filter-field label { display: block; margin-bottom: 8px; color: #374151; font-size: 14px; font-weight: 500; }
+.filter-actions { display: flex; grid-column: 1 / -1; justify-content: center; gap: 16px; padding-top: 24px; border-top: 2px solid #e5e7eb; }
+.btn-primary, .btn-secondary { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s ease; }
+.btn-primary { border: 0; background: linear-gradient(135deg,#0047ab,#003580); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,102,255,.4); }
+.btn-secondary { border: 2px solid #e5e7eb; background: #fff; color: #374151; }
+.btn-secondary:hover { border-color: #0066ff; color: #0066ff; }
+.tender-results-summary { margin: 0 0 16px; color: #4b5563; font-size: 14px; }
+#tender-results { margin-bottom: 64px; }
+.tender-card { position: relative; }
+.card-hover { position: relative; overflow: hidden; transition: all .4s cubic-bezier(.4,0,.2,.5); }
+.card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(22,95,206,.2); }
+.tender-card-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tender-card-title { margin: 0 0 16px; color: #1f2937; font-size: 20px; line-height: 1.35; font-weight: 700; }
+.tender-card-reference { margin: 0; color: #6b7280; font: 12px 'Space Mono', monospace; }
+.badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.badge-category { background: linear-gradient(135deg,#0047ab,#0047ab); color: #fff; }
+.badge-active { background: linear-gradient(135deg,#5db89a,#65c5a7); color: #fff; }
+.tender-category { display: inline-block; padding: 6px 14px; border-radius: 20px; background: linear-gradient(135deg,#0047ab,#0047ab); color: #fff; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.tender-published { display: inline-block; padding: 6px 14px; border-radius: 20px; background: linear-gradient(135deg,#5db89a,#65c5a7); color: #fff; font-size: 12px; font-weight: 600; }
+.tender-deadline { color: #374151; font-size: 14px; font-weight: 700; text-align: right; }
+.tender-card-meta { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+.tender-card-facts { display: flex; flex-wrap: wrap; gap: 32px; }
+.tender-card-fact-label { margin-bottom: 4px; color: #111827; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+.tender-card-fact-value { color: #1f2937; font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
+.tender-card-actions { display: flex; justify-content: flex-end; }
+.mono { font-family: 'Space Mono', monospace; }
+.neon-glow { box-shadow: 0 0 20px rgba(0,102,255,.3), 0 0 40px rgba(0,102,255,.2); }
+#scrollTop { position: fixed; right: 32px; bottom: 32px; z-index: 50; display: flex; width: 56px; height: 56px; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: linear-gradient(135deg,#0066ff,#0047ab); color: #fff; cursor: pointer; opacity: 0; visibility: hidden; transition: all .3s ease; }
+#scrollTop.visible { opacity: 1; visibility: visible; }
 #scrollTop:hover { transform: scale(1.1); }
-
-.filter-panel { transition: all 0.4s cubic-bezier(0.4,0,0.2,1); overflow:hidden; }
-.filter-panel.collapsed { max-height:10px; margin-bottom:24px; box-shadow:none; }
-.filter-panel.expanded { max-height:1200px; margin-bottom:48px; }
-.filter-content { transition: opacity 0.3s ease, transform 0.3s ease; }
-.filter-panel.collapsed .filter-content { opacity:0; transform: translateY(-20px); pointer-events:none; }
-.filter-panel.expanded .filter-content { opacity:1; transform: translateY(0); pointer-events:all; }
-.filter-toggle {
-  background: linear-gradient(135deg, #1f4fd8, #1f4fd8);
-  color:white; border:none; padding:8px 24px; border-radius:12px;
-  font-weight:600; cursor:pointer; transition: all 0.3s ease;
-  display:flex; align-items:center; gap:8px;
-}
-.filter-toggle:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,102,255,0.3); }
-
-.date-input-wrapper { position:relative; display:flex; align-items:center; background:white; border-radius:12px; overflow:hidden; }
-.date-input-wrapper i { color:#6b7280; font-size:14px; }
-.date-input-wrapper .date-input { border:none; background:transparent; padding:14px 12px; width:100%; outline:none; font-size:15px; }
-.custom-checkbox { width:16px; height:16px; accent-color: var(--primary-blue); cursor:pointer; }
-
-.pagination-btn {
-  min-width:40px; height:40px; border-radius:8px;
-  background:white; border:1px solid #e5e7eb; color:#374151;
-  font-weight:600; cursor:pointer; transition: all 0.2s ease;
-}
-.pagination-btn:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
-.pagination-btn.active { background: linear-gradient(135deg, var(--deep-blue), var(--deep-blue)); color:white; border-color: transparent; }
-
-body.loading { overflow:hidden; }
-body:not(.loading) { overflow:visible; }
-#loadingOverlay {
-  position:fixed; inset:0; background:white;
-  display:flex; align-items:center; justify-content:center;
-  z-index:9999; opacity:1; transition: opacity 0.3s ease-out;
-}
-body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
-
-@media (max-width:768px) {
-  .filter-panel.expanded { max-height: calc(100vh - 140px); overflow-y:auto; -webkit-overflow-scrolling:touch; }
-  .filter-panel.collapsed { max-height:100px; }
-}
+.tender-results-state, .tender-load-error { padding: 18px; border-radius: 8px; background: #fff; color: #475467; }
+.tender-results-state { border: 1px solid #e1e7ee; }
+.tender-load-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #f1c7c7; background: #fff7f7; color: #8f2424; }
+.tender-results-state[hidden], .tender-load-error[hidden] { display: none !important; }
+#tender-detail-modal { width: min(920px, calc(100vw - 32px)); max-width: none; max-height: min(88vh, 900px); margin: auto; padding: 0; overflow: visible; border: 0; border-radius: 16px; background: transparent; color: #1f2937; }
+#tender-detail-modal::backdrop { background: rgba(10,25,41,.6); backdrop-filter: blur(3px); }
+.tender-modal-shell { display: flex; max-height: min(88vh, 900px); flex-direction: column; overflow: hidden; border: 1px solid #e1e7ee; border-radius: 16px; background: #fff; box-shadow: 0 24px 70px rgba(10,25,41,.28); }
+.tender-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 24px; border-bottom: 1px solid #e5e7eb; }
+.tender-modal-header h2 { margin: 10px 0 8px; color: #1f2937; font-size: 24px; line-height: 1.3; }
+.tender-modal-description { margin: 0; color: #4b5563; line-height: 1.5; }
+.tender-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.tender-modal-actions[hidden] { display: none !important; }
+.tender-modal-close { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151; cursor: pointer; }
+.tender-modal-close:hover { border-color: #2563eb; color: #2563eb; }
+.tender-modal-content { display: grid; gap: 20px; overflow: auto; padding: 24px; }
+.tender-modal-section { padding: 18px; border: 1px solid #e5eaf0; border-radius: 10px; background: #fff; }
+.tender-modal-section h3 { margin: 0 0 14px; color: #1f2937; font-size: 17px; }
+.tender-modal-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.tender-modal-fact-label { display: block; margin-bottom: 4px; color: #667085; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.tender-modal-fact-value { color: #1f2937; font-size: 14px; overflow-wrap: anywhere; }
+.tender-modal-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.tender-modal-list-item { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid #eef0f3; }
+.tender-modal-list-item:last-child { padding-bottom: 0; border-bottom: 0; }
+.tender-modal-document { grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 16px; }
+.tender-modal-list-title { color: #1f2937; font-weight: 600; }
+.tender-modal-list-meta { color: #667085; font-size: 13px; }
+.tender-modal-links { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; font-weight: 600; }
+.tender-modal-links a { color: #126ac2; text-decoration: none; }
+.tender-modal-links a:hover { color: #0047ab; text-decoration: underline; text-underline-offset: 3px; }
+.tender-modal-answer { display: grid; gap: 5px; }
+.tender-modal-answer + .tender-modal-answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eef0f3; }
+@media (max-width: 600px) { #tender-detail-modal { width: calc(100vw - 20px); max-height: 92vh; } .tender-modal-shell { max-height: 92vh; } .tender-modal-header, .tender-modal-content { padding: 18px; } .tender-modal-facts { grid-template-columns: 1fr; gap: 12px; } .tender-modal-header h2 { font-size: 20px; } .tender-modal-document { grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; } .tender-modal-document .tender-modal-list-meta { grid-column: 1; } .tender-modal-document .tender-modal-links { grid-column: 2; grid-row: 1 / span 2; } }
+#all-tenders-footer { padding: 28px 16px; background: #0b1f3b; color: #fff; }
+.footer-inner { width: min(1200px, 100%); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+.footer-links a { color: #e4eaf3; text-decoration: none; }
+.footer-links a:hover { color: #fff; text-decoration: underline; }
+@media (min-width: 768px) { .page-heading { font-size: 60px; } .tender-card-meta { flex-direction: row; } }
+@media (max-width: 900px) { #mainNav { gap: 14px; } .kt-header-actions { gap: 8px; } #site-nav { gap: 14px; } }
+@media (max-width: 767px) { #mainNav, .kt-header-actions { display: none; } #mobileMenuBtn { display: inline-flex; } .filter-grid { grid-template-columns: 1fr 1fr; } .filter-actions { grid-column: 1 / -1; } }
+@media (max-width: 560px) { .page-heading { font-size: 30px; } .filter-grid { grid-template-columns: 1fr; } .tender-card-top, .tender-load-error { align-items: flex-start; flex-direction: column; } .tender-deadline { text-align: left; } .filter-actions { align-items: stretch; flex-direction: column; } .footer-inner { align-items: flex-start; flex-direction: column; } }
 </style>
 
-<div id="loadingOverlay">
-  <img src="https://ik.imagekit.io/kltovsgah/kentender_loader.gif" alt="Loading..." style="width:80px;height:80px;">
-</div>
-
-<div id="headerWrapper" class="navbar-blur sticky top-0 z-50">
-  <div id="topBar" class="bg-[#0b1f3b] text-white relative overflow-hidden">
-    <div class="absolute inset-0 pattern-dots opacity-30"></div>
-    <div class="container mx-auto px-4 py-2 relative z-10">
-      <div class="flex items-center gap-4 text-sm">
-        <span class="mono"><i class="far fa-clock mr-2"></i><span id="live-time"></span></span>
-        <span class="hidden md:inline">|</span>
-        <span class="hidden md:inline"><i class="fas fa-phone mr-2"></i>+254 700 000 000</span>
-      </div>
-    </div>
-  </div>
-
-  <nav class="container mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center">
-      <img src="https://ik.imagekit.io/kltovsgah/kentender_logo.png" alt="KenyaTenders" class="h-12 object-contain">
-    </a>
-
+<div id="headerWrapper" class="navbar-blur">
+  <div id="topBar"><div class="absolute inset-0 pattern-dots opacity-30"></div><div id="topBar-inner"><span><i class="far fa-clock"></i> <span id="live-time"></span></span><span aria-hidden="true">|</span><span><i class="fas fa-phone"></i> +254 700 000 000</span></div></div>
+  <nav id="site-nav" aria-label="Main navigation">
+    <a id="site-logo" href="/" aria-label="KenyaTenders home"><img src="https://ik.imagekit.io/kltovsgah/kentender_logo.png" alt="KenyaTenders"></a>
     <div id="mainNav">
-      <a href="/" class="text-gray-700 font-medium hover:text-blue-600">Home</a>
-      <a href="/about" class="text-gray-700 font-medium hover:text-blue-600">About</a>
-      <div class="dropdown">
-        <button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down dropdown-arrow"></i></button>
-        <div class="dropdown-menu">
-          <a href="/tenders" class="dropdown-item">All Tenders</a>
-          <a href="/contracts" class="dropdown-item">Awarded Contracts</a>
-        </div>
-      </div>
-      <div class="dropdown">
-        <button class="dropdown-toggle" type="button">Industries <i class="fas fa-chevron-down dropdown-arrow"></i></button>
-        <div class="dropdown-menu">
-          <a href="/industry/public" class="dropdown-item">Public Sector</a>
-          <a href="/industry/private" class="dropdown-item">Private Sector</a>
-          <a href="/industry/donor" class="dropdown-item">Donor Funded</a>
-        </div>
-      </div>
+      <a href="/">Home</a><a href="/about">About</a>
+      <div class="dropdown"><button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down" aria-hidden="true"></i></button><div class="dropdown-menu"><a href="/all-tenders" class="dropdown-item">All Tenders</a><a href="/contracts" class="dropdown-item">Awarded Contracts</a></div></div>
+      <div class="dropdown"><button class="dropdown-toggle" type="button">Industries <i class="fas fa-chevron-down" aria-hidden="true"></i></button><div class="dropdown-menu"><a href="/industry/public" class="dropdown-item">Public Sector</a><a href="/industry/private" class="dropdown-item">Private Sector</a><a href="/industry/donor" class="dropdown-item">Donor Funded</a></div></div>
     </div>
-
-    <div class="kt-header-actions">
-      <a href="/app/home" class="btn-primary text-sm"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
-      {% if frappe.session.user == 'Guest' %}
-      <a href="/tenant_registration" class="btn-primary text-sm"><i class="fas fa-rocket"></i><span>Get Started</span></a>
-      {% endif %}
-      {% if frappe.session.user != 'Guest' %}
-      <a href="/account" class="btn-primary text-sm"><i class="fas fa-user"></i><span>Profile</span></a>
-      {% endif %}
-    </div>
-
-    <button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl"><i class="fas fa-bars"></i></button>
+    <div class="kt-header-actions"><a id="kt-dashboard-button" class="kt-action-button" href="/app/home"><i class="fas fa-table-columns" aria-hidden="true"></i><span>Go to Dashboard</span></a>{% if frappe.session.user == 'Guest' %}<a class="kt-action-button" href="/tenant_registration"><i class="fas fa-rocket" aria-hidden="true"></i><span>Get Started</span></a>{% endif %}</div>
+    <button id="mobileMenuBtn" type="button" aria-label="Open menu"><i class="fas fa-bars" aria-hidden="true"></i></button>
   </nav>
-
-  <div id="mobileMenu" class="hidden border-t bg-white">
-    <div class="container mx-auto px-4 py-4 space-y-3">
-      <a href="/" class="block text-gray-700 font-medium py-2">Home</a>
-      <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
-      <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
-      <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
-      <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
-      {% if frappe.session.user == 'Guest' %}
-      <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
-      {% endif %}
-      {% if frappe.session.user != 'Guest' %}
-      <a href="/account" class="block text-gray-700 font-medium py-2">Profile</a>
-      {% endif %}
-    </div>
-  </div>
+  <nav id="mobileMenu" hidden aria-label="Mobile navigation"><div id="mobileMenu-inner"><a href="/">Home</a><a href="/about">About</a><a href="/all-tenders">All Tenders</a><a href="/contracts">Awarded Contracts</a><a href="/app/home">Go to Dashboard</a>{% if frappe.session.user == 'Guest' %}<a href="/tenant_registration">Get Started</a>{% endif %}</div></nav>
 </div>
 
-<section class="relative py-20 overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50">
+<main class="all-tenders-main">
   <div class="absolute inset-0 pattern-grid opacity-50"></div>
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
-
-  <div class="container mx-auto relative mt-4 z-10 px-4">
+  <div class="page-inner">
     <div class="text-center mb-16">
-      <h1 class="text-3xl md:text-5xl text-gray-600 font-bold mb-6">
-        All <span class="bg-gray-600 bg-clip-text text-transparent">Active Tenders</span>
-      </h1>
-      <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-        Browse thousands of verified government and private sector opportunities across Kenya
-      </p>
+      <h1 class="page-heading">All <span class="bg-gray-600 bg-clip-text text-transparent">Tenders</span></h1>
+      <p class="page-intro">Browse published opportunities and review tender details across Kenya.</p>
     </div>
 
-    <div class="bg-black/5 py-4 px-4 rounded-3xl mb-4 flex justify-between items-center flex-wrap gap-3">
-      <h2 class="flex items-center gap-2 font-bold text-lg">
-        <i class="fas fa-filter text-green-600"></i>
-        <span>Active Tenders Filters</span>
-      </h2>
-      <button class="filter-toggle" id="filterToggle" type="button">
-        <i class="fas fa-plus"></i>
-        <span class="toggle-text">Hide Filters</span>
-      </button>
+    <div class="filter-heading">
+      <h2><i class="fas fa-filter"></i><span>All Tenders Filters</span></h2>
+      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="false"><i class="fas fa-chevron-up"></i><span class="toggle-text">Show Filters</span></button>
     </div>
 
-    <div class="filter-panel bg-[#0b1f3b]/5 rounded-2xl shadow-xl p-6 md:p-8" id="filterPanel">
+    <section class="filter-panel" id="filterPanel" aria-label="Tender filters">
       <div class="filter-content" id="filterContent">
-        <form class="space-y-6" onsubmit="event.preventDefault();">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            <div>
-              <label class="block text-sm font-medium mb-2">Ref. No.</label>
-              <input type="text" placeholder="Enter KET reference" class="input-modern bg-white placeholder-gray-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i>Location</label>
-              <select class="input-modern bg-white">
-                <option value="">All Locations</option>
-                <option value="nairobi">Nairobi County</option>
-                <option value="mombasa">Mombasa County</option>
-                <option value="kisumu">Kisumu County</option>
-                <option value="kiambu">Kiambu County</option>
-                <option value="nakuru">Nakuru County</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Financier</label>
-              <select class="input-modern bg-white">
-                <option value="">All Financiers</option>
-                <option value="world-bank">World Bank</option>
-                <option value="afdb">African Development Bank</option>
-                <option value="eu">European Union</option>
-                <option value="gok">Government of Kenya</option>
-                <option value="usaid">USAID</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Search Keywords</label>
-              <input type="text" placeholder="Enter keywords" class="input-modern bg-white placeholder-gray-500">
-              <div class="mt-3 flex items-center">
-                <input type="checkbox" id="exact" class="custom-checkbox mr-2">
-                <label for="exact" class="text-sm text-gray-600 cursor-pointer">Exact match only</label>
-              </div>
-            </div>
+        <form id="tender-filters">
+          <div class="filter-grid">
+            <div><label for="tender-search">Title or reference</label><input id="tender-search" class="input-modern bg-white" type="search" placeholder="Search published tenders"></div>
+            <div><label for="tender-method">Method</label><select id="tender-method" class="input-modern bg-white"><option value="">All methods</option></select></div>
+            <div><label for="tender-reservation">Reservation</label><select id="tender-reservation" class="input-modern bg-white"><option value="">All categories</option></select></div>
+            <div><label for="tender-closing">Availability</label><select id="tender-closing" class="input-modern bg-white"><option value="all">Open and closed</option><option value="open">Open tenders</option><option value="closed">Closed or cancelled</option></select></div>
           </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            <div>
-              <label class="block text-sm font-medium mb-2">Posting From</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Posting To</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Deadline From</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Deadline To</label>
-              <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input bg-white"></div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Value Range</label>
-              <select class="input-modern bg-white">
-                <option value="">Any Value</option>
-                <option value="under-10m">Under KES 10M</option>
-                <option value="10m-50m">KES 10M - 50M</option>
-                <option value="50m-200m">KES 50M - 200M</option>
-                <option value="over-200m">Over KES 200M</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 border-t-2 border-gray-200">
-            <button type="submit" class="btn-primary"><i class="fas fa-search"></i><span>Search For Tenders</span></button>
-            <button type="reset" class="btn-secondary"><i class="fas fa-redo"></i><span>Reset Filters</span></button>
+          <div class="filter-actions">
+            <button type="submit" class="btn-primary"><i class="fas fa-search"></i><span>Search Tenders</span></button>
+            <button id="tender-filter-reset" type="button" class="btn-secondary"><i class="fas fa-redo"></i><span>Reset Filters</span></button>
           </div>
         </form>
       </div>
-    </div>
+    </section>
+
+    <div class="tender-results-summary"><p id="tender-count" aria-live="polite">Loading tenders…</p></div>
+    <div id="tender-load-error" class="tender-load-error" role="alert" hidden><span>We could not load tenders. Please try again.</span><button id="tender-retry" type="button" class="btn-secondary">Try again</button></div>
+    <div id="tender-results-state" class="tender-results-state" role="status" hidden></div>
+    <div id="tender-results" class="space-y-6 mb-16" aria-live="polite"></div>
   </div>
+</main>
 
-  <div class="container mx-auto flex flex-col gap-8 mb-16 px-4 relative z-10">
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">ICT</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">15 Mar 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Supply &amp; Installation of Network Infrastructure</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Mombasa County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">KES 45M</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
+<dialog id="tender-detail-modal" aria-labelledby="tender-detail-title" aria-describedby="tender-detail-description">
+  <div class="tender-modal-shell">
+    <header class="tender-modal-header">
+      <div>
+        <span id="tender-detail-status" class="badge badge-active" hidden></span>
+        <h2 id="tender-detail-title">Tender details</h2>
+        <p id="tender-detail-description" class="tender-modal-description"></p>
+        <div id="tender-detail-actions" class="tender-modal-actions" role="group" aria-label="Tender actions" hidden></div>
       </div>
-    </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">HEALTH</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">02 Apr 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Procurement of Diagnostic Medical Equipment</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Kisumu County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">Refer Document</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">ROAD WORKS</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">20 Mar 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Rehabilitation of Urban Access Roads</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Nakuru County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">KES 120M</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">EDUCATION</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">10 Apr 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Construction of Modern Science Laboratories</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Machakos County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">KES 68M</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rounded-2xl shadow-lg card-hover overflow-hidden bg-black/5">
-      <div class="p-6">
-        <div class="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div class="flex gap-2"><span class="badge badge-category text-xs">AGRICULTURE</span><span class="badge badge-active">ACTIVE</span></div>
-          <div class="flex items-center text-gray-600 gap-2">
-            <div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Deadline:</div>
-            <div class="font-bold text-sm text-red-600 mono">05 May 2026</div>
-          </div>
-        </div>
-        <h3 class="text-xl font-bold mb-4 leading-tight">Supply of Certified Maize &amp; Bean Seeds</h3>
-        <div class="flex flex-col lg:flex-row justify-between gap-4">
-          <div class="flex flex-wrap gap-6">
-            <div><div class="text-xs text-gray-900 uppercase font-bold tracking-wide">Location</div><i class="fas fa-map-marker-alt mr-2 text-blue-600"></i><span class="text-md">Trans Nzoia County</span></div>
-            <div><div class="text-xs text-gray-900 font-bold uppercase tracking-wide">Value</div><div class="text-gray-800">Refer Document</div></div>
-          </div>
-          <button class="btn-primary text-sm whitespace-nowrap">View Details <i class="fas fa-arrow-right ml-2"></i></button>
-        </div>
-      </div>
-    </div>
+      <button id="tender-modal-close" class="tender-modal-close" type="button" aria-label="Close tender details"><i class="fas fa-times" aria-hidden="true"></i></button>
+    </header>
+    <div id="tender-detail-content" class="tender-modal-content" aria-live="polite"></div>
   </div>
+</dialog>
 
-  <div class="flex justify-center items-center gap-2 flex-wrap animate-in relative z-10">
-    <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
-    <button class="pagination-btn active">1</button>
-    <button class="pagination-btn">2</button>
-    <button class="pagination-btn">3</button>
-    <span class="text-gray-600">...</span>
-    <button class="pagination-btn">24</button>
-    <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
-  </div>
-</section>
-
-<button id="scrollTop">
-  <i class="fas fa-arrow-up text-2xl"></i>
-</button>
+<button id="scrollTop" class="neon-glow" type="button" aria-label="Back to top"><i class="fas fa-arrow-up text-2xl" aria-hidden="true"></i></button>
 
 <footer class="bg-[#0b1f3b] text-white pt-16 pb-8 mt-16">
   <div class="container mx-auto px-4">
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-      <div>
-        <img src="https://ik.imagekit.io/kltovsgah/kentender_logo.png" alt="KenyaTenders" class="w-40 mb-4 invert brightness-0">
-        <p class="text-gray-400 mb-6">Kenya's leading tender discovery platform.</p>
-      </div>
-      <div>
-        <h4 class="text-lg font-bold mb-6">Quick Links</h4>
-        <ul class="space-y-3">
-          <li><a href="/about" class="text-gray-400 hover:text-white">About Us</a></li>
-          <li><a href="/tenders" class="text-gray-400 hover:text-white">All Tenders</a></li>
-          <li><a href="/contracts" class="text-gray-400 hover:text-white">Contract Awards</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="text-lg font-bold mb-6">Industries</h4>
-        <ul class="space-y-3">
-          <li><a href="/industry/public" class="text-gray-400 hover:text-white">Public Sector</a></li>
-          <li><a href="/industry/private" class="text-gray-400 hover:text-white">Private Sector</a></li>
-          <li><a href="/industry/donor" class="text-gray-400 hover:text-white">Donor Funded</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="text-lg font-bold mb-6">Contact</h4>
-        <ul class="space-y-4">
-          <li><i class="fas fa-phone text-[#1f4fd8] mr-3"></i>+254 700 000 000</li>
-          <li><i class="fas fa-envelope text-[#1f4fd8] mr-3"></i>info@kentender.co.ke</li>
-          <li><i class="fas fa-map-marker-alt text-[#1f4fd8] mr-3"></i>Nairobi, Kenya</li>
-        </ul>
-      </div>
+      <div><img src="https://ik.imagekit.io/kltovsgah/kentender_logo.png" alt="KenyaTenders" class="w-40 mb-4 invert brightness-0"><p class="text-gray-400 mb-6">Kenya's leading tender discovery platform.</p></div>
+      <div><h4 class="text-lg font-bold mb-6">Quick Links</h4><ul class="space-y-3"><li><a href="/about" class="text-gray-400 hover:text-white">About Us</a></li><li><a href="/all-tenders" class="text-gray-400 hover:text-white">All Tenders</a></li><li><a href="/contracts" class="text-gray-400 hover:text-white">Contract Awards</a></li></ul></div>
+      <div><h4 class="text-lg font-bold mb-6">Industries</h4><ul class="space-y-3"><li><a href="/industry/public" class="text-gray-400 hover:text-white">Public Sector</a></li><li><a href="/industry/private" class="text-gray-400 hover:text-white">Private Sector</a></li><li><a href="/industry/donor" class="text-gray-400 hover:text-white">Donor Funded</a></li></ul></div>
+      <div><h4 class="text-lg font-bold mb-6">Contact</h4><ul class="space-y-4"><li><i class="fas fa-phone text-[#1f4fd8] mr-3"></i>+254 700 000 000</li><li><i class="fas fa-envelope text-[#1f4fd8] mr-3"></i>info@kentender.co.ke</li><li><i class="fas fa-map-marker-alt text-[#1f4fd8] mr-3"></i>Nairobi, Kenya</li></ul></div>
     </div>
-    <div class="border-t border-gray-700 pt-8 text-center">
-      <p class="text-gray-400 text-sm">© 2026 KenyaTenders. All rights reserved.</p>
-    </div>
+    <div class="border-t border-gray-700 pt-8 text-center"><p class="text-gray-400 text-sm">© 2026 KenyaTenders. All rights reserved.</p></div>
   </div>
 </footer>
 
 <script>
 (function() {
-  'use strict';
-
-  document.body.classList.add('loading');
-  window.addEventListener('load', function() { document.body.classList.remove('loading'); });
-  setTimeout(function() { document.body.classList.remove('loading'); }, 1500);
-
-  function updateTime() {
-    var el = document.getElementById('live-time');
-    if (el) el.textContent = new Date().toLocaleString();
-  }
-  updateTime(); setInterval(updateTime, 1000);
-
-  document.querySelectorAll('.dropdown-toggle').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation(); e.preventDefault();
-      var menu = btn.nextElementSibling;
-      document.querySelectorAll('.dropdown-menu').forEach(function(m) { if (m !== menu) m.classList.remove('show'); });
-      menu.classList.toggle('show');
-      var arrow = btn.querySelector('.dropdown-arrow');
-      if (arrow) arrow.classList.toggle('rotate-180');
-    });
-  });
-  document.addEventListener('click', function() {
-    document.querySelectorAll('.dropdown-menu').forEach(function(m) { m.classList.remove('show'); });
-  });
-
-  var mobileBtn = document.getElementById('mobileMenuBtn');
+  var clock = document.getElementById('live-time');
+  function updateTime() { if (clock) clock.textContent = new Date().toLocaleString('en-KE', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  updateTime();
+  setInterval(updateTime, 30000);
+  document.querySelectorAll('.dropdown-toggle').forEach(function(button) { button.addEventListener('click', function(event) { event.stopPropagation(); var menu = button.nextElementSibling; document.querySelectorAll('.dropdown-menu').forEach(function(item) { if (item !== menu) item.classList.remove('show'); }); menu.classList.toggle('show'); }); });
+  document.addEventListener('click', function(event) { if (!event.target.closest('.dropdown')) document.querySelectorAll('.dropdown-menu').forEach(function(menu) { menu.classList.remove('show'); }); });
+  var mobileButton = document.getElementById('mobileMenuBtn');
   var mobileMenu = document.getElementById('mobileMenu');
-  if (mobileBtn && mobileMenu) {
-    mobileBtn.addEventListener('click', function(e) {
-      e.preventDefault(); e.stopPropagation();
-      mobileMenu.classList.toggle('hidden');
-    });
-  }
-
-  var scrollTopBtn = document.getElementById('scrollTop');
-  if (scrollTopBtn) {
-    window.addEventListener('scroll', function() {
-      if (window.scrollY > 500) scrollTopBtn.classList.add('visible');
-      else scrollTopBtn.classList.remove('visible');
-    }, { passive: true });
-    scrollTopBtn.addEventListener('click', function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  var filterPanel = document.getElementById('filterPanel');
-  var filterToggle = document.getElementById('filterToggle');
-  if (filterPanel && filterToggle) {
-    var toggleIcon = filterToggle.querySelector('i');
-    var toggleText = filterToggle.querySelector('.toggle-text');
-    var saved = localStorage.getItem('filterPanelCollapsed');
-    if (saved !== 'false') collapse();
-    filterToggle.addEventListener('click', function() {
-      if (filterPanel.classList.contains('collapsed')) expand();
-      else collapse();
-    });
-    function collapse() {
-      filterPanel.classList.remove('expanded'); filterPanel.classList.add('collapsed');
-      toggleIcon.classList.remove('fa-chevron-down'); toggleIcon.classList.add('fa-chevron-up');
-      if (toggleText) toggleText.textContent = 'Show Filters';
-      localStorage.setItem('filterPanelCollapsed', 'true');
-    }
-    function expand() {
-      filterPanel.classList.remove('collapsed'); filterPanel.classList.add('expanded');
-      toggleIcon.classList.remove('fa-chevron-up'); toggleIcon.classList.add('fa-chevron-down');
-      if (toggleText) toggleText.textContent = 'Hide Filters';
-      localStorage.setItem('filterPanelCollapsed', 'false');
-    }
-  }
-
-  // Active nav
-  (function initActiveNav() {
-    try {
-      var path = window.location.pathname || '/';
-      var cleanPath = path.replace(/\/$/, '') || '/';
-      document.querySelectorAll('#mainNav a, #mobileMenu a').forEach(function(a) {
-        var href = a.getAttribute('href') || '';
-        var cleanHref = href.replace(/\/$/, '') || '/';
-        var isMatch = false;
-        if (cleanPath === '/' && (cleanHref === '/' || cleanHref === '/home')) isMatch = true;
-        else if (cleanHref === cleanPath) isMatch = true;
-        else if (cleanHref !== '/' && cleanPath.indexOf(cleanHref) === 0) isMatch = true;
-        else if ((cleanPath === '/contracts' && cleanHref === '/contract') || (cleanPath === '/contract' && cleanHref === '/contracts')) isMatch = true;
-
-        if (isMatch) {
-          a.classList.add('active');
-          a.setAttribute('aria-current', 'page');
-          a.style.setProperty('color', '#2563eb', 'important');
-          a.style.setProperty('font-weight', '700', 'important');
-          a.style.setProperty('border-bottom', '2px solid #2563eb', 'important');
-          a.style.setProperty('padding-bottom', '4px', 'important');
-          a.style.setProperty('display', 'inline-block', 'important');
-          var dropdown = a.closest('.dropdown');
-          if (dropdown) {
-            var toggle = dropdown.querySelector('.dropdown-toggle');
-            if (toggle) {
-              toggle.classList.add('active');
-              toggle.style.setProperty('color', '#2563eb', 'important');
-              toggle.style.setProperty('font-weight', '700', 'important');
-              toggle.style.setProperty('border-bottom', '2px solid #2563eb', 'important');
-              toggle.style.setProperty('padding-bottom', '4px', 'important');
-              toggle.style.setProperty('display', 'inline-block', 'important');
-            }
-          }
-        } else {
-          a.classList.remove('active');
-          a.removeAttribute('aria-current');
-          a.style.removeProperty('border-bottom');
-          a.style.removeProperty('padding-bottom');
-          a.style.removeProperty('display');
-          a.style.removeProperty('color');
-          a.style.removeProperty('font-weight');
-        }
-      });
-    } catch (e) {}
-  })();
+  mobileButton.addEventListener('click', function() { mobileMenu.hidden = !mobileMenu.hidden; });
+  var scrollTop = document.getElementById('scrollTop');
+  window.addEventListener('scroll', function() { if (window.scrollY > 500) scrollTop.classList.add('visible'); else scrollTop.classList.remove('visible'); }, { passive: true });
+  scrollTop.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 })();
 </script>
+<script src="/assets/frontend/js/all_tenders.js?v=7"></script>
 """

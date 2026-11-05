@@ -189,7 +189,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <div class="dropdown">
         <button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down dropdown-arrow"></i></button>
         <div class="dropdown-menu">
-          <a href="/tenders" class="dropdown-item">All Tenders</a>
+          <a href="/all-tenders" class="dropdown-item">All Tenders</a>
           <a href="/contracts" class="dropdown-item">Awarded Contracts</a>
         </div>
       </div>
@@ -220,7 +220,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
     <div class="container mx-auto px-4 py-4 space-y-3">
       <a href="/" class="block text-gray-700 font-medium py-2">Home</a>
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
-      <a href="/tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
+      <a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
       <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       {% if frappe.session.user == 'Guest' %}
@@ -307,7 +307,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
         <h4 class="text-lg font-bold mb-6">Quick Links</h4>
         <ul class="space-y-3">
           <li><a href="/about" class="text-gray-400 hover:text-white">About Us</a></li>
-          <li><a href="/tenders" class="text-gray-400 hover:text-white">All Tenders</a></li>
+          <li><a href="/all-tenders" class="text-gray-400 hover:text-white">All Tenders</a></li>
           <li><a href="/contracts" class="text-gray-400 hover:text-white">Contract Awards</a></li>
         </ul>
       </div>
