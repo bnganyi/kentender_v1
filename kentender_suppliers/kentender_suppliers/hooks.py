@@ -99,7 +99,7 @@ kt_portal_surfaces = [
 		"prefix": "/account",
 		"resolver": "kentender_suppliers.supplier_accounts.portal.resolve",
 		"bundle": "supplier_account_portal.bundle.js",
-		"css": [f"/assets/kentender_suppliers/css/supplier_account_portal.css?v={_account_asset_version('public/css/supplier_account_portal.css')}"],
+		"css": [f"/assets/kentender_suppliers/css/supplier_account_portal.css?v={int(_account_asset_version('public/css/supplier_account_portal.css')) + 1}"],
 	},
 ]
 

@@ -181,9 +181,6 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 				{%- endif %}
 			</div>
 		</header>
-		<nav class="kt-portal-breadcrumbs" aria-label="Breadcrumb" hidden>
-			<div class="kt-portal-bar kt-portal-breadcrumb-inner" id="kt-portal-breadcrumbs"></div>
-		</nav>
 		<div class="kt-portal-body">
 			<main id="kt-portal-main" tabindex="-1">
 				<div id="kt-portal-app" data-kt-portal-app>
@@ -310,59 +307,6 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		{{ include_script('frappe-web.bundle.js') }} {# Before the surface bundles: a screen that
 		posts as it mounts (the emailed verification link) reads this token at once. #}
 		<!-- csrf_token -->
-		<script>
-			(function () {
-				var path = (window.location.pathname || "/").replace(/^\/+|\/+$/g, "");
-				var parts = path ? path.split("/").filter(Boolean) : [];
-				var host = document.getElementById("kt-portal-breadcrumbs");
-				if (!host) return;
-
-				var items = [];
-				var root = { label: "Home", href: "/" };
-				items.push(root);
-
-				if (parts.length && parts[0] === "tenders") {
-					items.push({ label: "Tenders", href: "/tenders" });
-					if (parts.length > 1 && parts[1]) {
-						items.push({
-							label: decodeURIComponent(parts[1]).replace(/-/g, " "),
-							href: null,
-						});
-					}
-				} else if (parts.length) {
-					parts.forEach(function (part, index) {
-						var href = "/" + parts.slice(0, index + 1).join("/");
-						items.push({
-							label: decodeURIComponent(part).replace(/-/g, " "),
-							href: index === parts.length - 1 ? null : href,
-						});
-					});
-				}
-
-				var list = items
-					.map(function (item, index) {
-						var isCurrent = index === items.length - 1 || item.href === null;
-						if (isCurrent) {
-							return (
-								'<li class="kt-portal-breadcrumb-item is-current"><span class="kt-portal-breadcrumb-current" aria-current="page">' +
-								item.label +
-								"</span></li>"
-							);
-						}
-						return (
-							'<li class="kt-portal-breadcrumb-item"><a href="' +
-							item.href +
-							'" class="kt-portal-breadcrumb-link">' +
-							item.label +
-							"</a></li>"
-						);
-					})
-					.join("");
-
-				host.innerHTML = '<ol class="kt-portal-breadcrumb-list">' + list + "</ol>";
-				host.parentNode.hidden = false;
-			})();
-		</script>
 		{%- if kt_portal_messages %}
 		<script>
 			frappe._messages = Object.assign(frappe._messages || {}, {{ kt_portal_messages }});
