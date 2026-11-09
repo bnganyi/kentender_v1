@@ -89,7 +89,15 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 .input-modern:focus { border-color: #0066ff; background: #fff; box-shadow: 0 0 0 4px rgba(0,102,255,.1); }
 #tender-filters { display: grid; gap: 24px; }
 .filter-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.filter-grid-dates { grid-template-columns: minmax(0,1fr); }
 .filter-field label { display: block; margin-bottom: 8px; color: #374151; font-size: 14px; font-weight: 500; }
+.filter-field input:disabled, .filter-field select:disabled { background: #f3f4f6; color: #6b7280; cursor: not-allowed; }
+.filter-exact { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #4b5563; font-size: 14px; }
+.filter-exact input { width: 16px; height: 16px; margin: 0; accent-color: #0066ff; }
+.date-input-wrapper { position: relative; display: flex; align-items: center; min-height: 48px; overflow: hidden; border-radius: 12px; background: rgba(255,255,255,.95); }
+.date-input-wrapper i { margin: 0 16px; color: #6b7280; }
+.date-input-wrapper input { width: 100%; min-width: 0; padding: 14px 12px; border: 0; outline: 0; background: transparent; font-size: 15px; }
+.date-input-wrapper input:disabled { color: #6b7280; cursor: not-allowed; }
 .filter-actions { display: flex; grid-column: 1 / -1; justify-content: center; gap: 16px; padding-top: 24px; border-top: 2px solid #e5e7eb; }
 .btn-primary, .btn-secondary { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s ease; }
 .btn-primary { border: 0; background: linear-gradient(135deg,#0047ab,#003580); color: #fff; }
@@ -161,6 +169,10 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 @media (max-width: 900px) { #mainNav { gap: 14px; } #site-nav { gap: 14px; } }
 @media (max-width: 767px) { #mainNav, .kt-header-actions { display: none; } #mobileMenuBtn { display: inline-flex; } .filter-grid { grid-template-columns: 1fr 1fr; } .filter-actions { grid-column: 1 / -1; } }
 @media (max-width: 560px) { .page-heading { font-size: 30px; } .filter-grid { grid-template-columns: 1fr; } .tender-card-top, .tender-load-error { align-items: flex-start; flex-direction: column; } .tender-deadline { text-align: left; } .filter-actions { align-items: stretch; flex-direction: column; } .footer-inner { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 1023px) { .filter-grid-primary, .filter-grid-live { grid-template-columns: repeat(2,minmax(0,1fr)); } .filter-grid-dates { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 560px) { .filter-grid-primary, .filter-grid-live, .filter-grid-dates { grid-template-columns: 1fr; } }
+@media (min-width: 1024px) { .filter-grid-dates { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (min-width: 1280px) { .filter-grid-dates { grid-template-columns: repeat(5,minmax(0,1fr)); } }
 </style>
 
 <div id="headerWrapper" class="navbar-blur">
@@ -208,14 +220,26 @@ select option { background-color: #f3f4f6; color: #1f2937; }
       <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="false"><i class="fas fa-chevron-up"></i><span class="toggle-text">Show Filters</span></button>
     </div>
 
-    <section class="filter-panel" id="filterPanel" aria-label="Tender filters">
+    <section class="filter-panel collapsed" id="filterPanel" aria-label="Tender filters">
       <div class="filter-content" id="filterContent">
         <form id="tender-filters">
-          <div class="filter-grid">
-            <div><label for="tender-search">Title or reference</label><input id="tender-search" class="input-modern bg-white" type="search" placeholder="Search published tenders"></div>
-            <div><label for="tender-method">Method</label><select id="tender-method" class="input-modern bg-white"><option value="">All methods</option></select></div>
-            <div><label for="tender-reservation">Reservation</label><select id="tender-reservation" class="input-modern bg-white"><option value="">All categories</option></select></div>
-            <div><label for="tender-closing">Availability</label><select id="tender-closing" class="input-modern bg-white"><option value="all">Open and closed</option><option value="open">Open tenders</option><option value="closed">Closed or cancelled</option></select></div>
+          <div class="filter-grid filter-grid-primary">
+            <div class="filter-field"><label for="tender-reference">Ref. No.</label><input id="tender-reference" class="input-modern bg-white" type="search" placeholder="Enter KET reference" disabled data-filter-placeholder="reference"></div>
+            <div class="filter-field"><label for="tender-location">Location</label><select id="tender-location" class="input-modern bg-white" disabled data-filter-placeholder="location"><option value="">All Locations</option><option value="nairobi">Nairobi County</option><option value="mombasa">Mombasa County</option><option value="kisumu">Kisumu County</option><option value="kiambu">Kiambu County</option><option value="nakuru">Nakuru County</option></select></div>
+            <div class="filter-field"><label for="tender-financier">Financier</label><select id="tender-financier" class="input-modern bg-white" disabled data-filter-placeholder="financier"><option value="">All Financiers</option><option value="world-bank">World Bank</option><option value="afdb">African Development Bank</option><option value="eu">European Union</option><option value="gok">Government of Kenya</option><option value="usaid">USAID</option></select></div>
+            <div class="filter-field"><label for="tender-search">Search Keywords</label><input id="tender-search" class="input-modern bg-white" type="search" placeholder="Enter keywords"><label class="filter-exact" for="tender-exact"><input id="tender-exact" type="checkbox" disabled data-filter-placeholder="exact-match">Exact match only</label></div>
+          </div>
+          <div class="filter-grid filter-grid-dates">
+            <div class="filter-field"><label for="tender-award-from">Award Date From</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-award-from" type="date" disabled data-filter-placeholder="award-date-from"></div></div>
+            <div class="filter-field"><label for="tender-award-to">Award Date To</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-award-to" type="date" disabled data-filter-placeholder="award-date-to"></div></div>
+            <div class="filter-field"><label for="tender-contract-from">Contract Start From</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-contract-from" type="date" disabled data-filter-placeholder="contract-start-from"></div></div>
+            <div class="filter-field"><label for="tender-contract-to">Contract End To</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-contract-to" type="date" disabled data-filter-placeholder="contract-end-to"></div></div>
+            <div class="filter-field"><label for="tender-value-range">Value Range</label><select id="tender-value-range" class="input-modern bg-white" disabled data-filter-placeholder="value-range"><option value="">Any Value</option><option value="under-10m">Under KES 10M</option><option value="10m-50m">KES 10M - 50M</option><option value="50m-200m">KES 50M - 200M</option><option value="over-200m">Over KES 200M</option></select></div>
+          </div>
+          <div class="filter-grid filter-grid-live">
+            <div class="filter-field"><label for="tender-method">Method</label><select id="tender-method" class="input-modern bg-white"><option value="">All methods</option></select></div>
+            <div class="filter-field"><label for="tender-reservation">Reservation</label><select id="tender-reservation" class="input-modern bg-white"><option value="">All categories</option></select></div>
+            <div class="filter-field"><label for="tender-closing">Availability</label><select id="tender-closing" class="input-modern bg-white"><option value="all">Open and closed</option><option value="open">Open tenders</option><option value="closed">Closed or cancelled</option></select></div>
           </div>
           <div class="filter-actions">
             <button type="submit" class="btn-primary"><i class="fas fa-search"></i><span>Search Tenders</span></button>

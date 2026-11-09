@@ -164,6 +164,159 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-i
 	border-color: #94a3b8;
 }
 
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-filter-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 12px;
+	padding: 16px 20px;
+	background: rgb(0 0 0 / 5%);
+	border-radius: 24px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-filter-heading h2 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	font-size: 18px;
+	font-weight: 700;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-filter-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 40px;
+	padding: 8px 18px;
+	border: 0;
+	border-radius: 12px;
+	background: #0047ab;
+	color: #fff;
+	font-size: 14px;
+	font-weight: 650;
+	cursor: pointer;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-filter-toggle:hover {
+	background: #003580;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-filter-chevron {
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid currentColor;
+	border-bottom: 2px solid currentColor;
+	transform: rotate(45deg) translateY(-2px);
+	transition: transform 0.18s ease;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-filter-toggle[aria-expanded="true"] .bds-filter-chevron {
+	transform: rotate(225deg) translate(-2px, -1px);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-filter-panel {
+	margin-bottom: 24px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-form {
+	display: grid;
+	gap: 24px;
+	padding: 4px 12px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 16px;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields .field {
+	display: grid;
+	gap: 8px;
+	min-width: 0;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields .field > label:not(.bds-exact-label) {
+	color: #374151;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields .input {
+	width: 100%;
+	height: 48px;
+	padding: 0 18px;
+	border: 2px solid transparent;
+	border-radius: 12px;
+	background: rgb(255 255 255 / 95%);
+	color: #1f2937;
+	font-size: 15px;
+	box-shadow: none;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields .input:focus-visible {
+	border-color: #0066ff;
+	outline: none;
+	box-shadow: 0 0 0 3px rgb(0 102 255 / 12%);
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields .input:disabled {
+	background: #f3f4f6;
+	color: #6b7280;
+	cursor: not-allowed;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-exact-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	color: #4b5563;
+	font-size: 13px;
+	font-weight: 400;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-exact-label input {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: #0066ff;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-live-fields {
+	padding-top: 18px;
+	border-top: 1px solid #e5e7eb;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 14px;
+	padding-top: 22px;
+	border-top: 2px solid #e5e7eb;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-actions .btn {
+	min-height: 46px;
+	padding: 0 24px;
+	border-radius: 10px;
+	font-size: 14px;
+	font-weight: 650;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-actions .btn-primary {
+	background: linear-gradient(135deg, #0047ab, #003580);
+	color: #fff;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-actions .btn-secondary {
+	border: 1px solid #d1d5db;
+	background: #fff;
+	color: #374151;
+}
+
 /* Bid cards */
 .kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .table {
 	width: 100%;
@@ -319,6 +472,9 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-i
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
 		grid-template-columns: 1fr 1fr;
 	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar > div:last-child {
 		grid-column: 1 / -1;
 		justify-self: start;
@@ -344,6 +500,23 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-i
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar {
 		grid-template-columns: 1fr;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-filter-heading {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-filter-toggle {
+		width: 100%;
+		justify-content: center;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-form {
+		padding: 4px;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-actions {
+		flex-direction: column;
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-actions .btn {
+		width: 100%;
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .kt-filter-bar.bds-filter-stack {
 		grid-template-columns: minmax(0, 1fr) !important;
@@ -378,6 +551,33 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-my-bids"]) .kt-portal-i
 	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-row-actions .btn {
 		width: 100%;
 		margin-top: 4px;
+	}
+}
+
+@media (max-width: 639px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (min-width: 640px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-fields {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1024px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-primary-fields {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-date-fields {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 1280px) {
+	.kt-industry.kt-portal .kt-page[data-testid="bds-my-bids"] .bds-awarded-date-fields {
+		grid-template-columns: repeat(5, minmax(0, 1fr));
 	}
 }
 

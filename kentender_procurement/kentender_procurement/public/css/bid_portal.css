@@ -222,6 +222,9 @@
 	display: grid;
 	gap: 6px;
 }
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card + .bds-card {
+	margin-top: 16px;
+}
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-title {
 	font-size: 14px;
 	font-weight: 600;

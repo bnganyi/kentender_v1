@@ -486,7 +486,7 @@
 	filterToggle.addEventListener("click", () => {
 		setFiltersExpanded(filterPanel.classList.contains("collapsed"));
 	});
-	setFiltersExpanded(localStorage.getItem("allTendersFilterPanelCollapsedV2") !== "true");
+	setFiltersExpanded(localStorage.getItem("allTendersFilterPanelCollapsedV2") === "false");
 	retryButton.addEventListener("click", loadTenders);
 	results.addEventListener("click", (event) => {
 		const trigger = event.target.closest("[data-tender-detail]");

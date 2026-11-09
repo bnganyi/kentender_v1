@@ -149,7 +149,11 @@ kt_portal_surfaces = [
 		"bundle": "bid_portal.bundle.js",
 		"css": [
 			f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}",
+			f"/assets/kentender_procurement/css/overrides/bds_available_tenders.css?v={_asset_version('public/css/overrides/bds_available_tenders.css') + 6}",
+			f"/assets/kentender_procurement/css/overrides/bds_tender_overview.css?v={_asset_version('public/css/overrides/bds_tender_overview.css') + 3}",
 			f"/assets/kentender_procurement/css/overrides/bds_my_bids.css?v={_asset_version('public/css/overrides/bds_my_bids.css') + 1}",
+			f"/assets/kentender_procurement/css/overrides/bid_company_task.css?v={_asset_version('public/css/overrides/bid_company_task.css')}",
+			f"/assets/kentender_procurement/css/overrides/bid_documents_task.css?v={_asset_version('public/css/overrides/bid_documents_task.css')}",
 		],
 	},
 	{

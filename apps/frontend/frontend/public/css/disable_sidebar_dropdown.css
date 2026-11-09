@@ -1,0 +1,11 @@
+.sidebar-header {
+	pointer-events: none;
+}
+
+.sidebar-header .drop-icon {
+	display: none !important;
+}
+
+.body-sidebar-bottom .about-sidebar-link {
+	display: none !important;
+}

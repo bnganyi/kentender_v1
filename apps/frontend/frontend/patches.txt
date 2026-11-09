@@ -28,6 +28,8 @@ frontend.patches.v1_0.sync_all_tenders_page_v07
 frontend.patches.v1_0.sync_all_tenders_page_v08
 frontend.patches.v1_0.sync_all_tenders_page_v09
 frontend.patches.v1_0.sync_all_tenders_page_v10
+frontend.patches.v1_0.sync_all_tenders_page_v11
+frontend.patches.v1_0.sync_all_tenders_page_v12
 frontend.patches.v1_0.sync_public_page_headers_v06
 frontend.patches.v1_0.sync_public_page_headers_v07
 frontend.patches.v1_0.sync_public_page_headers_v08

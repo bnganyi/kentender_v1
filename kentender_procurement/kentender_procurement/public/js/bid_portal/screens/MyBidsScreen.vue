@@ -19,6 +19,7 @@ const props = defineProps({ initial: { type: Object, default: null } });
 const portal = inject("portal");
 const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
 const narrow = useNarrow();
+const filtersOpen = ref(false);
 
 function fromQuery(query) {
 	const q = query || {};
@@ -106,20 +107,77 @@ onMounted(() => {
 			</div>
 		</div>
 		<div>
-			<div class="kt-filter-bar" :class="{ 'bds-filter-stack': narrow }" role="search" :aria-label="__('Filter bids')">
-				<div class="field">
-					<label for="bds-bids-search">{{ __("Search Tender or bid") }}</label>
-					<input id="bds-bids-search" v-model="filters.search" class="input" type="search" :placeholder="__('Tender or bid')" data-testid="bds-bids-search" @input="onSearch" @keydown.enter.prevent="apply">
-				</div>
-				<div class="field">
-					<label for="bds-bids-status">{{ __("Status") }}</label>
-					<select id="bds-bids-status" v-model="filters.status" class="input" data-testid="bds-bids-status" @change="apply">
-						<option v-for="o in options.status" :key="'s' + o.value" :value="o.value">{{ __(o.label) }}</option>
-					</select>
-				</div>
-				<div>
-					<button type="button" class="btn btn-ghost" :class="{ 'bds-btn-block': narrow }" data-testid="bds-bids-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
-				</div>
+			<div class="bds-awarded-filter-heading">
+				<h2>{{ __("My bids filters") }}</h2>
+				<button type="button" class="bds-filter-toggle" :aria-expanded="filtersOpen" aria-controls="bds-bids-filter-panel" data-testid="bds-bids-filter-toggle" @click="filtersOpen = !filtersOpen">
+					{{ filtersOpen ? __("Hide Filters") : __("Show Filters") }}<span class="bds-filter-chevron" aria-hidden="true"></span>
+				</button>
+			</div>
+			<div id="bds-bids-filter-panel" v-show="filtersOpen" class="bds-awarded-filter-panel" data-testid="bds-bids-filter-panel">
+				<form class="bds-awarded-form" role="search" :aria-label="__('Filter bids')" @submit.prevent="apply">
+					<div class="bds-awarded-fields bds-awarded-primary-fields">
+						<div class="field">
+							<label for="bds-bids-reference">{{ __("Ref. No.") }}</label>
+							<input id="bds-bids-reference" class="input" type="search" :placeholder="__('Enter KET reference')" disabled data-testid="bds-bids-reference-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-bids-location">{{ __("Location") }}</label>
+							<select id="bds-bids-location" class="input" disabled data-testid="bds-bids-location-placeholder">
+								<option>{{ __("All Locations") }}</option>
+								<option>Nairobi County</option><option>Mombasa County</option><option>Kisumu County</option><option>Kiambu County</option><option>Nakuru County</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="bds-bids-financier">{{ __("Financier") }}</label>
+							<select id="bds-bids-financier" class="input" disabled data-testid="bds-bids-financier-placeholder">
+								<option>{{ __("All Financiers") }}</option>
+								<option>World Bank</option><option>African Development Bank</option><option>European Union</option><option>Government of Kenya</option><option>USAID</option>
+							</select>
+						</div>
+						<div class="field bds-keyword-field">
+							<label for="bds-bids-search">{{ __("Search Keywords") }}</label>
+							<input id="bds-bids-search" v-model="filters.search" class="input" type="search" :placeholder="__('Tender or bid')" data-testid="bds-bids-search" @input="onSearch" @keydown.enter.prevent="apply">
+							<label class="bds-exact-label" for="bds-bids-exact"><input id="bds-bids-exact" type="checkbox" disabled data-testid="bds-bids-exact-placeholder">{{ __("Exact match only") }}</label>
+						</div>
+					</div>
+					<div class="bds-awarded-fields bds-awarded-date-fields">
+						<div class="field">
+							<label for="bds-bids-award-from">{{ __("Award Date From") }}</label>
+							<input id="bds-bids-award-from" class="input" type="date" disabled data-testid="bds-bids-award-from-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-bids-award-to">{{ __("Award Date To") }}</label>
+							<input id="bds-bids-award-to" class="input" type="date" disabled data-testid="bds-bids-award-to-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-bids-contract-from">{{ __("Contract Start From") }}</label>
+							<input id="bds-bids-contract-from" class="input" type="date" disabled data-testid="bds-bids-contract-from-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-bids-contract-to">{{ __("Contract End To") }}</label>
+							<input id="bds-bids-contract-to" class="input" type="date" disabled data-testid="bds-bids-contract-to-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-bids-value">{{ __("Value Range") }}</label>
+							<select id="bds-bids-value" class="input" disabled data-testid="bds-bids-value-placeholder">
+								<option>{{ __("Any Value") }}</option>
+								<option>Under KES 10M</option><option>KES 10M - 50M</option><option>KES 50M - 200M</option><option>Over KES 200M</option>
+							</select>
+						</div>
+					</div>
+					<div class="bds-awarded-fields bds-awarded-live-fields">
+						<div class="field">
+							<label for="bds-bids-status">{{ __("Status") }}</label>
+							<select id="bds-bids-status" v-model="filters.status" class="input" data-testid="bds-bids-status" @change="apply">
+								<option v-for="o in options.status" :key="'s' + o.value" :value="o.value">{{ __(o.label) }}</option>
+							</select>
+						</div>
+					</div>
+					<div class="bds-awarded-actions">
+						<button type="submit" class="btn btn-primary">{{ __("Search My Bids") }}</button>
+						<button type="button" class="btn btn-secondary" data-testid="bds-bids-clear" @click="clearFilters">{{ __("Reset Filters") }}</button>
+					</div>
+				</form>
 			</div>
 
 			<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">

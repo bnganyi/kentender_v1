@@ -44,6 +44,11 @@ describe("AvailableTendersScreen", () => {
 		expect(portal.call).not.toHaveBeenCalled(); // first paint from the server payload
 		expect(wrapper.find("h1.kt-page-title").text()).toBe("Available Tenders");
 		expect(wrapper.findAll("thead th").map((th) => th.text())).toEqual(["Tender", "Procuring Entity", "Method", "Reservation", "Submission deadline", "Action"]);
+		expect(wrapper.get('[data-testid="bds-filter-search"]').attributes("placeholder")).toBe("Enter keywords");
+		expect(wrapper.get('[data-testid="bds-filter-location-placeholder"]').attributes("disabled")).toBeDefined();
+		expect(wrapper.get('[data-testid="bds-filter-value-placeholder"]').attributes("disabled")).toBeDefined();
+		expect(wrapper.get('[data-testid="bds-filter-toggle"]').attributes("aria-expanded")).toBe("false");
+		expect(wrapper.get('[data-testid="bds-tender-filter-panel"]').isVisible()).toBe(false);
 		const cells = wrapper.findAll("tbody td");
 		expect(cells[0].find(".kt-label").text()).toBe("TND-MOH-2027-033");
 		expect(cells[5].find("a").attributes("href")).toBe("/tenders/TND-MOH-2027-033");
@@ -56,7 +61,14 @@ describe("AvailableTendersScreen", () => {
 		const { wrapper } = render(LIST);
 		expect(wrapper.find("table").exists()).toBe(false);
 		expect(wrapper.findAll(".bds-card-fact .kt-label").map((l) => l.text())).toEqual(["Procuring Entity", "Method", "Reservation", "Submission deadline"]);
-		expect(wrapper.find(".kt-filter-bar").classes()).toContain("bds-filter-stack");
+		expect(wrapper.find('[data-testid="bds-filter-toggle"]').exists()).toBe(true);
+	});
+
+	it("keeps filters collapsed by default and lets the user open them", async () => {
+		const { wrapper } = render(LIST);
+		await wrapper.get('[data-testid="bds-filter-toggle"]').trigger("click");
+		expect(wrapper.get('[data-testid="bds-filter-toggle"]').attributes("aria-expanded")).toBe("true");
+		expect(wrapper.find("#bds-tender-filter-panel").isVisible()).toBe(true);
 	});
 
 	it("shows the empty state with Clear filters and no table", () => {

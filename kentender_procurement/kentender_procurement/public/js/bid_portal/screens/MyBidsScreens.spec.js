@@ -32,8 +32,20 @@ describe("My bids", () => {
 		expect(row.text()).toContain("Ready to submit");
 		expect(row.get('[data-testid="bds-bid-action-0"]').text()).toBe("Review bid");
 		expect(row.get('[data-testid="bds-bid-action-0"]').attributes("href")).toBe("/tenders/TND-MOH-2027-033/bid/review");
+		expect(wrapper.get('[data-testid="bds-bids-search"]').attributes("placeholder")).toBe("Tender or bid");
+		expect(wrapper.get('[data-testid="bds-bids-financier-placeholder"]').attributes("disabled")).toBeDefined();
+		expect(wrapper.get('[data-testid="bds-bids-value-placeholder"]').attributes("disabled")).toBeDefined();
+		expect(wrapper.get('[data-testid="bds-bids-filter-toggle"]').attributes("aria-expanded")).toBe("false");
+		expect(wrapper.get('[data-testid="bds-bids-filter-panel"]').isVisible()).toBe(false);
 		expect(wrapper.get('[data-testid="kt-pager-count"]').text()).toBe("1 bid");
 		expect(wrapper.find('[data-kt="journey"]').exists()).toBe(false); // a list, not a tracker
+	});
+
+	it("keeps filters collapsed by default and lets the user open them", async () => {
+		const wrapper = mountWith(MyBidsScreen, { initial: myBids() }, portalFor());
+		await wrapper.get('[data-testid="bds-bids-filter-toggle"]').trigger("click");
+		expect(wrapper.get('[data-testid="bds-bids-filter-toggle"]').attributes("aria-expanded")).toBe("true");
+		expect(wrapper.find("#bds-bids-filter-panel").isVisible()).toBe(true);
 	});
 
 	it("shows the preparer the action the server chose for a bid only the signatory can submit", () => {

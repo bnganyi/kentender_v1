@@ -23,6 +23,7 @@ const props = defineProps({
 const portal = inject("portal");
 const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
 const narrow = useNarrow();
+const filtersOpen = ref(false);
 
 function fromQuery(query) {
 	const q = query || {};
@@ -109,32 +110,89 @@ onMounted(() => {
 			</div>
 		</div>
 		<div>
-			<div class="kt-filter-bar" :class="{ 'bds-filter-stack': narrow }" role="search" :aria-label="__('Filter Tenders')">
-				<div class="field">
-					<label for="bds-filter-search">{{ __("Search title or reference") }}</label>
-					<input id="bds-filter-search" v-model="filters.search" class="input" type="search" :placeholder="__('Title or reference')" data-testid="bds-filter-search" @input="onSearch" @keydown.enter.prevent="apply">
-				</div>
-				<div class="field">
-					<label for="bds-filter-method">{{ __("Method") }}</label>
-					<select id="bds-filter-method" v-model="filters.method" class="input" data-testid="bds-filter-method" @change="apply">
-						<option v-for="o in options.method" :key="'m' + o.value" :value="o.value">{{ __(o.label) }}</option>
-					</select>
-				</div>
-				<div class="field">
-					<label for="bds-filter-reservation">{{ __("Reservation") }}</label>
-					<select id="bds-filter-reservation" v-model="filters.reservation" class="input" data-testid="bds-filter-reservation" @change="apply">
-						<option v-for="o in options.reservation" :key="'r' + o.value" :value="o.value">{{ __(o.label) }}</option>
-					</select>
-				</div>
-				<div class="field">
-					<label for="bds-filter-closing">{{ __("Closing") }}</label>
-					<select id="bds-filter-closing" v-model="filters.closing" class="input" data-testid="bds-filter-closing" @change="apply">
-						<option v-for="o in options.closing" :key="'c' + o.value" :value="o.value">{{ __(o.label) }}</option>
-					</select>
-				</div>
-				<div>
-					<button type="button" class="btn btn-ghost" :class="{ 'bds-btn-block': narrow }" data-testid="bds-filter-clear" @click="clearFilters">{{ __("Clear filters") }}</button>
-				</div>
+			<div class="bds-awarded-filter-heading">
+				<h2>{{ __("Available Tenders Filters") }}</h2>
+				<button type="button" class="bds-filter-toggle" :aria-expanded="filtersOpen" aria-controls="bds-tender-filter-panel" data-testid="bds-filter-toggle" @click="filtersOpen = !filtersOpen">
+					{{ filtersOpen ? __("Hide Filters") : __("Show Filters") }}<span class="bds-filter-chevron" aria-hidden="true"></span>
+				</button>
+			</div>
+			<div id="bds-tender-filter-panel" v-show="filtersOpen" class="bds-awarded-filter-panel" data-testid="bds-tender-filter-panel">
+				<form class="bds-awarded-form" role="search" :aria-label="__('Filter Tenders')" @submit.prevent="apply">
+					<div class="bds-awarded-fields bds-awarded-primary-fields">
+						<div class="field">
+							<label for="bds-filter-reference">{{ __("Ref. No.") }}</label>
+							<input id="bds-filter-reference" class="input" type="search" :placeholder="__('Enter KET reference')" disabled data-testid="bds-filter-reference-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-filter-location">{{ __("Location") }}</label>
+							<select id="bds-filter-location" class="input" disabled data-testid="bds-filter-location-placeholder">
+								<option>{{ __("All Locations") }}</option>
+								<option>Nairobi County</option><option>Mombasa County</option><option>Kisumu County</option><option>Kiambu County</option><option>Nakuru County</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="bds-filter-financier">{{ __("Financier") }}</label>
+							<select id="bds-filter-financier" class="input" disabled data-testid="bds-filter-financier-placeholder">
+								<option>{{ __("All Financiers") }}</option>
+								<option>World Bank</option><option>African Development Bank</option><option>European Union</option><option>Government of Kenya</option><option>USAID</option>
+							</select>
+						</div>
+						<div class="field bds-keyword-field">
+							<label for="bds-filter-search">{{ __("Search Keywords") }}</label>
+							<input id="bds-filter-search" v-model="filters.search" class="input" type="search" :placeholder="__('Enter keywords')" data-testid="bds-filter-search" @input="onSearch" @keydown.enter.prevent="apply">
+							<label class="bds-exact-label" for="bds-filter-exact"><input id="bds-filter-exact" type="checkbox" disabled data-testid="bds-filter-exact-placeholder">{{ __("Exact match only") }}</label>
+						</div>
+					</div>
+					<div class="bds-awarded-fields bds-awarded-date-fields">
+						<div class="field">
+							<label for="bds-filter-award-from">{{ __("Award Date From") }}</label>
+							<input id="bds-filter-award-from" class="input" type="date" disabled data-testid="bds-filter-award-from-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-filter-award-to">{{ __("Award Date To") }}</label>
+							<input id="bds-filter-award-to" class="input" type="date" disabled data-testid="bds-filter-award-to-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-filter-contract-from">{{ __("Contract Start From") }}</label>
+							<input id="bds-filter-contract-from" class="input" type="date" disabled data-testid="bds-filter-contract-from-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-filter-contract-to">{{ __("Contract End To") }}</label>
+							<input id="bds-filter-contract-to" class="input" type="date" disabled data-testid="bds-filter-contract-to-placeholder">
+						</div>
+						<div class="field">
+							<label for="bds-filter-value">{{ __("Value Range") }}</label>
+							<select id="bds-filter-value" class="input" disabled data-testid="bds-filter-value-placeholder">
+								<option>{{ __("Any Value") }}</option>
+								<option>Under KES 10M</option><option>KES 10M - 50M</option><option>KES 50M - 200M</option><option>Over KES 200M</option>
+							</select>
+						</div>
+					</div>
+					<div class="bds-awarded-fields bds-awarded-live-fields">
+						<div class="field">
+							<label for="bds-filter-method">{{ __("Method") }}</label>
+							<select id="bds-filter-method" v-model="filters.method" class="input" data-testid="bds-filter-method" @change="apply">
+								<option v-for="o in options.method" :key="'m' + o.value" :value="o.value">{{ __(o.label) }}</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="bds-filter-reservation">{{ __("Reservation") }}</label>
+							<select id="bds-filter-reservation" v-model="filters.reservation" class="input" data-testid="bds-filter-reservation" @change="apply">
+								<option v-for="o in options.reservation" :key="'r' + o.value" :value="o.value">{{ __(o.label) }}</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="bds-filter-closing">{{ __("Closing") }}</label>
+							<select id="bds-filter-closing" v-model="filters.closing" class="input" data-testid="bds-filter-closing" @change="apply">
+								<option v-for="o in options.closing" :key="'c' + o.value" :value="o.value">{{ __(o.label) }}</option>
+							</select>
+						</div>
+					</div>
+					<div class="bds-awarded-actions">
+						<button type="submit" class="btn btn-primary">{{ __("Search Available Tenders") }}</button>
+						<button type="button" class="btn btn-secondary" data-testid="bds-filter-clear" @click="clearFilters">{{ __("Reset Filters") }}</button>
+					</div>
+				</form>
 			</div>
 
 			<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">

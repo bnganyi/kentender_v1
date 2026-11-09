@@ -25,8 +25,11 @@ send_sms = ["frontend.api.talksasa.send_sms"]
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/frontend/css/frontend.css"
-# app_include_js = "/assets/frontend/js/frontend.js"
+app_include_css = [
+	"/assets/frontend/css/disable_sidebar_dropdown.css?v=2",
+	"/assets/frontend/css/user_profile_dialog.css",
+]
+app_include_js = ["/assets/frontend/js/user_profile_dialog.js?v=2"]
 
 # include js, css files in header of web template
 web_include_css = "/assets/frontend/css/login-custom.scss"

@@ -144,6 +144,55 @@
 	letter-spacing: -0.02em !important;
 }
 
+/* Budget line detail */
+.kt-industry[data-testid="bud-line"] {
+	--kt-ink: #0f2e2b !important;
+	--kt-muted: #5a6f6b !important;
+	--kt-line: #e3ebe8 !important;
+	--kt-soft: #f4f8f6 !important;
+	--kt-accent: #187a6b !important;
+	--kt-accent-hover: #136255 !important;
+	--kt-accent-soft: #e7f4f1 !important;
+	--kt-white: #fff !important;
+	--kt-shadow: 0 2px 8px rgb(15 46 43 / 5%), 0 8px 24px rgb(15 46 43 / 6%) !important;
+	--kt-radius: 14px !important;
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	box-sizing: border-box !important;
+}
+
+.kt-industry[data-testid="bud-line"] .kt-shell {
+	width: 100% !important;
+	max-width: none !important;
+	margin: 0 !important;
+	padding: 16px 20px 40px !important;
+	background: none !important;
+	border: none !important;
+	box-sizing: border-box !important;
+	display: flex !important;
+	flex-direction: column !important;
+	gap: 16px !important;
+}
+
+.kt-industry[data-testid="bud-line"] .bud-line-content {
+	width: 100% !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	background: var(--kt-white) !important;
+	border: 1px solid var(--kt-line) !important;
+	border-radius: var(--kt-radius) !important;
+	box-shadow: 0 1px 3px rgb(15 46 43 / 4%) !important;
+}
+
+.kt-industry[data-testid="bud-line"] [data-testid="bud-line-header"] h1 {
+	font-size: 28px !important;
+	font-weight: 750 !important;
+	line-height: 1.15 !important;
+	color: var(--kt-ink) !important;
+}
+
 /* Responsive */
 @media (max-width: 760px) {
 	.kt-industry[data-testid="bud-ws"] .kt-shell {
@@ -161,5 +210,14 @@
 	}
 	.kt-industry[data-testid="bud-ws"] select.input {
 		width: 100% !important;
+	}
+	.kt-industry[data-testid="bud-line"] .kt-shell {
+		padding: 12px 16px 32px !important;
+	}
+	.kt-industry[data-testid="bud-line"] [data-testid="bud-line-header"] {
+		padding: 20px 18px 16px !important;
+	}
+	.kt-industry[data-testid="bud-line"] [data-testid="bud-line-header"] h1 {
+		font-size: 24px !important;
 	}
 }

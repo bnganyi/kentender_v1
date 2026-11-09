@@ -88,13 +88,13 @@ function pad(i) {
 				<AccessDenied :heading="__(forbidden.heading)" :text="__(forbidden.text || '')" />
 			</div>
 		</div>
-		<div v-else class="kt-shell" style="max-width: 1000px">
+		<div v-else class="kt-shell">
 			<div v-if="loading" class="card blueprint"><div class="kt-skel" style="width: 280px; height: 20px"></div></div>
 			<div v-else-if="notFound" class="card blueprint kt-empty" data-testid="bud-line-not-found"><h2>{{ __("This budget line could not be found.") }}</h2></div>
 			<div v-else-if="serverError" class="card blueprint kt-empty" data-testid="bud-line-server-error"><h2>{{ __("This budget line could not be loaded.") }}</h2><button type="button" class="btn btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="line">
-				<div class="card blueprint" style="padding: 0">
+				<div class="card blueprint bud-line-content">
 					<div style="padding: 28px 28px 20px; border-bottom: 1px solid var(--kt-color-divider)" data-testid="bud-line-header">
 						<div class="kt-eyebrow" style="margin-bottom: 6px">{{ line.code }}</div>
 						<div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
