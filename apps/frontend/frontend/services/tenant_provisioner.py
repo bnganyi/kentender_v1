@@ -10,6 +10,8 @@ import os
 import re
 import secrets
 import hashlib
+import time
+import ipaddress
 import shutil
 import subprocess
 import tempfile
@@ -252,12 +254,10 @@ def _create_site(bench, site):
 
 def _run_onboarding(bench, site, payload):
     """
-    Write a temporary owner-only payload and invoke the onboarding method.
+    Write a temporary owner-only payload and invoke the tenant onboarding
+    method implemented in kentender_core.
 
-    IMPORTANT:
-    The current method is still in the central frontend app.
-    It must be moved to an app installed on the tenant before this command
-    can work against a tenant that does not have frontend installed.
+    kentender_core must be installed on the tenant before this command runs.
     """
 
     sites_dir = bench / "sites"
@@ -431,6 +431,103 @@ def _create_hostafrica_dns_record(site):
 
 
 # ---------------------------------------------------------------------------
+# PUBLIC DNS PROPAGATION CHECK
+# ---------------------------------------------------------------------------
+
+def _wait_for_public_dns(site, expected_ip, timeout=300, interval=10):
+    """
+    Wait until both public DNS resolvers return the expected tenant IPv4.
+
+    Uses independent public resolvers to avoid relying on local DNS caches.
+    """
+
+    site = _safe_site(site)
+
+    try:
+        expected = str(ipaddress.IPv4Address(str(expected_ip).strip()))
+    except ipaddress.AddressValueError as exc:
+        raise RuntimeError(
+            f"Invalid configured HostAfrica IPv4 address: {expected_ip}"
+        ) from exc
+
+    dig = shutil.which("dig")
+
+    if not dig:
+        raise RuntimeError(
+            "DNS propagation check requires the 'dig' command. "
+            "Install dnsutils before provisioning tenants."
+        )
+
+    resolvers = ("1.1.1.1", "8.8.8.8")
+    deadline = time.monotonic() + timeout
+    last_results = {}
+
+    while True:
+        all_resolved = True
+        last_results = {}
+
+        for resolver in resolvers:
+            try:
+                result = subprocess.run(
+                    [
+                        dig,
+                        "+short",
+                        "+time=3",
+                        "+tries=1",
+                        f"@{resolver}",
+                        site,
+                        "A",
+                    ],
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    timeout=8,
+                    check=False,
+                )
+
+                addresses = set()
+
+                for line in result.stdout.splitlines():
+                    value = line.strip()
+
+                    try:
+                        address = ipaddress.ip_address(value)
+                        if address.version == 4:
+                            addresses.add(str(address))
+                    except ValueError:
+                        # Ignore CNAME names and non-address output.
+                        continue
+
+                last_results[resolver] = sorted(addresses)
+
+                if result.returncode != 0 or expected not in addresses:
+                    all_resolved = False
+
+            except (subprocess.TimeoutExpired, OSError) as exc:
+                last_results[resolver] = str(exc)
+                all_resolved = False
+
+        if all_resolved:
+            return {
+                "hostname": site,
+                "expected_ip": expected,
+                "resolvers": last_results,
+                "status": "propagated",
+            }
+
+        remaining = deadline - time.monotonic()
+
+        if remaining <= 0:
+            raise RuntimeError(
+                f"DNS propagation timed out after {timeout} seconds "
+                f"for {site}. Expected IPv4: {expected}. "
+                f"Resolver results: {last_results}"
+            )
+
+        time.sleep(min(interval, remaining))
+
+
+# ---------------------------------------------------------------------------
 # SSL CONFIGURATION
 # ---------------------------------------------------------------------------
 
@@ -587,7 +684,18 @@ def _provision_registration_locked(registration_name):
         raise RuntimeError(
             "The registration password is unavailable. "
             "Ask the user to register again."
-        )
+     )
+    
+    # Validate before changing status or creating tenant resources.
+    from kentender_core.services.password_validation import (
+        validate_admin_password,
+    )
+    
+    validate_admin_password(
+        password=password,
+        administrator_name=doc.administrator_name,
+        email=doc.email,
+    )
 
     _set_status(doc, "Provisioning")
 
@@ -729,7 +837,28 @@ def _provision_registration_locked(registration_name):
             json.dumps(dns_result)
         )
 
-        # Configure HTTPS.
+        # Wait for public DNS propagation before requesting SSL.
+        _log(
+            doc.name,
+            "Wait for DNS propagation",
+            "Running"
+        )
+
+        dns_check = _wait_for_public_dns(
+            site,
+            dns_result["ip_address"],
+            timeout=300,
+            interval=10,
+        )
+
+        _log(
+            doc.name,
+            "Wait for DNS propagation",
+            "Success",
+            json.dumps(dns_check)
+        )
+
+        # Configure HTTPS only after public DNS is ready.
         _log(
             doc.name,
             "Configure HTTPS",

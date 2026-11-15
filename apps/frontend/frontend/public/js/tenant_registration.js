@@ -18,6 +18,12 @@
 	const passwordInput = document.getElementById("password");
 	const confirmPasswordInput = document.getElementById("confirm_password");
 
+	const administratorNameInput = document.getElementById("administrator_name");
+	const passwordStrengthFeedback = document.getElementById("password-strength-feedback");
+	let passwordStrengthValid = false;
+	let passwordStrengthTimer = null;
+	let passwordStrengthRequest = 0;
+
 	const emailCode = document.getElementById("email_otp");
 	const smsCode = document.getElementById("sms_otp");
 	const emailVerified = document.getElementById("email-verified");
@@ -121,12 +127,106 @@
 		);
 	}
 
-	function updateWorkspacePreview() {
-		const slug = workspaceInput.value.trim().toLowerCase();
-		document.getElementById("workspace-url-preview").textContent =
-			`${slug || "yourname"}.midas.co.ke`;
-	}
+			async function validatePasswordStrength() {
+			const password = passwordInput.value;
+			const requestId = ++passwordStrengthRequest;
 
+			passwordStrengthValid = false;
+
+			if (password.length < 12) {
+				const text = "Password must contain at least 12 characters.";
+				passwordInput.setCustomValidity(text);
+				passwordStrengthFeedback.textContent = text;
+				passwordStrengthFeedback.className = "text-danger";
+				return false;
+			}
+
+			passwordStrengthFeedback.textContent = "Checking password strength...";
+			passwordStrengthFeedback.className = "text-muted";
+
+			try {
+				const response = await frappe.call({
+					method: "kentender_core.services.password_validation.check_registration_password_strength",
+					args: {
+						new_password: password,
+						administrator_name: administratorNameInput.value.trim(),
+						email: emailInput.value.trim().toLowerCase()
+					}
+				});
+				if (requestId !== passwordStrengthRequest) {
+					return false;
+				}
+
+				const result = response.message || {};
+				const feedback = result.feedback || {};
+
+				if (!feedback.password_policy_validation_passed) {
+					const warning = feedback.warning ||
+						"Password does not meet the configured security policy.";
+
+					const suggestions = feedback.suggestions || [];
+
+					const text = [warning, ...suggestions].join(" ");
+
+					passwordInput.setCustomValidity(warning);
+					passwordStrengthFeedback.textContent = text;
+					passwordStrengthFeedback.className = "text-danger";
+
+					return false;
+				}
+
+				passwordInput.setCustomValidity("");
+				passwordStrengthValid = true;
+
+				passwordStrengthFeedback.textContent =
+					"Password meets the security requirements.";
+
+				passwordStrengthFeedback.className = "text-success";
+
+				return true;
+
+			} catch (error) {
+				if (requestId !== passwordStrengthRequest) {
+					return false;
+				}
+
+				passwordInput.setCustomValidity(
+					"Unable to verify password strength. Please try again."
+				);
+
+				passwordStrengthFeedback.textContent =
+					"Unable to verify password strength. Please try again.";
+
+				passwordStrengthFeedback.className = "text-danger";
+
+				return false;
+			}
+		}
+
+	function updateWorkspacePreview() {
+		// Automatically convert workspace name to lowercase.
+		const originalValue = workspaceInput.value;
+		const lowercaseValue = originalValue.toLowerCase();
+
+		if (originalValue !== lowercaseValue) {
+			const cursorPosition = workspaceInput.selectionStart;
+
+			workspaceInput.value = lowercaseValue;
+
+			if (cursorPosition !== null) {
+				workspaceInput.setSelectionRange(
+					cursorPosition,
+					cursorPosition
+				);
+			}
+		}
+
+		// Update workspace URL preview.
+		const slug = workspaceInput.value.trim();
+
+		document.getElementById("workspace-url-preview").textContent =
+			`${slug || "company"}.midas.co.ke`;
+	}
 	function getRegistrationSnapshot() {
 		return JSON.stringify({
 			company_name: companyInput.value.trim(),
@@ -307,13 +407,26 @@
 	// Validate the first step before allowing the user to continue.
 	form.querySelectorAll("[data-next-step]").forEach((nextButton) => {
 		nextButton.addEventListener("click", async () => {
-			if (currentStep === 1) {
-				validatePasswordConfirmation();
+		if (currentStep === 1) {
+			validatePasswordConfirmation();
 
-				const valid = await validateRegistration();
-				if (!valid) return;
+			if (!confirmPasswordInput.checkValidity()) {
+				confirmPasswordInput.reportValidity();
+				return;
 			}
 
+			clearTimeout(passwordStrengthTimer);
+
+			const passwordValid = await validatePasswordStrength();
+
+			if (!passwordValid) {
+				passwordInput.reportValidity();
+				return;
+			}
+
+			const valid = await validateRegistration();
+			if (!valid) return;
+		}
 			showStep(Number(nextButton.dataset.nextStep));
 		});
 	});
@@ -324,7 +437,22 @@
 		});
 	});
 
-	passwordInput.addEventListener("input", validatePasswordConfirmation);
+		passwordInput.addEventListener("input", () => {
+		validatePasswordConfirmation();
+
+		passwordStrengthValid = false;
+		passwordInput.setCustomValidity("");
+
+		clearTimeout(passwordStrengthTimer);
+
+		passwordStrengthFeedback.textContent = "Checking password strength...";
+		passwordStrengthFeedback.className = "text-muted";
+
+		passwordStrengthTimer = setTimeout(() => {
+			validatePasswordStrength();
+		}, 600);
+	});
+
 	confirmPasswordInput.addEventListener("input", validatePasswordConfirmation);
 	workspaceInput.addEventListener("input", updateWorkspacePreview);
 
