@@ -222,6 +222,159 @@ def _ensure_administrator_contact(email, administrator_name, phone):
     return contact.name
 
 
+
+def _ensure_procurement_onboarding():
+    """Install the Procurement onboarding checklist for this tenant."""
+
+    onboarding_name = "KenTender Procurement Setup"
+    module_name = "Kentender Procurement"
+
+    steps = [
+        {
+            "name": "KT Procurement - System Setup",
+            "title": "Configure System Setup",
+            "description": (
+                "Review and configure the core procurement system "
+                "settings for your institution."
+            ),
+            "action_label": "Configure System Setup",
+            "path": "system-setup",
+        },
+        {
+            "name": "KT Procurement - Strategy Alignment",
+            "title": "Configure Strategy Alignment",
+            "description": (
+                "Review institutional strategy and align procurement "
+                "priorities with organisational objectives."
+            ),
+            "action_label": "Open Strategy Alignment",
+            "path": "strategy",
+        },
+        {
+            "name": "KT Procurement - Budget Funding",
+            "title": "Configure Budget and Funding",
+            "description": (
+                "Review available budgets and funding allocations "
+                "for procurement activities."
+            ),
+            "action_label": "Configure Budget and Funding",
+            "path": "budget-funding",
+        },
+        {
+            "name": "KT Procurement - Departmental Needs",
+            "title": "Configure Departmental Needs",
+            "description": (
+                "Review departmental requirements and consolidate "
+                "institutional procurement needs."
+            ),
+            "action_label": "Review Departmental Needs",
+            "path": "departmental-needs",
+        },
+        {
+            "name": "KT Procurement - Procurement Planning",
+            "title": "Prepare Procurement Plan",
+            "description": (
+                "Prepare and review the institution's procurement plan."
+            ),
+            "action_label": "Open Procurement Planning",
+            "path": "procurement-planning",
+        },
+        {
+            "name": "KT Procurement - Requisitions",
+            "title": "Configure Procurement Requisitions",
+            "description": (
+                "Review the procurement requisition process "
+                "and its configuration."
+            ),
+            "action_label": "Open Procurement Requisitions",
+            "path": "procurement-requisitions",
+        },
+    ]
+
+    if not frappe.db.exists("Module Def", module_name):
+        frappe.throw(
+            _("Procurement module is not installed: {0}").format(
+                module_name
+            )
+        )
+
+    if not frappe.db.exists("Role", "System Manager"):
+        frappe.throw(_("System Manager role does not exist."))
+
+    # Create missing steps. Preserve existing completion state.
+    for step_data in steps:
+        step_name = step_data["name"]
+
+        if not frappe.db.exists("Onboarding Step", step_name):
+            frappe.get_doc({
+                "doctype": "Onboarding Step",
+                "name": step_name,
+                "title": step_data["title"],
+                "is_complete": 0,
+                "is_skipped": 0,
+                "description": step_data["description"],
+                "action": "Go to Page",
+                "action_label": step_data["action_label"],
+                "path": step_data["path"],
+                "validate_action": 1,
+            }).insert(ignore_permissions=True)
+
+    # Create or update the Module Onboarding record.
+    if frappe.db.exists("Module Onboarding", onboarding_name):
+        onboarding = frappe.get_doc(
+            "Module Onboarding", onboarding_name
+        )
+    else:
+        onboarding = frappe.new_doc("Module Onboarding")
+        onboarding.name = onboarding_name
+
+    onboarding.title = onboarding_name
+    onboarding.module = module_name
+
+    # Restrict the checklist to System Manager.
+    onboarding.set("allow_roles", [])
+    onboarding.append("allow_roles", {"role": "System Manager"})
+
+    # Add only missing steps, preserving existing checklist rows.
+    existing_steps = {
+        row.step for row in onboarding.steps
+    }
+
+    for step_data in steps:
+        step_name = step_data["name"]
+        if step_name not in existing_steps:
+            onboarding.append("steps", {"step": step_name})
+
+    if onboarding.is_new():
+        onboarding.insert(ignore_permissions=True)
+    else:
+        onboarding.save(ignore_permissions=True)
+
+    # Attach the onboarding checklist to the Procurement workspace.
+    if frappe.db.exists("Workspace Sidebar", "Procurement"):
+        workspace_module = frappe.db.get_value(
+            "Workspace Sidebar",
+            "Procurement",
+            "module",
+        )
+
+        if workspace_module != module_name:
+            frappe.throw(
+                _("Procurement workspace belongs to an unexpected module.")
+            )
+
+        frappe.db.set_value(
+            "Workspace Sidebar",
+            "Procurement",
+            "module_onboarding",
+            onboarding_name,
+            update_modified=False,
+        )
+    else:
+        frappe.throw(_("Procurement workspace does not exist."))
+
+    frappe.clear_cache()
+
 def initialize_tenant(
     company_name,
     country,
@@ -275,6 +428,10 @@ def initialize_tenant(
                 json.dumps(states, default=str)
             )
         )
+
+    # Install the Procurement onboarding checklist for this tenant.
+    _ensure_procurement_onboarding()
+    frappe.db.commit()
 
     return {
         "company": setup["company"],
