@@ -41,7 +41,6 @@ function sessionUserRole() {
 const userName = sessionUserLabel();
 const userRole = sessionUserRole();
 const menuOpen = ref(false);
-const notificationsOpen = ref(false);
 const allNotificationsOpen = ref(false);
 const allNotificationsFilter = ref("all");
 const allNotifications = ref([]);
@@ -72,23 +71,12 @@ function openSearch() {
 	searchTrigger.value?.click();
 }
 
-function setNotificationsOpen(open) {
-	if (!notificationWrapper.value) return;
-	const dropdown = $(notificationWrapper.value).find(".dropdown-notifications");
-	dropdown.toggleClass("hidden", !open);
-	notificationsOpen.value = open;
-}
-
 function toggleNotifications() {
-	setNotificationsOpen(!notificationsOpen.value);
-	if (notificationsOpen.value) {
-		menuOpen.value = false;
-		refreshUnreadNotificationCount();
+	if (allNotificationsOpen.value) {
+		closeAllNotifications();
+		return;
 	}
-}
-
-function closeRailNotifications() {
-	setNotificationsOpen(false);
+	openAllNotifications();
 }
 
 async function refreshUnreadNotificationCount() {
@@ -115,14 +103,11 @@ async function refreshUnreadNotificationCount() {
 
 function onNewNotification() {
 	refreshUnreadNotificationCount();
+	if (allNotificationsOpen.value) loadAllNotifications(true);
 }
 
 function onNotificationIndicatorHide() {
 	refreshUnreadNotificationCount();
-}
-
-function onNotificationReadAction() {
-	window.setTimeout(refreshUnreadNotificationCount, 400);
 }
 
 const NOTIFICATION_PAGE_SIZE = 25;
@@ -135,20 +120,15 @@ async function loadAllNotifications(reset = false) {
 		allNotificationsError.value = "";
 	}
 	try {
-		const filters = { for_user: frappe.session.user };
-		if (allNotificationsFilter.value === "unread") filters.read = 0;
 		const response = await frappe.call({
-			method: "frappe.client.get_list",
+			method: "frappe.desk.doctype.notification_log.notification_log.get_notification_logs",
 			args: {
-				doctype: "Notification Log",
-				fields: ["name", "subject", "type", "read", "from_user", "creation", "link", "document_type", "document_name"],
-				filters,
-				order_by: "creation desc",
-				limit_start: reset ? 0 : allNotifications.value.length,
-				limit_page_length: NOTIFICATION_PAGE_SIZE + 1,
+				limit: NOTIFICATION_PAGE_SIZE + 1,
+				start: reset ? 0 : allNotifications.value.length,
+				unread: allNotificationsFilter.value === "unread",
 			},
 		});
-		const rows = response.message || [];
+		const rows = response.message?.notification_logs || [];
 		allNotificationsHasMore.value = rows.length > NOTIFICATION_PAGE_SIZE;
 		const page = rows.slice(0, NOTIFICATION_PAGE_SIZE);
 		allNotifications.value = reset ? page : allNotifications.value.concat(page);
@@ -161,11 +141,116 @@ async function loadAllNotifications(reset = false) {
 }
 
 function openAllNotifications() {
-	setNotificationsOpen(false);
 	menuOpen.value = false;
 	allNotificationsFilter.value = "all";
 	allNotificationsOpen.value = true;
+	refreshUnreadNotificationCount();
 	loadAllNotifications(true);
+}
+
+async function openNotificationSettings() {
+	closeAllNotifications();
+	menuOpen.value = false;
+	try {
+		const response = await frappe.call({
+			method: "frappe.client.get",
+			args: {
+				doctype: "Notification Settings",
+				name: frappe.session.user,
+			},
+		});
+		const settings = response.message;
+		await frappe.model.with_doctype("Notification Subscribed Document");
+		const dialog = new frappe.ui.Dialog({
+			title: __("Notification Settings"),
+			size: "large",
+			fields: [
+				{
+					fieldtype: "Check",
+					fieldname: "enabled",
+					label: __("Enable System Notification"),
+				},
+				{
+					fieldtype: "Table MultiSelect",
+					fieldname: "subscribed_documents",
+					label: __("Open Documents"),
+					options: "Notification Subscribed Document",
+				},
+				{ fieldtype: "Section Break", label: __("Email Settings") },
+				{
+					fieldtype: "Check",
+					fieldname: "enable_email_notifications",
+					label: __("Enable Email Notifications"),
+				},
+				{
+					fieldtype: "Check",
+					fieldname: "enable_email_mention",
+					label: __("Mentions"),
+					depends_on: "eval:doc.enable_email_notifications",
+				},
+				{
+					fieldtype: "Check",
+					fieldname: "enable_email_assignment",
+					label: __("Assignments"),
+					depends_on: "eval:doc.enable_email_notifications",
+				},
+				{
+					fieldtype: "Check",
+					fieldname: "enable_email_share",
+					label: __("Document Share"),
+					depends_on: "eval:doc.enable_email_notifications",
+				},
+				{
+					fieldtype: "Check",
+					fieldname: "enable_email_event_reminders",
+					label: __("Event Reminders"),
+					depends_on: "eval:doc.enable_email_notifications",
+				},
+				{
+					fieldtype: "Check",
+					fieldname: "enable_email_threads_on_assigned_document",
+					label: __("Email Threads on Assigned Document"),
+					description: __(
+						"Get notified when an email is received on any of the documents assigned to you.",
+					),
+					depends_on: "eval:doc.enable_email_notifications",
+				},
+			],
+			primary_action_label: __("Save"),
+			primary_action: async (values) => {
+				const existingRows = new Map(
+					(settings.subscribed_documents || []).map((row) => [row.document, row]),
+				);
+				const updatedSettings = {
+					...settings,
+					...values,
+					subscribed_documents: (values.subscribed_documents || []).map((row) => {
+						const document = typeof row === "string" ? row : row.document;
+						return existingRows.get(document) || { document };
+					}),
+				};
+				try {
+					await frappe.call({
+						method: "frappe.client.save",
+						args: { doc: updatedSettings },
+						freeze: true,
+					});
+					frappe.boot.notification_settings = updatedSettings;
+					dialog.hide();
+					frappe.show_alert({
+						message: __("Notification settings saved"),
+						indicator: "green",
+					});
+				} catch (error) {
+					frappe.msgprint(error.message || __("Could not save notification settings."));
+				}
+			},
+		});
+		dialog.set_values(settings);
+		dialog.show();
+	} catch (error) {
+		frappe.msgprint(error.message || __("Could not load notification settings."));
+	}
 }
 
 function closeAllNotifications() {
@@ -189,10 +274,13 @@ async function markAllNotificationsRead() {
 	if (markingAllNotificationsRead.value) return;
 	markingAllNotificationsRead.value = true;
 	try {
-		await frappe.call("frappe.desk.doctype.notification_log.notification_log.mark_all_as_read");
-		allNotifications.value = allNotificationsFilter.value === "unread"
-			? []
-			: allNotifications.value.map((item) => ({ ...item, read: 1 }));
+		await frappe.call(
+			"frappe.desk.doctype.notification_log.notification_log.mark_all_as_read",
+		);
+		allNotifications.value =
+			allNotificationsFilter.value === "unread"
+				? []
+				: allNotifications.value.map((item) => ({ ...item, read: 1 }));
 		await refreshUnreadNotificationCount();
 	} catch (_) {
 		allNotificationsError.value = __("Notifications could not be updated.");
@@ -203,7 +291,9 @@ async function markAllNotificationsRead() {
 
 function notificationSubject(notification) {
 	const subject = notification.subject || __("Notification");
-	return frappe.utils?.strip_html ? frappe.utils.strip_html(subject) : String(subject).replace(/<[^>]*>/g, "");
+	return frappe.utils?.strip_html
+		? frappe.utils.strip_html(subject)
+		: String(subject).replace(/<[^>]*>/g, "");
 }
 
 function notificationTime(value) {
@@ -228,25 +318,9 @@ async function openNotification(notification) {
 	if (href) window.location.href = href;
 }
 
-function onNotificationFooterClick(event) {
-	const footer = event.target.closest(".list-footer");
-	if (!footer || !notificationWrapper.value?.contains(footer)) return;
-	event.preventDefault();
-	event.stopImmediatePropagation();
-	openAllNotifications();
-}
-
 function handleClickOutside(event) {
 	if (userMenu.value && !userMenu.value.contains(event.target)) {
 		closeMenu();
-	}
-	if (
-		notificationsOpen.value &&
-		notificationWrapper.value &&
-		!notificationWrapper.value.contains(event.target) &&
-		!event.target.closest(".notifications-list")
-	) {
-		closeRailNotifications();
 	}
 }
 
@@ -260,47 +334,25 @@ onMounted(() => {
 			new frappe.search.AwesomeBar().setup(searchTrigger.value);
 		}
 	}
-	if (notificationsEnabled.value && frappe.ui?.Notifications && notificationWrapper.value) {
-		const notifications = frappe.app?.sidebar?.notifications;
-		if (notifications?.dropdown?.length) {
-			$(notificationWrapper.value).find(".dropdown-notifications").remove();
-			$(notificationWrapper.value).append(notifications.dropdown);
-			const view = notifications.tabs?.notifications;
-			if (view) {
-				view.notifications_icon = $(notificationWrapper.value).find(".notifications-icon");
-			}
-		} else {
-			new frappe.ui.Notifications({
-				full_height: true,
-				wrapper: $(notificationWrapper.value),
-			});
-		}
-		notificationWrapper.value.addEventListener("click", onNotificationFooterClick, true);
+	if (notificationsEnabled.value && notificationWrapper.value) {
 		document.querySelector(".body-sidebar .sidebar-notification")?.classList.add("hidden");
 		refreshUnreadNotificationCount();
 		frappe.realtime?.on("notification", onNewNotification);
 		frappe.realtime?.on("indicator_hide", onNotificationIndicatorHide);
-		$(notificationWrapper.value).on(
-			"click.ktIndustryRailCount",
-			".notification-item, .mark-all-read",
-			onNotificationReadAction,
-		);
 	}
-	$(document).on("page-change.ktIndustryRail", closeRailNotifications);
+	$(document).on("page-change.ktIndustryRail", closeAllNotifications);
 });
 
 onBeforeUnmount(() => {
 	document.removeEventListener("click", handleClickOutside);
-	$(document).off("page-change.ktIndustryRail", closeRailNotifications);
-	notificationWrapper.value?.removeEventListener("click", onNotificationFooterClick, true);
+	$(document).off("page-change.ktIndustryRail", closeAllNotifications);
 	frappe.realtime?.off?.("notification", onNewNotification);
 	frappe.realtime?.off?.("indicator_hide", onNotificationIndicatorHide);
-	$(notificationWrapper.value).off(".ktIndustryRailCount");
 });
 
 function toggleMenu() {
 	menuOpen.value = !menuOpen.value;
-	if (menuOpen.value) closeRailNotifications();
+	if (menuOpen.value) closeAllNotifications();
 }
 
 function goRoute(route) {
@@ -385,6 +437,7 @@ function logout() {
 					type="button"
 					class="kt-rail-btn kt-rail-notifications sidebar-notification"
 					:aria-label="__('Notifications')"
+					:aria-expanded="allNotificationsOpen"
 					@click.stop="toggleNotifications"
 				>
 					<span class="notifications-icon">
@@ -430,19 +483,6 @@ function logout() {
 						{{ unreadNotificationCount > 99 ? "99+" : unreadNotificationCount }}
 					</span>
 				</button>
-				<div class="dropdown-notifications" :class="{ hidden: !notificationsOpen }">
-					<div class="notifications-list" role="menu">
-						<div class="notification-list-header">
-							<div class="header-items"></div>
-							<div class="header-actions"></div>
-						</div>
-						<div class="notification-list-body">
-							<div class="panel-notifications"></div>
-							<div class="panel-events"></div>
-							<div class="panel-changelog-feed"></div>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 		<div class="kt-rail-div"></div>
@@ -502,29 +542,130 @@ function logout() {
 		</div>
 	</header>
 	<Teleport to="body">
-		<div v-if="allNotificationsOpen" class="kt-all-notifications-backdrop" @click.self="closeAllNotifications" @keydown.esc="closeAllNotifications">
-			<section class="kt-all-notifications-modal" role="dialog" aria-modal="true" aria-labelledby="kt-all-notifications-title">
+		<div
+			v-if="allNotificationsOpen"
+			class="kt-all-notifications-backdrop"
+			@click.self="closeAllNotifications"
+			@keydown.esc="closeAllNotifications"
+		>
+			<section
+				class="kt-all-notifications-modal"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="kt-all-notifications-title"
+			>
 				<header class="kt-all-notifications-header">
-					<div><p>{{ __("ACCOUNT ACTIVITY") }}</p><h2 id="kt-all-notifications-title">{{ __("All Notifications") }}</h2></div>
-					<button type="button" class="kt-all-notifications-close" :aria-label="__('Close notifications')" @click="closeAllNotifications">×</button>
+					<h2 id="kt-all-notifications-title">{{ __("Notifications") }}</h2>
+					<div class="kt-all-notifications-header-actions">
+						<button
+							type="button"
+							class="kt-all-notifications-settings"
+							@click="openNotificationSettings"
+						>
+							{{ __("Settings") }}
+						</button>
+						<button
+							type="button"
+							class="kt-all-notifications-mark-read"
+							:disabled="
+								markingAllNotificationsRead || unreadNotificationCount === 0
+							"
+							@click="markAllNotificationsRead"
+						>
+							<span aria-hidden="true">✓</span>
+							{{
+								markingAllNotificationsRead
+									? __("Marking…")
+									: __("Mark all as read")
+							}}
+						</button>
+					</div>
 				</header>
 				<div class="kt-all-notifications-toolbar">
-					<div class="kt-all-notifications-filters" role="group" :aria-label="__('Filter notifications')">
-						<button type="button" :aria-pressed="allNotificationsFilter === 'all'" @click="filterAllNotifications('all')">{{ __("All") }}</button>
-						<button type="button" :aria-pressed="allNotificationsFilter === 'unread'" @click="filterAllNotifications('unread')">{{ __("Unread") }}<span v-if="unreadNotificationCount">{{ unreadNotificationCount > 99 ? "99+" : unreadNotificationCount }}</span></button>
+					<div
+						class="kt-all-notifications-filters"
+						role="group"
+						:aria-label="__('Filter notifications')"
+					>
+						<button
+							type="button"
+							:class="{ 'is-active': allNotificationsFilter === 'all' }"
+							:aria-pressed="allNotificationsFilter === 'all'"
+							@click="filterAllNotifications('all')"
+						>
+							{{ __("All") }}
+						</button>
+						<button
+							type="button"
+							:class="{ 'is-active': allNotificationsFilter === 'unread' }"
+							:aria-pressed="allNotificationsFilter === 'unread'"
+							@click="filterAllNotifications('unread')"
+						>
+							{{ __("Unread") }}
+							<span
+								v-if="unreadNotificationCount > 0"
+								class="kt-all-notifications-pill"
+								:title="`${unreadNotificationCount} unread notifications`"
+							>
+								{{
+									unreadNotificationCount > 99 ? "99+" : unreadNotificationCount
+								}}
+							</span>
+						</button>
 					</div>
-					<button type="button" class="kt-all-notifications-mark-read" :disabled="markingAllNotificationsRead || unreadNotificationCount === 0" @click="markAllNotificationsRead">{{ markingAllNotificationsRead ? __("Marking…") : __("Mark all as read") }}</button>
 				</div>
 				<div class="kt-all-notifications-list" aria-live="polite">
-					<p v-if="allNotificationsLoading && !allNotifications.length" class="kt-all-notifications-state" role="status">{{ __("Loading notifications…") }}</p>
-					<p v-else-if="allNotificationsError" class="kt-all-notifications-state" role="alert">{{ allNotificationsError }}</p>
-					<p v-else-if="!allNotifications.length" class="kt-all-notifications-state">{{ allNotificationsFilter === 'unread' ? __("You are all caught up.") : __("No notifications yet.") }}</p>
-					<a v-for="notification in allNotifications" :key="notification.name" class="kt-all-notification-row" :class="{ 'is-unread': !notification.read }" :href="notificationHref(notification)" @click.prevent="openNotification(notification)">
-						<span class="kt-all-notification-marker" aria-hidden="true"></span>
-						<span class="kt-all-notification-content"><strong>{{ notificationSubject(notification) }}</strong><span>{{ notification.from_user || __("KenTender") }}<template v-if="notification.type"> · {{ notification.type }}</template></span></span>
-						<time>{{ notificationTime(notification.creation) }}</time>
+					<p
+						v-if="allNotificationsLoading && !allNotifications.length"
+						class="kt-all-notifications-state"
+						role="status"
+					>
+						{{ __("Loading notifications…") }}
+					</p>
+					<p
+						v-else-if="allNotificationsError"
+						class="kt-all-notifications-state"
+						role="alert"
+					>
+						{{ allNotificationsError }}
+					</p>
+					<p v-else-if="!allNotifications.length" class="kt-all-notifications-state">
+						{{
+							allNotificationsFilter === "unread"
+								? __("You are all caught up.")
+								: __("No notifications yet.")
+						}}
+					</p>
+					<a
+						v-for="notification in allNotifications"
+						:key="notification.name"
+						class="kt-all-notification-row"
+						:class="{ 'is-unread': !notification.read }"
+						:href="notificationHref(notification)"
+						@click.prevent="openNotification(notification)"
+					>
+						<span class="kt-all-notification-avatar" aria-hidden="true">{{
+							(notification.from_user || "K").charAt(0).toUpperCase()
+						}}</span>
+						<span class="kt-all-notification-content">
+							<strong>{{ notification.from_user || __("KenTender") }}</strong>
+							<span>{{ notificationSubject(notification) }}</span>
+							<time>{{ notificationTime(notification.creation) }}</time>
+						</span>
+						<span class="kt-all-notification-side">
+							<span class="kt-all-notification-marker" aria-hidden="true"></span>
+							<time>{{ notificationTime(notification.creation) }}</time>
+						</span>
 					</a>
-					<button v-if="allNotificationsHasMore" type="button" class="kt-all-notifications-more" :disabled="allNotificationsLoadingMore" @click="loadMoreNotifications">{{ allNotificationsLoadingMore ? __("Loading…") : __("Load more") }}</button>
+					<button
+						v-if="allNotificationsHasMore"
+						type="button"
+						class="kt-all-notifications-more"
+						:disabled="allNotificationsLoadingMore"
+						@click="loadMoreNotifications"
+					>
+						{{ allNotificationsLoadingMore ? __("Loading…") : __("Load more") }}
+					</button>
 				</div>
 			</section>
 		</div>
@@ -635,7 +776,7 @@ function logout() {
 	top: 0;
 	right: 0;
 	z-index: 35;
-	width: min(390px, calc(100vw - 32px));
+	width: min(440px, calc(100vw - 32px));
 	height: min(72vh, 680px);
 	max-height: min(72vh, 680px);
 }
@@ -644,22 +785,24 @@ function logout() {
 	top: 0;
 	right: 0;
 	left: auto;
-	width: min(390px, calc(100vw - 32px));
+	width: min(440px, calc(100vw - 32px));
 	max-height: min(72vh, 680px);
 	height: min(72vh, 680px);
 	min-height: 320px;
-	border: 1px solid #d9dde1;
-	border-radius: 12px;
-	background: #fff;
-	box-shadow: 0 18px 48px rgb(0 0 0 / 16%);
+	border: 1px solid rgba(148, 163, 184, 0.35);
+	border-radius: 16px;
+	background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+	box-shadow: 0 22px 60px rgb(15 23 42 / 16%);
+	overflow: hidden;
 }
 .kt-rail-notification-host :deep(.notification-list-body) {
 	max-height: calc(72vh - 72px);
+	background: rgba(255, 255, 255, 0.45);
 }
 .kt-rail-notification-host :deep(.notification-list-header) {
 	margin: 0;
 	padding: 0 14px;
-	background: #f3f4f6;
+	background: linear-gradient(180deg, #f8fafc, #f3f4f6);
 	border-bottom: 1px solid #e5e7eb;
 }
 .kt-rail-notification-host :deep(.notification-item-tabs) {
@@ -686,9 +829,14 @@ function logout() {
 	margin: 6px 8px;
 	padding: 12px;
 	border: 1px solid transparent;
-	border-radius: 8px;
-	background: #fff;
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.9);
 	color: #17191c;
+	text-decoration: none;
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease,
+		box-shadow 0.2s ease;
 }
 .kt-rail-notification-host :deep(.recent-item.notification-item.unread) {
 	border-color: #e5e7eb;
@@ -698,6 +846,8 @@ function logout() {
 	border-color: #d1d5db;
 	background: #f9fafb;
 	color: #17191c;
+	text-decoration: none;
+	box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.15);
 }
 .kt-rail-notification-host :deep(.notification-body::before) {
 	width: 7px;
@@ -709,8 +859,16 @@ function logout() {
 .kt-rail-notification-host :deep(.notification-item.unread .notification-body::before) {
 	background: #17191c;
 }
+.kt-rail-notification-host :deep(.notification-item .message),
+.kt-rail-notification-host :deep(.notification-item .message a),
+.kt-rail-notification-host :deep(.notification-item a),
+.kt-rail-notification-host :deep(.notification-item .notification-timestamp),
+.kt-rail-notification-host :deep(.list-footer) {
+	text-decoration: none;
+}
 .kt-rail-notification-host :deep(.notification-item .message) {
 	max-width: none;
+	color: #17191c;
 }
 .kt-rail-notification-host :deep(.notification-item .notification-timestamp) {
 	color: #737982;
@@ -872,164 +1030,218 @@ function logout() {
 	position: fixed;
 	inset: 0;
 	z-index: 1060;
-	display: grid;
-	place-items: center;
-	padding: 24px;
-	background: rgb(17 24 39 / 38%);
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-end;
+	padding: 72px 20px 20px;
+	background: rgba(15, 23, 42, 0.12);
 }
 .kt-all-notifications-modal {
 	display: flex;
-	width: min(920px, 100%);
-	max-height: min(88vh, 820px);
+	width: min(420px, 100%);
+	max-height: min(82vh, 760px);
 	flex-direction: column;
-	border: 1px solid #d9dde1;
-	border-radius: 12px;
-	background: #fff;
+	border: 1px solid #e0e5ec;
+	border-radius: 16px;
+	background: #f7f8fa;
 	color: #17191c;
-	box-shadow: 0 24px 70px rgb(0 0 0 / 20%);
+	box-shadow: 0 18px 48px rgba(17, 24, 39, 0.18);
+	overflow: hidden;
 }
 .kt-all-notifications-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 20px;
-	padding: 22px 24px;
-	border-bottom: 1px solid #e5e7eb;
-}
-.kt-all-notifications-header p {
-	margin: 0 0 4px;
-	color: #6b7280;
-	font-size: 10px;
-	font-weight: 700;
-	letter-spacing: 0.08em;
+	gap: 12px;
+	padding: 18px 18px 12px;
 }
 .kt-all-notifications-header h2 {
 	margin: 0;
-	color: #17191c;
-	font-size: 21px;
-	font-weight: 650;
+	color: #1f2430;
+	font-size: 18px;
+	font-weight: 700;
+	letter-spacing: 0;
 }
-.kt-all-notifications-close {
-	display: grid;
-	width: 36px;
-	height: 36px;
-	place-items: center;
-	border: 1px solid #d9dde1;
+.kt-all-notifications-header-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 10px;
+}
+.kt-all-notifications-settings {
+	min-height: 32px;
+	padding: 0 10px;
+	border: 1px solid #dfe3e7;
 	border-radius: 8px;
 	background: #fff;
-	color: #4b5563;
-	font-size: 22px;
+	color: #3a3e45;
+	font-size: 12px;
+	font-weight: 600;
 	cursor: pointer;
 }
-.kt-all-notifications-close:hover {
-	background: #f3f4f6;
-	color: #17191c;
+.kt-all-notifications-mark-read {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border: 0;
+	background: transparent;
+	color: #3c6fe4;
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+}
+.kt-all-notifications-mark-read:hover:not(:disabled) {
+	opacity: 0.8;
+}
+.kt-all-notifications-mark-read:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
 }
 .kt-all-notifications-toolbar {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 12px;
-	padding: 14px 24px;
-	border-bottom: 1px solid #e5e7eb;
-	background: #f9fafb;
+	padding: 0 12px 12px;
 }
 .kt-all-notifications-filters {
-	display: inline-flex;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 4px;
-	padding: 3px;
-	border: 1px solid #e5e7eb;
-	border-radius: 8px;
-	background: #fff;
+	width: 100%;
+	padding: 4px;
+	border: 1px solid #e2e7ed;
+	border-radius: 10px;
+	background: #eef1f5;
 }
 .kt-all-notifications-filters button,
-.kt-all-notifications-mark-read,
 .kt-all-notifications-more {
-	min-height: 36px;
-	padding: 0 12px;
+	min-height: 34px;
+	padding: 0 10px;
 	border: 0;
-	border-radius: 6px;
+	border-radius: 7px;
 	background: transparent;
-	color: #5b616a;
+	color: #3a3e45;
 	font-size: 12px;
 	font-weight: 600;
 	cursor: pointer;
+	transition: all 0.2s ease;
 }
-.kt-all-notifications-filters button[aria-pressed="true"] {
-	background: #e5e7eb;
-	color: #17191c;
+.kt-all-notifications-filters button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	border: 1px solid transparent;
 }
-.kt-all-notifications-filters button span {
-	margin-left: 6px;
-	color: #17191c;
-}
-.kt-all-notifications-mark-read {
-	border: 1px solid #d1d5db;
+.kt-all-notifications-filters button[aria-pressed="true"],
+.kt-all-notifications-filters button.is-active {
 	background: #fff;
-	color: #17191c;
+	border-color: #e2e6eb;
+	color: #1d2430;
+	box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
-.kt-all-notifications-mark-read:hover:not(:disabled),
-.kt-all-notifications-more:hover:not(:disabled) {
-	background: #e5e7eb;
-	color: #17191c;
-}
-.kt-all-notifications-mark-read:disabled,
-.kt-all-notifications-more:disabled {
-	cursor: not-allowed;
-	opacity: 0.55;
+.kt-all-notifications-pill {
+	display: inline-flex;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	background: rgba(59, 90, 165, 0.12);
+	color: #3b5ca5;
+	font-size: 11px;
+	font-weight: 700;
 }
 .kt-all-notifications-list {
-	min-height: 240px;
+	min-height: 180px;
 	overflow: auto;
-	padding: 8px 24px 20px;
+	padding: 0 10px 12px;
+	background: #f7f8fa;
 }
 .kt-all-notification-row {
 	display: grid;
-	grid-template-columns: 12px minmax(0, 1fr) auto;
-	align-items: start;
-	gap: 12px;
-	padding: 15px 12px;
-	border-bottom: 1px solid #eceff1;
+	grid-template-columns: 36px minmax(0, 1fr) 10px;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 8px;
+	border-radius: 10px;
+	border: 1px solid transparent;
 	color: #17191c;
 	text-decoration: none;
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease;
+}
+.kt-all-notification-row + .kt-all-notification-row {
+	margin-top: 4px;
 }
 .kt-all-notification-row:hover,
+.kt-all-notification-row:focus-visible,
 .kt-all-notification-row.is-unread {
-	background: #f3f4f6;
+	background: #eaf1ff;
+	border-color: #dfe8fb;
 	color: #17191c;
-}
-.kt-all-notification-row:hover {
 	text-decoration: none;
+	outline: none;
 }
-.kt-all-notification-marker {
-	width: 7px;
-	height: 7px;
-	margin-top: 5px;
-	border: 1px solid #9ca3af;
+.kt-all-notification-avatar {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
 	border-radius: 50%;
-	background: #fff;
-}
-.kt-all-notification-row.is-unread .kt-all-notification-marker {
-	border-color: #17191c;
-	background: #17191c;
+	background: linear-gradient(135deg, #f1e5d7, #d5dfe9);
+	color: #232a35;
+	font-size: 14px;
+	font-weight: 700;
+	border: 2px solid rgba(255, 255, 255, 0.8);
 }
 .kt-all-notification-content {
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	gap: 4px;
 	min-width: 0;
 }
 .kt-all-notification-content strong {
-	color: #17191c;
-	font-size: 13px;
-	font-weight: 600;
+	color: #1a1d22;
+	font-size: 12px;
+	font-weight: 700;
 }
-.kt-all-notification-content span,
-.kt-all-notification-row time {
-	color: #737982;
+.kt-all-notification-content span {
+	color: #4c535d;
+	font-size: 12px;
+	line-height: 1.5;
+}
+.kt-all-notification-content time,
+.kt-all-notification-side time {
+	color: #737b84;
 	font-size: 11px;
+	line-height: 1.4;
 }
-.kt-all-notification-row time {
-	white-space: nowrap;
+.kt-all-notification-side {
+	display: inline-flex;
+	align-items: center;
+	gap: 0;
+	justify-self: end;
+}
+.kt-all-notification-side time {
+	display: none;
+}
+.kt-all-notification-marker {
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-top: 1px;
+	border-radius: 50%;
+	background: #3c6fe4;
+	box-shadow: 0 0 0 2px rgba(60, 111, 228, 0.12);
+}
+.kt-all-notification-row:not(.is-unread) .kt-all-notification-marker {
+	background: rgba(60, 111, 228, 0.2);
+	box-shadow: none;
 }
 .kt-all-notifications-state {
 	padding: 52px 16px;
@@ -1106,15 +1318,6 @@ function logout() {
 	.kt-rail-user {
 		padding: 4px;
 	}
-	.kt-rail-notification-host :deep(.notifications-list) {
-		right: -44px;
-		width: calc(100vw - 24px);
-		min-width: 0;
-	}
-	.kt-rail-notification-host :deep(.dropdown-notifications) {
-		width: calc(100vw - 24px);
-		height: min(72vh, 680px);
-	}
 	.kt-all-notifications-backdrop {
 		align-items: end;
 		padding: 0;
@@ -1126,6 +1329,9 @@ function logout() {
 	}
 	.kt-all-notifications-header {
 		padding: 18px 16px;
+	}
+	.kt-all-notifications-header-actions {
+		gap: 6px;
 	}
 	.kt-all-notifications-toolbar {
 		align-items: flex-start;

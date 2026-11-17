@@ -33,7 +33,7 @@ app_include_js = ["/assets/frontend/js/user_profile_dialog.js?v=2"]
 
 # include js, css files in header of web template
 web_include_css = "/assets/frontend/css/login-custom.scss"
-# web_include_js = "/assets/frontend/js/frontend.js"
+web_include_js = "/assets/frontend/js/public_manuals_nav.js?v=5"
 
 website_context = {
 	"splash_image": "/assets/frontend/images/kentender_loader.gif",
@@ -191,9 +191,9 @@ website_context = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "frontend.event.get_events"
-# }
+override_whitelisted_methods = {
+	"frappe.desk.doctype.notification_log.notification_log.get_notification_logs": "frontend.api.notifications.get_notification_logs",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

@@ -1,0 +1,670 @@
+{% extends "templates/web.html" %} {% block title %}Registration Manuals | KenTender{% endblock %}
+{% block page_content %}
+<link
+	href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+	rel="stylesheet"
+/>
+<style>
+	.navbar,
+	nav.navbar,
+	.navbar-light,
+	header.navbar,
+	.web-footer,
+	.page-header-wrapper,
+	.page-breadcrumbs,
+	.page-footer {
+		display: none !important;
+	}
+	html,
+	body {
+		margin: 0 !important;
+		padding: 0 !important;
+		background: #f5f8fc;
+	}
+	body {
+		padding-top: 0 !important;
+		color: #172433;
+		font-family: "Outfit", sans-serif;
+	}
+	main,
+	.main-section,
+	.page-content,
+	.page-content-wrapper,
+	.container {
+		max-width: none !important;
+		width: 100% !important;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+	.manuals-page {
+		--ink: #172433;
+		--muted: #627185;
+		--line: #dce5ef;
+		--blue: #0758b8;
+		--green: #0a8f5a;
+		min-height: 100vh;
+		background-color: #f5f8fc;
+		background-image:
+			linear-gradient(rgba(7, 88, 184, 0.035) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(7, 88, 184, 0.035) 1px, transparent 1px);
+		background-size: 40px 40px;
+		color: var(--ink);
+		font-family: "Outfit", sans-serif;
+	}
+	.manuals-header {
+		position: sticky;
+		top: 0;
+		z-index: 20;
+		display: flex;
+		min-height: 76px;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+		padding: 12px clamp(20px, 4vw, 64px);
+		border-bottom: 1px solid rgba(9, 69, 133, 0.12);
+		background: rgba(255, 255, 255, 0.97);
+	}
+	.manuals-brand img {
+		display: block;
+		width: 150px;
+		height: auto;
+	}
+	.manuals-nav {
+		display: flex;
+		align-items: center;
+		gap: 28px;
+	}
+	.manuals-nav a {
+		color: #344356;
+		font-size: 14px;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.manuals-nav a:hover,
+	.manuals-nav a[aria-current="page"] {
+		color: var(--blue);
+	}
+	.manuals-account {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.manuals-account a {
+		display: inline-flex;
+		min-height: 38px;
+		align-items: center;
+		justify-content: center;
+		padding: 0 14px;
+		border: 1px solid #dfe5ec;
+		border-radius: 8px;
+		background: #f5f7fa;
+		color: #172433;
+		font-size: 13px;
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.manuals-account a:last-child {
+		border-color: var(--blue);
+		background: var(--blue);
+		color: #fff;
+	}
+	.manuals-mobile-toggle {
+		display: none;
+	}
+	.manuals-mobile-nav[hidden] {
+		display: none;
+	}
+	.manuals-mobile-nav {
+		display: grid;
+		gap: 2px;
+		padding: 8px 16px 14px;
+		border-bottom: 1px solid var(--line);
+		background: #fff;
+	}
+	.manuals-mobile-nav a {
+		padding: 10px 8px;
+		border-radius: 6px;
+		color: #344356;
+		font-size: 14px;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.manuals-mobile-nav a:hover,
+	.manuals-mobile-nav a[aria-current="page"] {
+		background: #edf5ff;
+		color: var(--blue);
+	}
+	.manuals-intro {
+		box-sizing: border-box;
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 48px clamp(20px, 4vw, 64px) 24px;
+		text-align: center;
+	}
+	.manuals-eyebrow {
+		margin: 0 0 8px;
+		color: var(--green);
+		font-size: 12px;
+		font-weight: 800;
+		text-transform: uppercase;
+	}
+	.manuals-intro h1 {
+		margin: 0;
+		color: #203044;
+		font-size: 34px;
+		font-weight: 800;
+		line-height: 1.15;
+	}
+	.manuals-intro p {
+		max-width: 700px;
+		margin: 10px auto 0;
+		color: var(--muted);
+		font-size: 15px;
+		line-height: 1.55;
+	}
+	.manuals-content {
+		box-sizing: border-box;
+		max-width: 1280px;
+		margin: 0 auto;
+		padding: 0 clamp(20px, 4vw, 64px) 64px;
+	}
+	.manuals-tabs {
+		display: grid;
+		max-width: 620px;
+		margin: 0 auto;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 4px;
+		padding: 4px;
+		border: 1px solid var(--line);
+		border-radius: 9px;
+		background: #eaf0f6;
+	}
+	.manuals-tabs button {
+		min-height: 42px;
+		padding: 0 12px;
+		border: 1px solid transparent;
+		border-radius: 6px;
+		background: transparent;
+		color: #526174;
+		font: inherit;
+		font-size: 13px;
+		font-weight: 700;
+		cursor: pointer;
+	}
+	.manuals-tabs button[aria-selected="true"] {
+		border-color: #e0e6ed;
+		background: #fff;
+		color: var(--ink);
+		box-shadow: 0 1px 3px rgba(18, 35, 54, 0.08);
+	}
+	.manuals-guide {
+		max-width: 1080px;
+		margin: 18px auto 0;
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		background: rgba(255, 255, 255, 0.95);
+		box-shadow: 0 12px 32px rgba(23, 36, 51, 0.06);
+	}
+	.manuals-guide[hidden] {
+		display: none;
+	}
+	.manuals-guide-head {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 20px;
+		padding: 24px 26px 18px;
+		border-bottom: 1px solid #e8edf3;
+	}
+	.manuals-guide-head h2 {
+		margin: 0;
+		color: #203044;
+		font-size: 21px;
+		font-weight: 800;
+	}
+	.manuals-guide-head p {
+		margin: 6px 0 0;
+		color: var(--muted);
+		font-size: 13px;
+	}
+	.manuals-cta {
+		flex: none;
+		display: inline-flex;
+		min-height: 38px;
+		align-items: center;
+		justify-content: center;
+		padding: 0 14px;
+		border-radius: 7px;
+		background: var(--blue);
+		color: #fff;
+		font-size: 13px;
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.manuals-cta:hover {
+		background: #064b9b;
+		color: #fff;
+		text-decoration: none;
+	}
+	.manuals-guide-body {
+		display: grid;
+		grid-template-columns: minmax(0, 1.5fr) minmax(240px, 0.8fr);
+		gap: 32px;
+		padding: 24px 26px 28px;
+	}
+	.manuals-steps {
+		display: grid;
+		gap: 0;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.manuals-steps li {
+		position: relative;
+		display: grid;
+		grid-template-columns: 32px minmax(0, 1fr);
+		gap: 12px;
+		padding: 0 0 22px;
+	}
+	.manuals-steps li:not(:last-child)::after {
+		position: absolute;
+		top: 31px;
+		bottom: 0;
+		left: 15px;
+		width: 1px;
+		background: #dfe7ef;
+		content: "";
+	}
+	.manuals-step-number {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		width: 31px;
+		height: 31px;
+		place-items: center;
+		border: 1px solid #cfe0f4;
+		border-radius: 50%;
+		background: #edf5ff;
+		color: var(--blue);
+		font-size: 12px;
+		font-weight: 800;
+	}
+	.manuals-steps h3 {
+		margin: 2px 0 4px;
+		color: #25364a;
+		font-size: 14px;
+		font-weight: 700;
+	}
+	.manuals-steps p {
+		margin: 0;
+		color: #5d6b7b;
+		font-size: 13px;
+		line-height: 1.55;
+	}
+	.manuals-note {
+		align-self: start;
+		padding: 17px;
+		border-left: 3px solid var(--green);
+		background: #eef8f3;
+		color: #36584a;
+	}
+	.manuals-note h3 {
+		margin: 0 0 7px;
+		color: #235a42;
+		font-size: 13px;
+		font-weight: 800;
+	}
+	.manuals-note p {
+		margin: 0;
+		font-size: 12px;
+		line-height: 1.55;
+	}
+	.manuals-note p + p {
+		margin-top: 9px;
+	}
+	.manuals-footer {
+		padding: 18px clamp(20px, 4vw, 64px);
+		border-top: 1px solid var(--line);
+		background: #fff;
+		color: var(--muted);
+		font-size: 12px;
+	}
+	.manuals-footer a {
+		color: var(--blue);
+		font-weight: 700;
+		text-decoration: none;
+	}
+	@media (max-width: 860px) {
+		.manuals-header {
+			flex-wrap: wrap;
+			gap: 12px;
+		}
+		.manuals-nav {
+			order: 3;
+			width: 100%;
+			justify-content: center;
+			gap: 18px;
+		}
+		.manuals-account {
+			margin-left: auto;
+		}
+		.manuals-guide-body {
+			grid-template-columns: 1fr;
+		}
+	}
+	@media (max-width: 560px) {
+		.manuals-header {
+			min-height: 62px;
+			padding: 10px 16px;
+		}
+		.manuals-brand img {
+			width: 126px;
+		}
+		.manuals-nav {
+			display: none;
+		}
+		.manuals-mobile-toggle {
+			display: inline-flex;
+			min-height: 36px;
+			align-items: center;
+			padding: 0 10px;
+			border: 1px solid #dfe5ec;
+			border-radius: 7px;
+			background: #fff;
+			color: #26384b;
+			font: inherit;
+			font-size: 13px;
+			font-weight: 700;
+		}
+		.manuals-account a:first-child {
+			display: none;
+		}
+		.manuals-intro {
+			padding: 32px 16px 20px;
+		}
+		.manuals-intro h1 {
+			font-size: 28px;
+		}
+		.manuals-content {
+			padding: 0 16px 40px;
+		}
+		.manuals-tabs {
+			max-width: none;
+		}
+		.manuals-tabs button {
+			font-size: 12px;
+		}
+		.manuals-guide-head {
+			flex-direction: column;
+			padding: 19px 16px 15px;
+		}
+		.manuals-guide-body {
+			gap: 18px;
+			padding: 18px 16px 20px;
+		}
+		.manuals-footer {
+			padding: 16px;
+		}
+	}
+</style>
+
+<div class="manuals-page">
+	<header class="manuals-header">
+		<a class="manuals-brand" href="/" aria-label="KenTender home">
+			<img
+				src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
+				alt="KenTender Solutions"
+			/>
+		</a>
+		
+		<button
+			id="manuals-mobile-toggle"
+			class="manuals-mobile-toggle"
+			type="button"
+			aria-controls="manuals-mobile-nav"
+			aria-expanded="false"
+		>
+			Menu
+		</button>
+		<div class="manuals-account">
+			<a href="/app/home">Go to Dashboard</a>
+			{% if frappe.session.user == 'Guest' %}
+			<a href="/login?redirect-to=/account/register">Sign in</a>
+			{% else %}
+			<a href="/account">My Account</a>
+			{% endif %}
+		</div>
+	</header>
+	<nav id="manuals-mobile-nav" class="manuals-mobile-nav" aria-label="Mobile navigation" hidden>
+		<a href="/">Home</a>
+		<a href="/about">About</a>
+		<a href="/all-tenders">Tenders</a>
+		<a href="/industry/public">Industries</a>
+		<a href="/manuals" aria-current="page">Manuals</a>
+	</nav>
+
+	<main>
+		<section class="manuals-intro" aria-labelledby="manuals-title">
+			 
+			<p>
+				Choose a guide for setting up a supplier account or creating a Procuring Entity
+				workspace.
+			</p>
+		</section>
+
+		<section class="manuals-content" aria-label="Registration guides">
+			<div class="manuals-tabs" role="tablist" aria-label="Registration guide">
+				<button
+					id="supplier-tab"
+					type="button"
+					role="tab"
+					aria-selected="true"
+					aria-controls="supplier-guide"
+				>
+					Supplier Registration
+				</button>
+				<button
+					id="entity-tab"
+					type="button"
+					role="tab"
+					aria-selected="false"
+					aria-controls="entity-guide"
+					tabindex="-1"
+				>
+					Procuring Entity Registration
+				</button>
+			</div>
+
+			<article
+				id="supplier-guide"
+				class="manuals-guide"
+				role="tabpanel"
+				aria-labelledby="supplier-tab"
+			>
+				<header class="manuals-guide-head">
+					<div>
+						<h2>Set up a supplier account</h2>
+						<p>Register the organisation that will prepare and submit bids.</p>
+					</div>
+					<a class="manuals-cta" href="/account/register">Start supplier registration</a>
+				</header>
+				<div class="manuals-guide-body">
+					<ol class="manuals-steps">
+						<li>
+							<span class="manuals-step-number">1</span>
+							<div>
+								<h3>Sign in</h3>
+								<p>
+									Supplier account registration requires a signed-in user. If you
+									are signed out, sign in first; you will be returned to the
+									registration form.
+								</p>
+							</div>
+						</li>
+						<li>
+							<span class="manuals-step-number">2</span>
+							<div>
+								<h3>Enter the organisation’s legal details</h3>
+								<p>
+									Provide the legal name, country, registration number, KRA PIN,
+									registered address, and official contact details.
+								</p>
+							</div>
+						</li>
+						<li>
+							<span class="manuals-step-number">3</span>
+							<div>
+								<h3>Confirm your authority</h3>
+								<p>
+									Enter your job title as the Authorised Signatory and upload
+									evidence of your authority. The form accepts PDF, PNG, or
+									JPG/JPEG files.
+								</p>
+							</div>
+						</li>
+						<li>
+							<span class="manuals-step-number">4</span>
+							<div>
+								<h3>Create the account and verify email</h3>
+								<p>
+									Submit the form. A verification link is sent to the
+									organisation’s official email. Open that link to verify the
+									contact and continue.
+								</p>
+							</div>
+						</li>
+					</ol>
+					<aside class="manuals-note">
+						<h3>Before you begin</h3>
+						<p>
+							Have your organisation’s registration details and signatory-authority
+							evidence ready.
+						</p>
+						<p>
+							Account setup gives your organisation access to bid preparation. It
+							does not approve or prequalify the organisation for a tender.
+						</p>
+					</aside>
+				</div>
+			</article>
+
+			<article
+				id="entity-guide"
+				class="manuals-guide"
+				role="tabpanel"
+				aria-labelledby="entity-tab"
+				hidden
+			>
+				<header class="manuals-guide-head">
+					<div>
+						<h2>Create a Procuring Entity workspace</h2>
+						<p>
+							Set up the organisation workspace and verify its administrator’s
+							contact details.
+						</p>
+					</div>
+					<a class="manuals-cta" href="/tenant_registration"
+						>Register a Procuring Entity</a
+					>
+				</header>
+				<div class="manuals-guide-body">
+					<ol class="manuals-steps">
+						<li>
+							<span class="manuals-step-number">1</span>
+							<div>
+								<h3>Enter account and organisation details</h3>
+								<p>
+									Provide the organisation name, a unique workspace name,
+									administrator name and email, country, contact phone, and a
+									password.
+								</p>
+							</div>
+						</li>
+						<li>
+							<span class="manuals-step-number">2</span>
+							<div>
+								<h3>Choose optional workspace settings</h3>
+								<p>
+									Set the industry, organisation size, financial-year start, and
+									default currency if applicable.
+								</p>
+							</div>
+						</li>
+						<li>
+							<span class="manuals-step-number">3</span>
+							<div>
+								<h3>Verify the administrator’s email</h3>
+								<p>
+									Request the email code, enter it on the verification step, and
+									continue after the address is confirmed.
+								</p>
+							</div>
+						</li>
+						<li>
+							<span class="manuals-step-number">4</span>
+							<div>
+								<h3>Verify the contact phone and submit</h3>
+								<p>
+									Request the SMS code, verify the phone, accept the terms, then
+									submit the workspace request. The completion screen displays
+									the workspace status and URL when available.
+								</p>
+							</div>
+						</li>
+					</ol>
+					<aside class="manuals-note">
+						<h3>Choose a workspace name carefully</h3>
+						<p>
+							The workspace name becomes part of the site address. Use lowercase
+							letters, numbers, and single hyphens.
+						</p>
+						<p>
+							Keep access to the administrator email and phone available throughout
+							registration; changing either after verification resets the
+							verification steps.
+						</p>
+					</aside>
+				</div>
+			</article>
+		</section>
+	</main>
+
+	<footer class="manuals-footer">
+		Need to return to the public site? <a href="/">Go to KenTender</a>
+	</footer>
+</div>
+
+<script>
+	(() => {
+		const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+		const menuToggle = document.getElementById("manuals-mobile-toggle");
+		const mobileMenu = document.getElementById("manuals-mobile-nav");
+		menuToggle?.addEventListener("click", () => {
+			const open = menuToggle.getAttribute("aria-expanded") !== "true";
+			menuToggle.setAttribute("aria-expanded", String(open));
+			mobileMenu.hidden = !open;
+		});
+		const activate = (tab) => {
+			tabs.forEach((item) => {
+				const active = item === tab;
+				item.setAttribute("aria-selected", String(active));
+				item.tabIndex = active ? 0 : -1;
+				document.getElementById(item.getAttribute("aria-controls")).hidden = !active;
+			});
+		};
+		tabs.forEach((tab, index) => {
+			tab.addEventListener("click", () => activate(tab));
+			tab.addEventListener("keydown", (event) => {
+				if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+				event.preventDefault();
+				const next =
+					tabs[
+						(index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length
+					];
+				activate(next);
+				next.focus();
+			});
+		});
+	})();
+</script>
+{% endblock %}
