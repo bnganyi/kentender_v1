@@ -633,7 +633,14 @@
 								minlength="12"
 								maxlength="256"
 								autocomplete="new-password"
-							/><small class="text-muted">Use at least 12 characters.</small>
+							/>
+							<small
+							    id="password-strength-feedback"
+							    class="text-muted"
+							    aria-live="polite"
+							>
+							    Use at least 12 characters. Your password must also meet the security policy.
+							</small>
 						</div>
 						<div class="form-group">
 							<label for="confirm_password">Confirm password</label
