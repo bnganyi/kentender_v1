@@ -29,6 +29,12 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-tender-overview"]) {
 	color: #0a1929;
 }
 
+.kt-industry.kt-portal .kt-portal-body:has(.kt-page[data-testid="bds-tender-overview"]) {
+	width: min(1504px, calc(100% - 64px));
+	max-width: none;
+	padding: 32px 0;
+}
+
 body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-tender-overview"]) .kt-portal-bar {
 	justify-content: flex-start;
 	gap: 12px;

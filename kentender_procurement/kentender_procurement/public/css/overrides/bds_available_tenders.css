@@ -23,9 +23,9 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"]) {
 }
 
 .kt-industry.kt-portal .kt-portal-body:has(.kt-page[data-testid="bds-available-tenders"]) {
-	width: min(1536px, calc(100% - 32px));
+	width: min(1504px, calc(100% - 64px));
 	max-width: none;
-	padding: 72px 16px;
+	padding: 72px 0;
 }
 
 body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"]) .kt-portal-bar {
