@@ -33,7 +33,7 @@ app_include_js = ["/assets/frontend/js/user_profile_dialog.js?v=2"]
 
 # include js, css files in header of web template
 web_include_css = "/assets/frontend/css/login-custom.scss"
-web_include_js = "/assets/frontend/js/public_manuals_nav.js?v=5"
+web_include_js = "/assets/frontend/js/public_manuals_nav.js?v=7"
 
 website_context = {
 	"splash_image": "/assets/frontend/images/kentender_loader.gif",

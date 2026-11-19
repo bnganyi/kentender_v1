@@ -40,9 +40,9 @@ def _parse_json(value, default):
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])
-def get_available_tenders(search: str = "", method: str = "", reservation: str = "", closing: str = "open") -> dict[str, Any]:
+def get_available_tenders(search: str = "", method: str = "", reservation: str = "", closing: str = "open", exact: str = "", created_from: str = "", created_to: str = "", expiry_from: str = "", expiry_to: str = "", reference: str = "") -> dict[str, Any]:
 	"""BDS §7.1 `GetAvailableTenders` — public; no identity is needed."""
-	return reads.get_available_tenders(search=search, method=method, reservation=reservation, closing=closing)
+	return reads.get_available_tenders(search=search, method=method, reservation=reservation, closing=closing, exact=exact, created_from=created_from, created_to=created_to, expiry_from=expiry_from, expiry_to=expiry_to, reference=reference)
 
 
 @frappe.whitelist(allow_guest=True, methods=["GET"])

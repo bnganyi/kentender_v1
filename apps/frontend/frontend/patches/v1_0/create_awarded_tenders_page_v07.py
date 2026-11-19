@@ -27,6 +27,7 @@ def create_awarded_tenders_page():
 PAGE_HTML = r"""
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/assets/frontend/css/public_site_header.css?v=5">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1">
 
@@ -129,12 +130,12 @@ select option { background-color:#f3f4f6; color:#1f2937; }
 .badge-active { background: linear-gradient(135deg,#5db89a,#65c5a7); color:white; }
 .badge-category { background: linear-gradient(135deg, var(--deep-blue), var(--deep-blue)); color:white; }
 
-.card-hover { transition: all 0.4s cubic-bezier(0.4,0,0.2,.5); position:relative; overflow:hidden; }
+.card-hover { transition: all 0.4s cubic-bezier(0.4,0,0.2,.5); position:relative; overflow:hidden; border:1px solid #dfe3e8; background:#ffffff; }
 .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(22,95,206,0.2); }
 
 .input-modern {
   background: rgba(255,255,255,0.95);
-  border: 2px solid transparent; border-radius:12px;
+  border: 2px solid #dfe3e8; border-radius:12px;
   padding:14px 18px; font-size:15px;
   transition: all 0.3s ease; outline:none; width:100%;
 }
@@ -175,7 +176,7 @@ select option { background-color:#f3f4f6; color:#1f2937; }
 
 .filter-panel { margin-bottom:24px; }
 .filter-panel.collapsed { display:none; margin-bottom:0; }
-.filter-panel.expanded { margin-bottom:24px; }
+.filter-panel.expanded { margin-bottom:24px; padding:20px; border:1px solid #dfe3e8; border-radius:8px; background:#f3f4f6; }
 .filter-content { transition: opacity 0.3s ease, transform 0.3s ease; }
 .filter-panel.collapsed .filter-content { opacity:0; transform: translateY(-20px); pointer-events:none; }
 .filter-panel.expanded .filter-content { opacity:1; transform: translateY(0); pointer-events:all; }
@@ -250,6 +251,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
           <a href="/industry/donor" class="dropdown-item">Donor Funded</a>
         </div>
       </div>
+      <a href="/manuals" class="text-gray-700 font-medium hover:text-blue-600">Manuals</a>
     </div>
 
     {% if frappe.session.user == 'Guest' %}
@@ -282,6 +284,10 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
       <a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
+      <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
+      <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
+      <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
+      <a href="/manuals" class="block text-gray-700 font-medium py-2">Manuals</a>
       <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       {% if frappe.session.user == 'Guest' %}
       <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
@@ -301,15 +307,15 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
 
   <div class="container mx-auto relative z-10 px-4">
     <div class="text-center mb-16">
-      <h1 class="text-3xl md:text-6xl font-bold text-gray-600 mb-6">
-        Awarded <span class="bg-gray-600 bg-clip-text text-transparent">Tenders</span>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight">
+        Awarded <span class="text-blue-600">Tenders</span>
       </h1>
       <p class="text-xl text-gray-600 max-w-3xl mx-auto">
         View recently awarded contracts across government and private sectors in Kenya
       </p>
     </div>
 
-    <div class="bg-black/5 py-4 px-4 rounded-3xl mb-4 flex justify-between items-center flex-wrap gap-3">
+    <div class="py-4 px-4 rounded-lg mb-4 flex justify-between items-center flex-wrap gap-3 border border-gray-300" style="background:#f3f4f6">
       <h2 class="flex items-center gap-2 font-bold text-lg">
         <i class="fas fa-filter text-green-600"></i>
         <span>Awarded Tenders Filters</span>
@@ -353,40 +359,32 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
             <div>
               <label class="block text-sm font-medium mb-2">Search Keywords</label>
               <input type="text" placeholder="Enter keywords" class="input-modern bg-white placeholder-gray-500">
-              <div class="mt-3 flex items-center">
-                <input type="checkbox" id="exact" class="custom-checkbox mr-2">
-                <label for="exact" class="text-sm text-gray-600 cursor-pointer">Exact match only</label>
-              </div>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-2">Award Date From</label>
+              <label class="block text-sm font-medium mb-2">Tender Creation Date From</label>
               <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Award Date To</label>
+              <label class="block text-sm font-medium mb-2">Tender Creation Date To</label>
               <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Contract Start From</label>
+              <label class="block text-sm font-medium mb-2">Tender Expiry Date From</label>
               <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2">Contract End To</label>
+              <label class="block text-sm font-medium mb-2">Tender Expiry Date To</label>
               <div class="date-input-wrapper"><i class="fas fa-calendar-alt mx-4"></i><input type="date" class="date-input"></div>
             </div>
-            <div>
-              <label class="block text-sm font-medium mb-2">Value Range</label>
-              <select class="input-modern bg-white">
-                <option value="">Any Value</option>
-                <option value="under-10m">Under KES 10M</option>
-                <option value="10m-50m">KES 10M - 50M</option>
-                <option value="50m-200m">KES 50M - 200M</option>
-                <option value="over-200m">Over KES 200M</option>
-              </select>
-            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-6 border-t-2 border-gray-200">
+            <div><label class="block text-sm font-medium mb-2">Method</label><select class="input-modern bg-white"><option value="">All methods</option></select></div>
+            <div><label class="block text-sm font-medium mb-2">Reservation</label><select class="input-modern bg-white"><option value="">All categories</option></select></div>
+            <div><label class="block text-sm font-medium mb-2">Closing</label><select class="input-modern bg-white"><option value="open">Open Tenders</option><option value="closed">Closed or cancelled</option><option value="all">All Tenders</option></select></div>
           </div>
 
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 border-t-2 border-gray-200">
@@ -568,7 +566,10 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
 
   function updateTime() {
     var el = document.getElementById('live-time');
-    if (el) el.textContent = new Date().toLocaleString();
+    if (el) el.textContent = new Date().toLocaleString('en-GB', {
+      timeZone: 'Africa/Nairobi', weekday: 'short', day: '2-digit', month: 'short',
+      year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).replace(' at ', ', ');
   }
   updateTime(); setInterval(updateTime, 1000);
 

@@ -27,6 +27,7 @@ def create_all_tenders_page():
 PAGE_HTML = r"""
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/assets/frontend/css/public_site_header.css?v=5">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1">
 
@@ -73,19 +74,19 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 .page-inner { position: relative; z-index: 10; width: min(1536px, 100%); margin: 0 auto; padding: 96px 16px; }
 .page-heading { margin: 0 0 24px; color: #4b5563; font-size: 30px; line-height: 1.15; font-weight: 700; }
 .page-intro { max-width: 768px; margin: 0 auto 64px; color: #4b5563; font-size: 20px; line-height: 1.5; }
-.filter-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding: 16px; border-radius: 24px; background: rgba(0,0,0,.05); }
+.filter-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; padding: 16px; border-radius: 8px; background: #f3f4f6; border: 1px solid #dfe3e8; }
 .filter-heading h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 18px; font-weight: 700; }
 .filter-heading p { margin: 0 auto 0 0; color: #4b5563; font-size: 14px; }
 .filter-heading h2 i { color: #16a34a; }
 .filter-panel { margin-bottom: 24px; padding: 0; background: transparent; }
 .filter-panel.collapsed { display: none; margin-bottom: 0; }
-.filter-panel.expanded { margin-bottom: 24px; }
+.filter-panel.expanded { margin-bottom: 24px; padding: 20px; border: 1px solid #dfe3e8; border-radius: 8px; background: #f3f4f6; }
 .filter-content { transition: opacity .3s ease, transform .3s ease; }
 .filter-panel.collapsed .filter-content { opacity: 0; transform: translateY(-20px); pointer-events: none; }
 .filter-panel.expanded .filter-content { opacity: 1; transform: translateY(0); pointer-events: all; }
 .filter-toggle { display: flex; align-items: center; gap: 8px; padding: 8px 24px; border: 0; border-radius: 12px; background: linear-gradient(135deg,#0047ab,#0047ab); color: #fff; font-weight: 600; cursor: pointer; transition: all .3s ease; }
 .filter-toggle:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,102,255,.3); }
-.input-modern { width: 100%; padding: 14px 18px; border: 2px solid transparent; border-radius: 12px; outline: none; background: rgba(255,255,255,.95); font-size: 15px; transition: all .3s ease; }
+.input-modern { width: 100%; padding: 14px 18px; border: 2px solid #dfe3e8; border-radius: 12px; outline: none; background: rgba(255,255,255,.95); font-size: 15px; transition: all .3s ease; }
 .input-modern:focus { border-color: #0066ff; background: #fff; box-shadow: 0 0 0 4px rgba(0,102,255,.1); }
 #tender-filters { display: grid; gap: 24px; }
 .filter-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
@@ -94,7 +95,7 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 .filter-field input:disabled, .filter-field select:disabled { background: #f3f4f6; color: #6b7280; cursor: not-allowed; }
 .filter-exact { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: #4b5563; font-size: 14px; }
 .filter-exact input { width: 16px; height: 16px; margin: 0; accent-color: #0066ff; }
-.date-input-wrapper { position: relative; display: flex; align-items: center; min-height: 48px; overflow: hidden; border-radius: 12px; background: rgba(255,255,255,.95); }
+.date-input-wrapper { position: relative; display: flex; align-items: center; min-height: 48px; overflow: hidden; border: 2px solid #dfe3e8; border-radius: 12px; background: rgba(255,255,255,.95); }
 .date-input-wrapper i { margin: 0 16px; color: #6b7280; }
 .date-input-wrapper input { width: 100%; min-width: 0; padding: 14px 12px; border: 0; outline: 0; background: transparent; font-size: 15px; }
 .date-input-wrapper input:disabled { color: #6b7280; cursor: not-allowed; }
@@ -106,7 +107,7 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 .btn-secondary:hover { border-color: #0066ff; color: #0066ff; }
 .tender-results-summary { margin: 0 0 16px; color: #4b5563; font-size: 14px; }
 #tender-results { margin-bottom: 64px; }
-.tender-card { position: relative; }
+.tender-card { position: relative; border: 1px solid #dfe3e8; border-radius: 16px; background: #ffffff; }
 .card-hover { position: relative; overflow: hidden; transition: all .4s cubic-bezier(.4,0,.2,.5); }
 .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(22,95,206,.2); }
 .tender-card-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -171,8 +172,8 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 @media (max-width: 560px) { .page-heading { font-size: 30px; } .filter-grid { grid-template-columns: 1fr; } .tender-card-top, .tender-load-error { align-items: flex-start; flex-direction: column; } .tender-deadline { text-align: left; } .filter-actions { align-items: stretch; flex-direction: column; } .footer-inner { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 1023px) { .filter-grid-primary, .filter-grid-live { grid-template-columns: repeat(2,minmax(0,1fr)); } .filter-grid-dates { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media (max-width: 560px) { .filter-grid-primary, .filter-grid-live, .filter-grid-dates { grid-template-columns: 1fr; } }
-@media (min-width: 1024px) { .filter-grid-dates { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-@media (min-width: 1280px) { .filter-grid-dates { grid-template-columns: repeat(5,minmax(0,1fr)); } }
+@media (min-width: 1024px) { .filter-grid-dates { grid-template-columns: repeat(4,minmax(0,1fr)); } .filter-grid-live { grid-template-columns: repeat(3,minmax(0,1fr)); } }
+@media (min-width: 1280px) { .filter-grid-dates { grid-template-columns: repeat(4,minmax(0,1fr)); } .filter-grid-live { grid-template-columns: repeat(3,minmax(0,1fr)); } }
 </style>
 
 <div id="headerWrapper" class="navbar-blur">
@@ -183,6 +184,7 @@ select option { background-color: #f3f4f6; color: #1f2937; }
       <a href="/">Home</a><a href="/about">About</a>
       <div class="dropdown"><button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down" aria-hidden="true"></i></button><div class="dropdown-menu"><a href="/all-tenders" class="dropdown-item">All Tenders</a><a href="/contracts" class="dropdown-item">Awarded Contracts</a></div></div>
       <div class="dropdown"><button class="dropdown-toggle" type="button">Industries <i class="fas fa-chevron-down" aria-hidden="true"></i></button><div class="dropdown-menu"><a href="/industry/public" class="dropdown-item">Public Sector</a><a href="/industry/private" class="dropdown-item">Private Sector</a><a href="/industry/donor" class="dropdown-item">Donor Funded</a></div></div>
+      <a href="/manuals">Manuals</a>
     </div>
     {% if frappe.session.user == 'Guest' %}
     <div class="kt-header-actions"><a id="kt-dashboard-button" class="kt-action-button" href="/app/home"><i class="fas fa-table-columns" aria-hidden="true"></i><span>Go to Dashboard</span></a><a id="kt-start-trial" class="kt-action-button" href="/tenant_registration"><i class="fas fa-rocket" aria-hidden="true"></i><span>Get Started</span></a></div>
@@ -202,7 +204,7 @@ select option { background-color: #f3f4f6; color: #1f2937; }
     {% endif %}
     <button id="mobileMenuBtn" type="button" aria-label="Open menu"><i class="fas fa-bars" aria-hidden="true"></i></button>
   </nav>
-  <nav id="mobileMenu" hidden aria-label="Mobile navigation"><div id="mobileMenu-inner"><a href="/">Home</a><a href="/about">About</a><a href="/all-tenders">All Tenders</a><a href="/contracts">Awarded Contracts</a><a href="/app/home">Go to Dashboard</a>{% if frappe.session.user == 'Guest' %}<a href="/tenant_registration">Get Started</a>{% else %}<a href="/account">Profile</a>{% endif %}</div></nav>
+  <nav id="mobileMenu" hidden aria-label="Mobile navigation"><div id="mobileMenu-inner"><a href="/">Home</a><a href="/about">About</a><a href="/all-tenders">All Tenders</a><a href="/contracts">Awarded Contracts</a><a href="/industry/public">Public Sector</a><a href="/industry/private">Private Sector</a><a href="/industry/donor">Donor Funded</a><a href="/manuals">Manuals</a><a href="/app/home">Go to Dashboard</a>{% if frappe.session.user == 'Guest' %}<a href="/tenant_registration">Get Started</a>{% else %}<a href="/account">Profile</a>{% endif %}</div></nav>
 </div>
 
 <main class="all-tenders-main">
@@ -211,7 +213,7 @@ select option { background-color: #f3f4f6; color: #1f2937; }
   <div class="blob blob-2"></div>
   <div class="page-inner">
     <div class="text-center mb-16">
-      <h1 class="page-heading">All <span class="bg-gray-600 bg-clip-text text-transparent">Tenders</span></h1>
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight">All <span class="text-blue-600">Tenders</span></h1>
       <p class="page-intro">Browse published opportunities and review tender details across Kenya.</p>
     </div>
 
@@ -224,17 +226,16 @@ select option { background-color: #f3f4f6; color: #1f2937; }
       <div class="filter-content" id="filterContent">
         <form id="tender-filters">
           <div class="filter-grid filter-grid-primary">
-            <div class="filter-field"><label for="tender-reference">Ref. No.</label><input id="tender-reference" class="input-modern bg-white" type="search" placeholder="Enter KET reference" disabled data-filter-placeholder="reference"></div>
-            <div class="filter-field"><label for="tender-location">Location</label><select id="tender-location" class="input-modern bg-white" disabled data-filter-placeholder="location"><option value="">All Locations</option><option value="nairobi">Nairobi County</option><option value="mombasa">Mombasa County</option><option value="kisumu">Kisumu County</option><option value="kiambu">Kiambu County</option><option value="nakuru">Nakuru County</option></select></div>
-            <div class="filter-field"><label for="tender-financier">Financier</label><select id="tender-financier" class="input-modern bg-white" disabled data-filter-placeholder="financier"><option value="">All Financiers</option><option value="world-bank">World Bank</option><option value="afdb">African Development Bank</option><option value="eu">European Union</option><option value="gok">Government of Kenya</option><option value="usaid">USAID</option></select></div>
-            <div class="filter-field"><label for="tender-search">Search Keywords</label><input id="tender-search" class="input-modern bg-white" type="search" placeholder="Enter keywords"><label class="filter-exact" for="tender-exact"><input id="tender-exact" type="checkbox" disabled data-filter-placeholder="exact-match">Exact match only</label></div>
+            <div class="filter-field"><label for="tender-reference">Ref. No.</label><input id="tender-reference" class="input-modern bg-white" type="search" placeholder="Enter KET reference" data-filter-placeholder="reference"></div>
+            <div class="filter-field"><label for="tender-location">Location</label><select id="tender-location" class="input-modern bg-white" data-filter-placeholder="location"><option value="">All Locations</option><option value="nairobi">Nairobi County</option><option value="mombasa">Mombasa County</option><option value="kisumu">Kisumu County</option><option value="kiambu">Kiambu County</option><option value="nakuru">Nakuru County</option></select></div>
+            <div class="filter-field"><label for="tender-financier">Financier</label><select id="tender-financier" class="input-modern bg-white" data-filter-placeholder="financier"><option value="">All Financiers</option><option value="world-bank">World Bank</option><option value="afdb">African Development Bank</option><option value="eu">European Union</option><option value="gok">Government of Kenya</option><option value="usaid">USAID</option></select></div>
+            <div class="filter-field"><label for="tender-search">Search Keywords</label><input id="tender-search" class="input-modern bg-white" type="search" placeholder="Enter keywords"></div>
           </div>
           <div class="filter-grid filter-grid-dates">
-            <div class="filter-field"><label for="tender-award-from">Award Date From</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-award-from" type="date" disabled data-filter-placeholder="award-date-from"></div></div>
-            <div class="filter-field"><label for="tender-award-to">Award Date To</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-award-to" type="date" disabled data-filter-placeholder="award-date-to"></div></div>
-            <div class="filter-field"><label for="tender-contract-from">Contract Start From</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-contract-from" type="date" disabled data-filter-placeholder="contract-start-from"></div></div>
-            <div class="filter-field"><label for="tender-contract-to">Contract End To</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-contract-to" type="date" disabled data-filter-placeholder="contract-end-to"></div></div>
-            <div class="filter-field"><label for="tender-value-range">Value Range</label><select id="tender-value-range" class="input-modern bg-white" disabled data-filter-placeholder="value-range"><option value="">Any Value</option><option value="under-10m">Under KES 10M</option><option value="10m-50m">KES 10M - 50M</option><option value="50m-200m">KES 50M - 200M</option><option value="over-200m">Over KES 200M</option></select></div>
+            <div class="filter-field"><label for="tender-created-from">Tender Creation Date From</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-created-from" type="date"></div></div>
+            <div class="filter-field"><label for="tender-created-to">Tender Creation Date To</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-created-to" type="date"></div></div>
+            <div class="filter-field"><label for="tender-expiry-from">Tender Expiry Date From</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-expiry-from" type="date"></div></div>
+            <div class="filter-field"><label for="tender-expiry-to">Tender Expiry Date To</label><div class="date-input-wrapper"><i class="fas fa-calendar-alt" aria-hidden="true"></i><input id="tender-expiry-to" type="date"></div></div>
           </div>
           <div class="filter-grid filter-grid-live">
             <div class="filter-field"><label for="tender-method">Method</label><select id="tender-method" class="input-modern bg-white"><option value="">All methods</option></select></div>
@@ -288,7 +289,7 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 <script>
 (function() {
   var clock = document.getElementById('live-time');
-  function updateTime() { if (clock) clock.textContent = new Date().toLocaleString('en-KE', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  function updateTime() { if (clock) clock.textContent = new Date().toLocaleString('en-GB', { timeZone: 'Africa/Nairobi', weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).replace(' at ', ', '); }
   updateTime();
   setInterval(updateTime, 30000);
   document.querySelectorAll('.dropdown-toggle').forEach(function(button) { button.addEventListener('click', function(event) { event.stopPropagation(); var menu = button.nextElementSibling; document.querySelectorAll('.dropdown-menu').forEach(function(item) { if (item !== menu) item.classList.remove('show'); }); menu.classList.toggle('show'); }); });

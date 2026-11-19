@@ -383,6 +383,7 @@
 	}
 
 	function setFiltersExpanded(expanded) {
+		if (!filterPanel || !filterToggle) return;
 		filterPanel.classList.toggle("expanded", expanded);
 		filterPanel.classList.toggle("collapsed", !expanded);
 		filterToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -414,10 +415,10 @@
 	async function loadTenders() {
 		const version = ++requestVersion;
 		const params = new URLSearchParams({
-			search: searchInput.value.trim(),
-			method: methodSelect.value,
-			reservation: reservationSelect.value,
-			closing: closingSelect.value,
+			search: searchInput ? searchInput.value.trim() : "",
+			method: methodSelect ? methodSelect.value : "",
+			reservation: reservationSelect ? reservationSelect.value : "",
+			closing: closingSelect ? closingSelect.value : "all",
 		});
 
 		errorNotice.hidden = true;
@@ -469,40 +470,45 @@
 		clearTimeout(searchTimer);
 		loadTenders();
 	});
-	searchInput.addEventListener("input", () => {
-		clearTimeout(searchTimer);
-		searchTimer = setTimeout(loadTenders, 300);
+	if (searchInput)
+		searchInput.addEventListener("input", () => {
+			clearTimeout(searchTimer);
+			searchTimer = setTimeout(loadTenders, 300);
+		});
+	[methodSelect, reservationSelect, closingSelect].forEach((select) => {
+		if (select) select.addEventListener("change", loadTenders);
 	});
-	[methodSelect, reservationSelect, closingSelect].forEach((select) =>
-		select.addEventListener("change", loadTenders),
-	);
-	resetButton.addEventListener("click", () => {
-		searchInput.value = "";
-		methodSelect.value = "";
-		reservationSelect.value = "";
-		closingSelect.value = "all";
-		loadTenders();
-	});
-	filterToggle.addEventListener("click", () => {
-		setFiltersExpanded(filterPanel.classList.contains("collapsed"));
-	});
+	if (resetButton)
+		resetButton.addEventListener("click", () => {
+			searchInput.value = "";
+			if (methodSelect) methodSelect.value = "";
+			if (reservationSelect) reservationSelect.value = "";
+			if (closingSelect) closingSelect.value = "all";
+			loadTenders();
+		});
+	if (filterToggle)
+		filterToggle.addEventListener("click", () => {
+			setFiltersExpanded(filterPanel.classList.contains("collapsed"));
+		});
 	setFiltersExpanded(localStorage.getItem("allTendersFilterPanelCollapsedV2") === "false");
-	retryButton.addEventListener("click", loadTenders);
-	results.addEventListener("click", (event) => {
-		const trigger = event.target.closest("[data-tender-detail]");
-		if (!trigger) return;
-		openTenderDetails(trigger.dataset.tenderDetail, trigger);
-	});
-	document
-		.getElementById("tender-modal-close")
-		.addEventListener("click", () => detailModal.close());
-	detailModal.addEventListener("click", (event) => {
-		if (event.target === detailModal) detailModal.close();
-	});
-	detailModal.addEventListener("close", () => {
-		detailRequestVersion += 1;
-		detailTrigger?.focus();
-	});
+	if (retryButton) retryButton.addEventListener("click", loadTenders);
+	if (results)
+		results.addEventListener("click", (event) => {
+			const trigger = event.target.closest("[data-tender-detail]");
+			if (!trigger) return;
+			openTenderDetails(trigger.dataset.tenderDetail, trigger);
+		});
+	const modalClose = document.getElementById("tender-modal-close");
+	if (modalClose && detailModal) modalClose.addEventListener("click", () => detailModal.close());
+	if (detailModal)
+		detailModal.addEventListener("click", (event) => {
+			if (event.target === detailModal) detailModal.close();
+		});
+	if (detailModal)
+		detailModal.addEventListener("close", () => {
+			detailRequestVersion += 1;
+			detailTrigger?.focus();
+		});
 	window.addEventListener("pagehide", () => clearTimeout(searchTimer), { once: true });
 
 	loadTenders();

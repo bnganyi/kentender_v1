@@ -41,7 +41,7 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"]) .k
 
 body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	.kt-portal-header-actions {
-	gap: 0;
+	gap: 16px;
 	margin-left: 0;
 }
 
@@ -52,7 +52,7 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 
 body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	.kt-portal-identity-wrap {
-	margin-left: 0;
+	margin-left: 12px;
 }
 
 /* Header — clear value proposition */
@@ -70,11 +70,15 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-page-title {
 	margin: 0;
-	color: #0b1f3b;
+	color: #1f2937;
 	font-size: 48px;
 	font-weight: 700;
 	letter-spacing: 0;
-	line-height: 1.1;
+	line-height: 1.25;
+}
+
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-title-accent {
+	color: #2563eb;
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .kt-page-desc {
@@ -165,11 +169,15 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	gap: 16px;
 	margin-bottom: 12px;
 	padding: 16px 20px;
-	background: rgb(0 0 0 / 5%);
-	border-radius: 24px;
+	background: #f3f4f6;
+	border: 1px solid #dfe3e8;
+	border-radius: 8px;
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-filter-heading h2 {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-awarded-filter-heading
+	h2 {
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -206,12 +214,19 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	transition: transform 0.18s ease;
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-filter-toggle[aria-expanded="true"] .bds-filter-chevron {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-filter-toggle[aria-expanded="true"]
+	.bds-filter-chevron {
 	transform: rotate(225deg) translate(-2px, -1px);
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-filter-panel {
 	margin-bottom: 24px;
+	padding: 20px;
+	background: #f3f4f6;
+	border: 1px solid #dfe3e8;
+	border-radius: 8px;
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-form {
@@ -232,7 +247,11 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	min-width: 0;
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-fields .field > label:not(.bds-exact-label) {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-awarded-fields
+	.field
+	> label:not(.bds-exact-label) {
 	color: #374151;
 	font-size: 14px;
 	font-weight: 600;
@@ -242,7 +261,7 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	width: 100%;
 	height: 48px;
 	padding: 0 18px;
-	border: 2px solid transparent;
+	border: 2px solid #dfe3e8;
 	border-radius: 12px;
 	background: rgb(255 255 255 / 95%);
 	color: #1f2937;
@@ -250,13 +269,19 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	box-shadow: none;
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-fields .input:focus-visible {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-awarded-fields
+	.input:focus-visible {
 	border-color: #0066ff;
 	outline: none;
 	box-shadow: 0 0 0 3px rgb(0 102 255 / 12%);
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-fields .input:disabled {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-awarded-fields
+	.input:disabled {
 	background: #f3f4f6;
 	color: #6b7280;
 	cursor: not-allowed;
@@ -300,12 +325,18 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	font-weight: 650;
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-actions .btn-primary {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-awarded-actions
+	.btn-primary {
 	background: linear-gradient(135deg, #0047ab, #003580);
 	color: #fff;
 }
 
-.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-actions .btn-secondary {
+.kt-industry.kt-portal
+	.kt-page[data-testid="bds-available-tenders"]
+	.bds-awarded-actions
+	.btn-secondary {
 	border: 1px solid #d1d5db;
 	background: #fff;
 	color: #374151;
@@ -327,12 +358,12 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody tr {
 	display: grid;
-	grid-template-columns: 2.2fr 1.2fr 1fr 1fr 1.3fr auto;
+	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: center;
 	gap: 16px;
-	padding: 18px 20px;
+	padding: 20px;
 	background: #fff;
-	border: 1px solid var(--kt-line);
+	border: 1px solid #dfe3e8;
 	border-radius: var(--kt-radius);
 	box-shadow: var(--kt-shadow);
 	transition:
@@ -354,6 +385,26 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 }
 
 /* Tender title + reference */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody td:nth-child(1) {
+	grid-column: 1;
+	grid-row: 1;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody td:nth-child(5) {
+	grid-column: 2;
+	grid-row: 1;
+	text-align: right;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody td:nth-child(2),
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody td:nth-child(3),
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody td:nth-child(4) {
+	grid-row: 2;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .table tbody td:nth-child(6) {
+	grid-column: 2;
+	grid-row: 2;
+	justify-self: end;
+}
+
 .kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-tender-cell {
 	font-size: 16.5px;
 	font-weight: 650;
@@ -422,6 +473,113 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	color: var(--kt-muted);
 	font-size: 14px;
 	font-weight: 500;
+}
+
+/* Card structure matches the public All Tenders page. */
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-tender-card-list {
+	display: grid;
+	gap: 24px;
+	margin-bottom: 64px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card {
+	display: block;
+	padding: 24px;
+	background: #fff;
+	border: 1px solid #dfe3e8;
+	border-radius: 16px;
+	box-shadow: 0 10px 24px rgb(11 31 59 / 8%);
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-badge {
+	display: inline-block;
+	padding: 6px 14px;
+	border-radius: 20px;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-badge-category {
+	background: #0047ab;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-badge-published {
+	background: #65c5a7;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-deadline {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	text-align: right;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-deadline span {
+	color: #111827;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-deadline strong {
+	color: #16a34a;
+	font-family: "Space Mono", monospace;
+	font-size: 14px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-title {
+	margin: 0 0 16px;
+	color: #1f2937;
+	font-size: 20px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-meta {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 16px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-facts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 32px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-fact {
+	display: grid;
+	gap: 4px;
+	text-align: left;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-fact > span {
+	color: #111827;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-fact > strong {
+	color: #1f2937;
+	font-size: 15px;
+}
+.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-card-actions a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 42px;
+	padding: 12px 24px;
+	border-radius: 10px;
+	background: linear-gradient(135deg, #0047ab, #003580);
+	color: #fff;
+	font-size: 14px;
+	font-weight: 700;
+	text-decoration: none;
+	white-space: nowrap;
 }
 
 /* Responsive — stack into true cards on smaller screens */
@@ -493,7 +651,9 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 }
 
 @media (max-width: 600px) {
-	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-filter-heading {
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.bds-awarded-filter-heading {
 		align-items: flex-start;
 		flex-direction: column;
 	}
@@ -507,7 +667,10 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-actions {
 		flex-direction: column;
 	}
-	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-actions .btn {
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.bds-awarded-actions
+		.btn {
 		width: 100%;
 	}
 	body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"]) .kt-portal-bar {
@@ -551,16 +714,29 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-available-tenders"])
 }
 
 @media (min-width: 1024px) {
-	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-primary-fields {
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.bds-awarded-primary-fields {
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-date-fields {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-live-fields {
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 }
 
 @media (min-width: 1280px) {
+	.kt-industry.kt-portal
+		.kt-page[data-testid="bds-available-tenders"]
+		.bds-awarded-primary-fields {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
 	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-date-fields {
-		grid-template-columns: repeat(5, minmax(0, 1fr));
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.kt-industry.kt-portal .kt-page[data-testid="bds-available-tenders"] .bds-awarded-live-fields {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 }

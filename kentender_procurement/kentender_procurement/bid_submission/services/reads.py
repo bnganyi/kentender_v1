@@ -35,8 +35,12 @@ def _options(label: str, values: set[str]) -> list[dict[str, str]]:
 	return [{"value": "", "label": label}] + [{"value": v, "label": v} for v in sorted(v for v in values if v)]
 
 
-def get_available_tenders(*, search: str = "", method: str = "", reservation: str = "", closing: str = "open") -> dict[str, Any]:
+def get_available_tenders(*, search: str = "", method: str = "", reservation: str = "", closing: str = "open", exact: str = "", created_from: str = "", created_to: str = "", expiry_from: str = "", expiry_to: str = "", reference: str = "") -> dict[str, Any]:
 	search, method, reservation = cstr(search).strip(), cstr(method).strip(), cstr(reservation).strip()
+	reference = cstr(reference).strip().lower()
+	exact = cstr(exact).strip().lower() in {"1", "true", "yes"}
+	created_from, created_to = cstr(created_from).strip(), cstr(created_to).strip()
+	expiry_from, expiry_to = cstr(expiry_from).strip(), cstr(expiry_to).strip()
 	closing = closing if closing in {value for value, _label in CLOSING} else "open"
 	public = tenders_gateway.available_tenders(at=clock.now())
 	needle = search.lower()
@@ -47,9 +51,14 @@ def get_available_tenders(*, search: str = "", method: str = "", reservation: st
 		}
 		for r in public
 		if _closing_matches(closing, r["availability"])
-		and (not needle or needle in r["title"].lower() or needle in r["reference"].lower())
+		and (not reference or reference == r["reference"].lower())
+		and (not needle or ((needle == r["title"].lower() or needle == r["reference"].lower()) if exact else (needle in r["title"].lower() or needle in r["reference"].lower())))
 		and (not method or r["method"] == method)
 		and (not reservation or r["reservation"] == reservation)
+		and (not created_from or cstr(r["published_at"])[:10] >= created_from)
+		and (not created_to or cstr(r["published_at"])[:10] <= created_to)
+		and (not expiry_from or cstr(r["submission_deadline"])[:10] >= expiry_from)
+		and (not expiry_to or cstr(r["submission_deadline"])[:10] <= expiry_to)
 	]
 	n = len(rows)
 	noun = "available Tender" if closing == "open" else "Tender"

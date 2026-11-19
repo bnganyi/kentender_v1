@@ -1,9 +1,12 @@
 {% extends "templates/web.html" %} {% block title %}Registration Manuals | KenTender{% endblock %}
 {% block page_content %}
+<script src="https://cdn.tailwindcss.com"></script>
 <link
 	href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
 	rel="stylesheet"
 />
+<link rel="stylesheet" href="/assets/frontend/css/public_site_header.css?v=5" />
+<link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1" />
 <style>
 	.navbar,
 	nav.navbar,
@@ -51,37 +54,63 @@
 		color: var(--ink);
 		font-family: "Outfit", sans-serif;
 	}
-	.manuals-header {
-		position: sticky;
-		top: 0;
-		z-index: 20;
-		display: flex;
-		min-height: 76px;
+	.manuals-nav .dropdown-toggle {
+		display: inline-flex;
 		align-items: center;
-		justify-content: space-between;
-		gap: 24px;
-		padding: 12px clamp(20px, 4vw, 64px);
-		border-bottom: 1px solid rgba(9, 69, 133, 0.12);
-		background: rgba(255, 255, 255, 0.97);
-	}
-	.manuals-brand img {
-		display: block;
-		width: 150px;
-		height: auto;
-	}
-	.manuals-nav {
-		display: flex;
-		align-items: center;
-		gap: 28px;
-	}
-	.manuals-nav a {
+		gap: 6px;
+		padding: 0;
+		border: 0;
+		background: transparent;
 		color: #344356;
+		font: inherit;
 		font-size: 14px;
 		font-weight: 600;
+		cursor: pointer;
+	}
+	.manuals-nav .dropdown-toggle:hover,
+	.manuals-nav .dropdown-toggle[aria-expanded="true"] {
+		color: var(--blue);
+	}
+	.manuals-nav .dropdown-arrow {
+		font-size: 11px;
+		transition: transform 0.2s ease;
+	}
+	.manuals-nav .dropdown-toggle[aria-expanded="true"] .dropdown-arrow {
+		transform: rotate(180deg);
+	}
+	.manuals-nav .dropdown-menu {
+		position: absolute;
+		top: calc(100% + 10px);
+		left: 0;
+		z-index: 30;
+		min-width: 200px;
+		padding: 8px;
+		border: 1px solid #e5e7eb;
+		border-radius: 8px;
+		background: #f3f4f6;
+		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-6px);
+		transition: all 0.2s ease;
+	}
+	.manuals-nav .dropdown-menu.show,
+	.manuals-nav .dropdown:hover .dropdown-menu {
+		opacity: 1;
+		visibility: visible;
+		transform: translateY(0);
+	}
+	.manuals-nav .dropdown-menu a {
+		display: block;
+		padding: 10px 12px;
+		border-radius: 6px;
+		color: #1f2937;
+		font-size: 14px;
 		text-decoration: none;
 	}
-	.manuals-nav a:hover,
-	.manuals-nav a[aria-current="page"] {
+	.manuals-nav .dropdown-menu a:hover,
+	.manuals-nav .dropdown-menu a[aria-current="page"] {
+		background: #e5e7eb;
 		color: var(--blue);
 	}
 	.manuals-account {
@@ -164,7 +193,7 @@
 	}
 	.manuals-content {
 		box-sizing: border-box;
-		max-width: 1280px;
+		max-width: 1580px;
 		margin: 0 auto;
 		padding: 0 clamp(20px, 4vw, 64px) 64px;
 	}
@@ -198,7 +227,7 @@
 		box-shadow: 0 1px 3px rgba(18, 35, 54, 0.08);
 	}
 	.manuals-guide {
-		max-width: 1080px;
+		max-width: 1480px;
 		margin: 18px auto 0;
 		border: 1px solid var(--line);
 		border-radius: 8px;
@@ -409,43 +438,93 @@
 </style>
 
 <div class="manuals-page">
-	<header class="manuals-header">
-		<a class="manuals-brand" href="/" aria-label="KenTender home">
-			<img
-				src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
-				alt="KenTender Solutions"
-			/>
-		</a>
-		
-		<button
-			id="manuals-mobile-toggle"
-			class="manuals-mobile-toggle"
-			type="button"
-			aria-controls="manuals-mobile-nav"
-			aria-expanded="false"
-		>
-			Menu
-		</button>
-		<div class="manuals-account">
-			<a href="/app/home">Go to Dashboard</a>
-			{% if frappe.session.user == 'Guest' %}
-			<a href="/login?redirect-to=/account/register">Sign in</a>
-			{% else %}
-			<a href="/account">My Account</a>
-			{% endif %}
+	<div id="headerWrapper" class="navbar-blur sticky top-0 z-50">
+		<div id="topBar" class="bg-[#0b1f3b] text-white relative overflow-hidden">
+			<div class="absolute inset-0 pattern-dots opacity-30"></div>
+			<div class="container mx-auto px-4 py-2 relative z-10">
+				<div class="flex items-center gap-4 text-sm">
+					<span class="mono"><i class="far fa-clock mr-2"></i><span id="live-time">Loading...</span></span>
+					<span class="hidden md:inline">|</span>
+					<span class="hidden md:inline"><i class="fas fa-phone mr-2"></i>+254 700 000 000</span>
+				</div>
+			</div>
 		</div>
-	</header>
-	<nav id="manuals-mobile-nav" class="manuals-mobile-nav" aria-label="Mobile navigation" hidden>
-		<a href="/">Home</a>
-		<a href="/about">About</a>
-		<a href="/all-tenders">Tenders</a>
-		<a href="/industry/public">Industries</a>
-		<a href="/manuals" aria-current="page">Manuals</a>
-	</nav>
 
+		<nav class="container mx-auto px-4 py-4 flex items-center justify-between">
+			<a href="/" class="flex items-center">
+				<img src="https://ik.imagekit.io/kltovsgah/kentender_logo.png" alt="KenyaTenders" class="h-12 object-contain">
+			</a>
+
+			<div id="mainNav">
+				<a href="/" class="text-gray-700 font-medium hover:text-blue-600 transition-colors">Home</a>
+				<a href="/about" class="text-gray-700 font-medium hover:text-blue-600 transition-colors">About</a>
+				<div class="dropdown">
+					<button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down dropdown-arrow"></i></button>
+					<div class="dropdown-menu">
+						<a href="/all-tenders" class="dropdown-item">All Tenders</a>
+						<a href="/contracts" class="dropdown-item">Awarded Contracts</a>
+					</div>
+				</div>
+				<div class="dropdown">
+					<button class="dropdown-toggle" type="button">Industries <i class="fas fa-chevron-down dropdown-arrow"></i></button>
+					<div class="dropdown-menu">
+						<a href="/industry/public" class="dropdown-item">Public Sector</a>
+						<a href="/industry/private" class="dropdown-item">Private Sector</a>
+						<a href="/industry/donor" class="dropdown-item">Donor Funded</a>
+					</div>
+				</div>
+				<a href="/manuals" class="text-gray-700 font-medium hover:text-blue-600 transition-colors" aria-current="page">Manuals</a>
+			</div>
+
+			<div id="kt-header-actions" class="kt-header-actions">
+				<a href="/app/home" id="kt-dashboard-button" class="kt-action-button" style="width:180px;height:49px;min-height:49px">
+					<i class="fas fa-table-columns"></i><span>Go to Dashboard</span>
+				</a>
+				{% if frappe.session.user == 'Guest' %}
+				<a href="/tenant_registration" id="kt-start-trial" class="kt-action-button" style="width:141px;height:49px;min-height:49px">
+					<i class="fas fa-rocket"></i><span>Get Started</span>
+				</a>
+				{% else %}
+				<div class="kt-profile-wrap">
+					<button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
+						<span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span>
+						<span>{{ frappe.session.user }}</span>
+						<i class="fas fa-chevron-down kt-profile-chevron"></i>
+					</button>
+					<div id="kt-profile-menu" role="menu" hidden>
+						<a href="/account" role="menuitem"><i class="fas fa-user"></i><span>Profile</span></a>
+						<button type="button" role="menuitem" onclick="frappe.logout(); return false;"><i class="fas fa-right-from-bracket"></i><span>Log out</span></button>
+					</div>
+				</div>
+				{% endif %}
+			</div>
+
+			<button id="mobileMenuBtn" type="button" class="md:hidden text-gray-700 text-2xl">
+				<i class="fas fa-bars"></i>
+			</button>
+		</nav>
+
+		<div id="mobileMenu" class="hidden border-t bg-white">
+			<div class="container mx-auto px-4 py-4 space-y-3">
+				<a href="/" class="block text-gray-700 font-medium py-2">Home</a>
+				<a href="/about" class="block text-gray-700 font-medium py-2">About</a>
+				<a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
+				<a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
+				<a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
+				<a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
+				<a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
+				<a href="/manuals" class="block text-gray-700 font-medium py-2">Manuals</a>
+				<a href="/app/home" class="kt-action-button"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+				{% if frappe.session.user == 'Guest' %}
+				<a href="/tenant_registration" class="kt-action-button"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+	<script src="/assets/frontend/js/public_profile_menu.js?v=1"></script>
 	<main>
 		<section class="manuals-intro" aria-labelledby="manuals-title">
-			 
 			<p>
 				Choose a guide for setting up a supplier account or creating a Procuring Entity
 				workspace.
@@ -637,12 +716,45 @@
 <script>
 	(() => {
 		const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
-		const menuToggle = document.getElementById("manuals-mobile-toggle");
-		const mobileMenu = document.getElementById("manuals-mobile-nav");
-		menuToggle?.addEventListener("click", () => {
-			const open = menuToggle.getAttribute("aria-expanded") !== "true";
-			menuToggle.setAttribute("aria-expanded", String(open));
-			mobileMenu.hidden = !open;
+		const dropdowns = Array.from(document.querySelectorAll(".manuals-nav .dropdown"));
+		const menuToggle = document.getElementById("mobileMenuBtn") || document.getElementById("manuals-mobile-toggle");
+		const mobileMenu = document.getElementById("mobileMenu") || document.getElementById("manuals-mobile-nav");
+		dropdowns.forEach((dropdown) => {
+			const button = dropdown.querySelector(".dropdown-toggle");
+			button.addEventListener("click", (event) => {
+				event.stopPropagation();
+				const open = button.getAttribute("aria-expanded") !== "true";
+				dropdowns.forEach((item) => {
+					const itemButton = item.querySelector(".dropdown-toggle");
+					const itemMenu = item.querySelector(".dropdown-menu");
+					const isOpen = item === dropdown && open;
+					itemButton.setAttribute("aria-expanded", String(isOpen));
+					itemMenu.classList.toggle("show", isOpen);
+				});
+			});
+		});
+		document.addEventListener("click", () => {
+			dropdowns.forEach((dropdown) => {
+				dropdown.querySelector(".dropdown-toggle").setAttribute("aria-expanded", "false");
+				dropdown.querySelector(".dropdown-menu").classList.remove("show");
+			});
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key !== "Escape") return;
+			dropdowns.forEach((dropdown) => {
+				dropdown.querySelector(".dropdown-toggle").setAttribute("aria-expanded", "false");
+				dropdown.querySelector(".dropdown-menu").classList.remove("show");
+			});
+		});
+		menuToggle?.addEventListener("click", (event) => {
+			event.preventDefault();
+			event.stopPropagation();
+			if (mobileMenu?.classList) {
+				mobileMenu.classList.toggle("hidden");
+			} else if (mobileMenu) {
+				mobileMenu.hidden = !mobileMenu.hidden;
+			}
+			menuToggle.setAttribute("aria-expanded", String(!mobileMenu.classList.contains("hidden")));
 		});
 		const activate = (tab) => {
 			tabs.forEach((item) => {

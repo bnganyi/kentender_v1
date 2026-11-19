@@ -35,5 +35,9 @@ frontend.patches.v1_0.sync_public_page_headers_v07
 frontend.patches.v1_0.sync_public_page_headers_v08
 frontend.patches.v1_0.sync_public_page_headers_v09
 frontend.patches.v1_0.sync_public_page_headers_v10
+frontend.patches.v1_0.sync_public_page_headers_v11
+frontend.patches.v1_0.sync_public_page_headers_v12
+frontend.patches.v1_0.sync_public_page_headers_v13
+frontend.patches.v1_0.sync_public_page_headers_v13
 
 

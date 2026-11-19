@@ -27,6 +27,7 @@ def create_donor_industry_page():
 PAGE_HTML = r"""
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="/assets/frontend/css/public_site_header.css?v=5">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/frontend/css/public_profile_menu.css?v=1">
 
@@ -207,6 +208,7 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
           <a href="/industry/donor" class="dropdown-item">Donor Funded</a>
         </div>
       </div>
+      <a href="/manuals" class="text-gray-700 font-medium hover:text-blue-600">Manuals</a>
     </div>
 
     {% if frappe.session.user == 'Guest' %}
@@ -238,6 +240,10 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
       <a href="/about" class="block text-gray-700 font-medium py-2">About</a>
       <a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
       <a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
+      <a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
+      <a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
+      <a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
+      <a href="/manuals" class="block text-gray-700 font-medium py-2">Manuals</a>
       <a href="/app/home" class="btn-primary text-sm inline-block mt-2">Go to Dashboard</a>
       {% if frappe.session.user == 'Guest' %}
       <a href="/tenant_registration" class="btn-primary text-sm inline-block mt-2">Get Started</a>
@@ -258,8 +264,8 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
   <div class="container mx-auto px-6 relative z-10">
     <div class="max-w-8xl mx-auto text-center">
       <div class="animate-in mb-12">
-        <h1 class="text-3xl md:text-5xl mt-6 font-bold text-gray-600 mb-8 leading-tight">
-          Donor-Funded Procurement<br>&amp; Contract Administration Module
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6 leading-tight">
+          Donor-Funded <span class="text-blue-600">Procurement</span><br>&amp; Contract Administration Module
         </h1>
         <p class="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto">
           Manages procurement for donor-funded projects and programs
@@ -360,7 +366,10 @@ body:not(.loading) #loadingOverlay { opacity:0; pointer-events:none; }
 
   function updateTime() {
     var el = document.getElementById('live-time');
-    if (el) el.textContent = new Date().toLocaleString();
+    if (el) el.textContent = new Date().toLocaleString('en-GB', {
+      timeZone: 'Africa/Nairobi', weekday: 'short', day: '2-digit', month: 'short',
+      year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).replace(' at ', ', ');
   }
   updateTime(); setInterval(updateTime, 1000);
 

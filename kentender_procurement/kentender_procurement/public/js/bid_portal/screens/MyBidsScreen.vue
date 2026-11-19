@@ -12,7 +12,9 @@ import { usePagedRows } from "../../pager_shared/usePagedRows.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.get_my_bids";
 // Row commands the read may offer; each then opens the bid it changed.
-const COMMANDS = { prepare_replacement: "kentender_procurement.bid_submission.api.prepare_replacement_bid" };
+const COMMANDS = {
+	prepare_replacement: "kentender_procurement.bid_submission.api.prepare_replacement_bid",
+};
 const DEFAULT_OPTIONS = { status: [{ value: "", label: "All statuses" }] };
 
 const props = defineProps({ initial: { type: Object, default: null } });
@@ -33,12 +35,18 @@ const filters = ref(fromQuery(route.value.query));
 const data = ref(props.initial);
 const failure = ref("");
 const guard = portal.createSequenceGuard();
-const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.value = e.message) });
+const runner = portal.createCommandRunner(
+	{ ref },
+	{ onError: (e) => (failure.value = e.message) },
+);
 const pending = computed(() => runner.pending.value);
 
 const rows = computed(() => (data.value && data.value.rows) || []);
 // The table-pagination standard (AGENTS.md §6.11): the wide table and the narrow cards draw the same page.
-const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(rows, "portal-my-bids");
+const { pagedRows, total, page, pageSize, setPage, setPageSize, reset } = usePagedRows(
+	rows,
+	"portal-my-bids",
+);
 const options = computed(() => (data.value && data.value.options) || DEFAULT_OPTIONS);
 const filtered = computed(() => !!(filters.value.search || filters.value.status));
 
@@ -71,7 +79,15 @@ function runAction(row, action) {
 	failure.value = "";
 	return runner.run(async () => {
 		const key = `bds-${action.command}-${row.bid_reference}-${Date.now().toString(36)}`;
-		await portal.call(COMMANDS[action.command], { bid_reference: row.bid_reference, expected_record_version: action.record_version, idempotency_key: key }, { type: "POST" });
+		await portal.call(
+			COMMANDS[action.command],
+			{
+				bid_reference: row.bid_reference,
+				expected_record_version: action.record_version,
+				idempotency_key: key,
+			},
+			{ type: "POST" },
+		);
 		go(action.href);
 	}, action.label);
 }
@@ -102,91 +118,196 @@ onMounted(() => {
 	<div class="kt-page" data-testid="bds-my-bids">
 		<div class="kt-page-head" :class="{ 'bds-head-stack': narrow }">
 			<div class="bds-head-main">
-				<div class="bds-title-row"><h1 class="kt-page-title">{{ __("My bids") }}</h1></div>
-				<p class="kt-page-desc">{{ __("Continue your organisation's bids and view submission receipts.") }}</p>
+				<div class="bds-title-row">
+					<h1 class="kt-page-title">My <span class="bds-title-accent">Bids</span></h1>
+				</div>
+				<p class="kt-page-desc">
+					{{ __("Continue your organisation's bids and view submission receipts.") }}
+				</p>
 			</div>
 		</div>
 		<div>
 			<div class="bds-awarded-filter-heading">
-				<h2>{{ __("My bids filters") }}</h2>
-				<button type="button" class="bds-filter-toggle" :aria-expanded="filtersOpen" aria-controls="bds-bids-filter-panel" data-testid="bds-bids-filter-toggle" @click="filtersOpen = !filtersOpen">
-					{{ filtersOpen ? __("Hide Filters") : __("Show Filters") }}<span class="bds-filter-chevron" aria-hidden="true"></span>
+				<h2>{{ __("My Bids Filters") }}</h2>
+				<button
+					type="button"
+					class="bds-filter-toggle"
+					:aria-expanded="filtersOpen"
+					aria-controls="bds-bids-filter-panel"
+					data-testid="bds-bids-filter-toggle"
+					@click="filtersOpen = !filtersOpen"
+				>
+					{{ filtersOpen ? __("Hide Filters") : __("Show Filters")
+					}}<span class="bds-filter-chevron" aria-hidden="true"></span>
 				</button>
 			</div>
-			<div id="bds-bids-filter-panel" v-show="filtersOpen" class="bds-awarded-filter-panel" data-testid="bds-bids-filter-panel">
-				<form class="bds-awarded-form" role="search" :aria-label="__('Filter bids')" @submit.prevent="apply">
+			<div
+				id="bds-bids-filter-panel"
+				v-show="filtersOpen"
+				class="bds-awarded-filter-panel"
+				data-testid="bds-bids-filter-panel"
+			>
+				<form
+					class="bds-awarded-form"
+					role="search"
+					:aria-label="__('Filter bids')"
+					@submit.prevent="apply"
+				>
 					<div class="bds-awarded-fields bds-awarded-primary-fields">
 						<div class="field">
 							<label for="bds-bids-reference">{{ __("Ref. No.") }}</label>
-							<input id="bds-bids-reference" class="input" type="search" :placeholder="__('Enter KET reference')" disabled data-testid="bds-bids-reference-placeholder">
+							<input
+								id="bds-bids-reference"
+								class="input"
+								type="search"
+								:placeholder="__('Enter KET reference')"
+								data-testid="bds-bids-reference"
+							/>
 						</div>
 						<div class="field">
 							<label for="bds-bids-location">{{ __("Location") }}</label>
-							<select id="bds-bids-location" class="input" disabled data-testid="bds-bids-location-placeholder">
+							<select
+								id="bds-bids-location"
+								class="input"
+								data-testid="bds-bids-location"
+							>
 								<option>{{ __("All Locations") }}</option>
-								<option>Nairobi County</option><option>Mombasa County</option><option>Kisumu County</option><option>Kiambu County</option><option>Nakuru County</option>
+								<option>Nairobi County</option>
+								<option>Mombasa County</option>
+								<option>Kisumu County</option>
+								<option>Kiambu County</option>
+								<option>Nakuru County</option>
 							</select>
 						</div>
 						<div class="field">
 							<label for="bds-bids-financier">{{ __("Financier") }}</label>
-							<select id="bds-bids-financier" class="input" disabled data-testid="bds-bids-financier-placeholder">
+							<select
+								id="bds-bids-financier"
+								class="input"
+								data-testid="bds-bids-financier"
+							>
 								<option>{{ __("All Financiers") }}</option>
-								<option>World Bank</option><option>African Development Bank</option><option>European Union</option><option>Government of Kenya</option><option>USAID</option>
+								<option>World Bank</option>
+								<option>African Development Bank</option>
+								<option>European Union</option>
+								<option>Government of Kenya</option>
+								<option>USAID</option>
 							</select>
 						</div>
 						<div class="field bds-keyword-field">
 							<label for="bds-bids-search">{{ __("Search Keywords") }}</label>
-							<input id="bds-bids-search" v-model="filters.search" class="input" type="search" :placeholder="__('Tender or bid')" data-testid="bds-bids-search" @input="onSearch" @keydown.enter.prevent="apply">
-							<label class="bds-exact-label" for="bds-bids-exact"><input id="bds-bids-exact" type="checkbox" disabled data-testid="bds-bids-exact-placeholder">{{ __("Exact match only") }}</label>
+							<input
+								id="bds-bids-search"
+								v-model="filters.search"
+								class="input"
+								type="search"
+								:placeholder="__('Tender or bid')"
+								data-testid="bds-bids-search"
+								@input="onSearch"
+								@keydown.enter.prevent="apply"
+							/>
 						</div>
 					</div>
 					<div class="bds-awarded-fields bds-awarded-date-fields">
 						<div class="field">
-							<label for="bds-bids-award-from">{{ __("Award Date From") }}</label>
-							<input id="bds-bids-award-from" class="input" type="date" disabled data-testid="bds-bids-award-from-placeholder">
+							<label for="bds-bids-created-from">{{
+								__("Tender Creation Date From")
+							}}</label>
+							<input
+								id="bds-bids-created-from"
+								class="input"
+								type="date"
+								disabled
+								data-testid="bds-bids-created-from-placeholder"
+							/>
 						</div>
 						<div class="field">
-							<label for="bds-bids-award-to">{{ __("Award Date To") }}</label>
-							<input id="bds-bids-award-to" class="input" type="date" disabled data-testid="bds-bids-award-to-placeholder">
+							<label for="bds-bids-created-to">{{
+								__("Tender Creation Date To")
+							}}</label>
+							<input
+								id="bds-bids-created-to"
+								class="input"
+								type="date"
+								disabled
+								data-testid="bds-bids-created-to-placeholder"
+							/>
 						</div>
 						<div class="field">
-							<label for="bds-bids-contract-from">{{ __("Contract Start From") }}</label>
-							<input id="bds-bids-contract-from" class="input" type="date" disabled data-testid="bds-bids-contract-from-placeholder">
+							<label for="bds-bids-expiry-from">{{
+								__("Tender Expiry Date From")
+							}}</label>
+							<input
+								id="bds-bids-expiry-from"
+								class="input"
+								type="date"
+								disabled
+								data-testid="bds-bids-expiry-from-placeholder"
+							/>
 						</div>
 						<div class="field">
-							<label for="bds-bids-contract-to">{{ __("Contract End To") }}</label>
-							<input id="bds-bids-contract-to" class="input" type="date" disabled data-testid="bds-bids-contract-to-placeholder">
-						</div>
-						<div class="field">
-							<label for="bds-bids-value">{{ __("Value Range") }}</label>
-							<select id="bds-bids-value" class="input" disabled data-testid="bds-bids-value-placeholder">
-								<option>{{ __("Any Value") }}</option>
-								<option>Under KES 10M</option><option>KES 10M - 50M</option><option>KES 50M - 200M</option><option>Over KES 200M</option>
-							</select>
+							<label for="bds-bids-expiry-to">{{
+								__("Tender Expiry Date To")
+							}}</label>
+							<input
+								id="bds-bids-expiry-to"
+								class="input"
+								type="date"
+								disabled
+								data-testid="bds-bids-expiry-to-placeholder"
+							/>
 						</div>
 					</div>
 					<div class="bds-awarded-fields bds-awarded-live-fields">
 						<div class="field">
 							<label for="bds-bids-status">{{ __("Status") }}</label>
-							<select id="bds-bids-status" v-model="filters.status" class="input" data-testid="bds-bids-status" @change="apply">
-								<option v-for="o in options.status" :key="'s' + o.value" :value="o.value">{{ __(o.label) }}</option>
+							<select
+								id="bds-bids-status"
+								v-model="filters.status"
+								class="input"
+								data-testid="bds-bids-status"
+								@change="apply"
+							>
+								<option
+									v-for="o in options.status"
+									:key="'s' + o.value"
+									:value="o.value"
+								>
+									{{ __(o.label) }}
+								</option>
 							</select>
 						</div>
 					</div>
 					<div class="bds-awarded-actions">
-						<button type="submit" class="btn btn-primary">{{ __("Search My Bids") }}</button>
-						<button type="button" class="btn btn-secondary" data-testid="bds-bids-clear" @click="clearFilters">{{ __("Reset Filters") }}</button>
+						<button type="submit" class="btn btn-primary">
+							{{ __("Search My Bids") }}
+						</button>
+						<button
+							type="button"
+							class="btn btn-secondary"
+							data-testid="bds-bids-clear"
+							@click="clearFilters"
+						>
+							{{ __("Reset Filters") }}
+						</button>
 					</div>
 				</form>
 			</div>
 
-			<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">
+			<div
+				v-if="failure"
+				class="kt-notice is-critical bds-load-failure"
+				role="alert"
+				data-testid="bds-load-failure"
+			>
 				<div class="kt-notice-body">{{ failure }}</div>
-				<button type="button" class="btn btn-secondary" @click="load">{{ __("Try again") }}</button>
+				<button type="button" class="btn btn-secondary" @click="load">
+					{{ __("Try again") }}
+				</button>
 			</div>
 
 			<template v-if="rows.length">
-				<table v-if="!narrow" class="table" data-testid="bds-bids-table">
+				<table v-if="false" class="table" data-testid="bds-bids-table">
 					<thead>
 						<tr>
 							<th>{{ __("Tender") }}</th>
@@ -198,48 +319,169 @@ onMounted(() => {
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in pagedRows" :key="row.bid_reference" :data-testid="'bds-bid-row-' + row.bid_reference">
-							<td class="bds-tender-cell">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div><div v-for="a in row.alerts" :key="a.title" class="bds-row-alert"><a :href="a.href" data-testid="bds-bid-alert">{{ __(a.title) }}</a></div></td>
-							<td><span class="bds-nowrap">{{ row.bid_reference }}</span><div v-if="row.version_label" class="kt-label">{{ row.version_label }}</div></td>
-							<td><span class="kt-status" :class="tone(row)">{{ row.status_label }}</span></td>
+						<tr
+							v-for="row in pagedRows"
+							:key="row.bid_reference"
+							:data-testid="'bds-bid-row-' + row.bid_reference"
+						>
+							<td class="bds-tender-cell">
+								{{ row.tender_title }}
+								<div class="kt-label bds-tender-ref">
+									{{ row.tender_reference }}
+								</div>
+								<div v-for="a in row.alerts" :key="a.title" class="bds-row-alert">
+									<a :href="a.href" data-testid="bds-bid-alert">{{
+										__(a.title)
+									}}</a>
+								</div>
+							</td>
+							<td>
+								<span class="bds-nowrap">{{ row.bid_reference }}</span>
+								<div v-if="row.version_label" class="kt-label">
+									{{ row.version_label }}
+								</div>
+							</td>
+							<td>
+								<span class="kt-status" :class="tone(row)">{{
+									row.status_label
+								}}</span>
+							</td>
 							<td>{{ row.deadline_label }}</td>
 							<td>{{ row.updated_label }}</td>
 							<td>
 								<div class="bds-row-actions">
 									<template v-for="(a, i) in row.actions" :key="a.label">
-										<button v-if="a.command" type="button" class="btn" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :disabled="pending" :data-testid="'bds-bid-action-' + i" @click="runAction(row, a)">{{ __(a.label) }}</button>
-										<a v-else :href="a.href" class="btn" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :data-testid="'bds-bid-action-' + i">{{ __(a.label) }}</a>
+										<button
+											v-if="a.command"
+											type="button"
+											class="btn"
+											:class="i === 0 ? 'btn-primary' : 'btn-secondary'"
+											:disabled="pending"
+											:data-testid="'bds-bid-action-' + i"
+											@click="runAction(row, a)"
+										>
+											{{ __(a.label) }}
+										</button>
+										<a
+											v-else
+											:href="a.href"
+											class="btn"
+											:class="i === 0 ? 'btn-primary' : 'btn-secondary'"
+											:data-testid="'bds-bid-action-' + i"
+											>{{ __(a.label) }}</a
+										>
 									</template>
 								</div>
 							</td>
 						</tr>
 					</tbody>
 				</table>
-				<div v-else data-testid="bds-bids-cards">
-					<div v-for="row in pagedRows" :key="row.bid_reference" class="bds-card" :data-testid="'bds-bid-row-' + row.bid_reference">
-						<div class="bds-card-title">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div><div v-for="a in row.alerts" :key="a.title" class="bds-row-alert"><a :href="a.href" data-testid="bds-bid-alert">{{ __(a.title) }}</a></div></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Bid") }}</span><span>{{ row.bid_reference }}</span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="tone(row)">{{ row.status_label }}</span></span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Submission deadline") }}</span><span>{{ row.deadline_label }}</span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Last updated") }}</span><span>{{ row.updated_label }}</span></div>
-						<div class="bds-card-actions">
-							<div class="bds-row-actions">
-								<template v-for="(a, i) in row.actions" :key="a.label">
-									<button v-if="a.command" type="button" class="btn bds-btn-touch" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :disabled="pending" :data-testid="'bds-bid-action-' + i" @click="runAction(row, a)">{{ __(a.label) }}</button>
-									<a v-else :href="a.href" class="btn bds-btn-touch" :class="i === 0 ? 'btn-primary' : 'btn-secondary'" :data-testid="'bds-bid-action-' + i">{{ __(a.label) }}</a>
-								</template>
+				<div class="bds-tender-card-list" data-testid="bds-bids-cards">
+					<article
+						v-for="row in pagedRows"
+						:key="row.bid_reference"
+						class="bds-card"
+						:data-testid="'bds-bid-row-' + row.bid_reference"
+					>
+						<div class="bds-card-top">
+							<div class="bds-card-badges">
+								<span class="bds-badge bds-badge-category">{{
+									row.status_label
+								}}</span>
+								<span class="bds-badge bds-badge-published">{{
+									row.version_label || __("Bid")
+								}}</span>
+							</div>
+							<div class="bds-card-deadline">
+								<span>{{ __("Submission Deadline:") }}</span
+								><strong>{{ row.deadline_label }}</strong>
 							</div>
 						</div>
-					</div>
+						<h3 class="bds-card-title">{{ row.tender_title }}</h3>
+						<div class="bds-card-meta">
+							<div class="bds-card-facts">
+								<div class="bds-card-fact">
+									<span>{{ __("Reference") }}</span
+									><strong>{{ row.tender_reference }}</strong>
+								</div>
+								<div class="bds-card-fact">
+									<span>{{ __("Bid") }}</span
+									><strong>{{ row.bid_reference }}</strong>
+								</div>
+								<div class="bds-card-fact">
+									<span>{{ __("Status") }}</span
+									><strong>{{ row.status_label }}</strong>
+								</div>
+								<div class="bds-card-fact">
+									<span>{{ __("Last updated") }}</span
+									><strong>{{ row.updated_label }}</strong>
+								</div>
+							</div>
+							<div class="bds-card-actions">
+								<div class="bds-row-actions">
+									<template v-for="(a, i) in row.actions" :key="a.label">
+										<button
+											v-if="a.command"
+											type="button"
+											class="btn bds-btn-touch"
+											:class="i === 0 ? 'btn-primary' : 'btn-secondary'"
+											:disabled="pending"
+											:data-testid="'bds-bid-action-' + i"
+											@click="runAction(row, a)"
+										>
+											{{ __(a.label) }} <span aria-hidden="true">→</span>
+										</button>
+										<a
+											v-else
+											:href="a.href"
+											class="btn bds-btn-touch"
+											:class="i === 0 ? 'btn-primary' : 'btn-secondary'"
+											:data-testid="'bds-bid-action-' + i"
+											>{{ __(a.label) }} <span aria-hidden="true">→</span></a
+										>
+									</template>
+								</div>
+							</div>
+						</div>
+					</article>
 				</div>
-				<TablePagerHost :total="total" :page="page" :page-size="pageSize" noun="bid" @update:page="setPage" @update:page-size="setPageSize" />
+				<TablePagerHost
+					:total="total"
+					:page="page"
+					:page-size="pageSize"
+					noun="bid"
+					@update:page="setPage"
+					@update:page-size="setPageSize"
+				/>
 			</template>
 			<div v-else-if="data" class="kt-empty" data-testid="bds-bids-empty">
-				<p class="bds-empty-text">{{ filtered ? __("No bids match these filters.") : data.empty_text }}</p>
-				<button v-if="filtered" type="button" class="btn btn-secondary" :class="{ 'bds-btn-touch': narrow }" @click="clearFilters">{{ __("Clear filters") }}</button>
-				<a v-else href="/tenders" class="btn btn-primary" :class="{ 'bds-btn-touch': narrow }" data-testid="bds-bids-view-tenders">{{ __("View Tenders") }}</a>
+				<p class="bds-empty-text">
+					{{ filtered ? __("No bids match these filters.") : data.empty_text }}
+				</p>
+				<button
+					v-if="filtered"
+					type="button"
+					class="btn btn-secondary"
+					:class="{ 'bds-btn-touch': narrow }"
+					@click="clearFilters"
+				>
+					{{ __("Clear filters") }}
+				</button>
+				<a
+					v-else
+					href="/tenders"
+					class="btn btn-primary"
+					:class="{ 'bds-btn-touch': narrow }"
+					data-testid="bds-bids-view-tenders"
+					>{{ __("View Tenders") }}</a
+				>
 			</div>
-			<div v-else-if="!failure" class="bds-skeleton" aria-hidden="true" data-testid="bds-bids-loading"></div>
+			<div
+				v-else-if="!failure"
+				class="bds-skeleton"
+				aria-hidden="true"
+				data-testid="bds-bids-loading"
+			></div>
 		</div>
 	</div>
 </template>
