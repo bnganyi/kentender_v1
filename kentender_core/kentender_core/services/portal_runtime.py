@@ -130,8 +130,11 @@ def identity(principal: str) -> dict[str, str] | None:
 
 def sign_in_url(path: str, query: str = "") -> str:
 	target = normalise(path) + (f"?{query}" if query else "")
-	return f"/login?redirect-to={quote(target, safe='')}"
-
+	try:
+		origin = frappe.request.url_root.rstrip("/")
+	except AttributeError:
+		origin = frappe.utils.get_url().rstrip("/")
+	return f"{origin}/login?redirect-to={quote(target, safe='')}"
 
 def resolve(path: str, *, query: dict[str, Any] | None = None, query_string: str = "", user: str | None = None) -> dict[str, Any]:
 	"""The whole server-side answer for one portal request: the surface, the

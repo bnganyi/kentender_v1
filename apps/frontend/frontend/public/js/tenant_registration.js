@@ -17,6 +17,10 @@
 	const countryInput = document.getElementById("country");
 	const passwordInput = document.getElementById("password");
 	const confirmPasswordInput = document.getElementById("confirm_password");
+	const tenantLogoInput = document.getElementById("tenant_logo");
+	const tenantLogoPlaceholder = document.getElementById("tenant-logo-placeholder");
+	let tenantLogoUrl = "";
+	let tenantLogoPreviewUrl = "";
 
 	const administratorNameInput = document.getElementById("administrator_name");
 	const passwordStrengthFeedback = document.getElementById("password-strength-feedback");
@@ -300,6 +304,40 @@
 		smsOtpPanel.hidden = true;
 		updateSubmit();
 	}
+
+	tenantLogoInput?.addEventListener("change", () => {
+		const file = tenantLogoInput.files?.[0];
+		if (!file) {
+			tenantLogoUrl = "";
+			if (tenantLogoPreviewUrl) URL.revokeObjectURL(tenantLogoPreviewUrl);
+			tenantLogoPreviewUrl = "";
+			tenantLogoPlaceholder.replaceChildren();
+			const label = document.createElement("span");
+			label.textContent = "Tenant logo placeholder";
+			tenantLogoPlaceholder.append(label);
+			return;
+		}
+
+		const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
+		if (!allowedTypes.has(file.type)) {
+			tenantLogoInput.value = "";
+			showToast("Choose a PNG, JPG, WEBP, or SVG logo.", "error");
+			return;
+		}
+		if (file.size > 2 * 1024 * 1024) {
+			tenantLogoInput.value = "";
+			showToast("The tenant logo must be 2 MB or smaller.", "error");
+			return;
+		}
+
+		if (tenantLogoPreviewUrl) URL.revokeObjectURL(tenantLogoPreviewUrl);
+		tenantLogoPreviewUrl = URL.createObjectURL(file);
+		tenantLogoPlaceholder.replaceChildren();
+		const preview = document.createElement("img");
+		preview.src = tenantLogoPreviewUrl;
+		preview.alt = "Tenant logo preview";
+		tenantLogoPlaceholder.append(preview);
+	});
 
 	async function callApi(method, args) {
 		const response = await fetch(`/api/method/${method}`, {
@@ -651,8 +689,27 @@
 
 		const args = Object.fromEntries(new FormData(form).entries());
 		delete args.confirm_password;
+		delete args.tenant_logo;
+		if (tenantLogoUrl) args.logo_url = tenantLogoUrl;
 
 		try {
+			const logoFile = tenantLogoInput?.files?.[0];
+			if (logoFile) {
+				const base64 = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result);
+					reader.onerror = () => reject(reader.error);
+					reader.readAsDataURL(logoFile);
+				});
+				const uploaded = await callApi("frontend.api.tenant_registration.upload_tenant_logo", {
+					verification_token: tokenField.value,
+					filename: logoFile.name,
+					content: base64,
+				});
+				tenantLogoUrl = uploaded.file_url;
+				args.logo_url = tenantLogoUrl;
+			}
+
 			const result = await callApi("frontend.api.tenant_registration.register_tenant", args);
 
 			showMessage(result.message, "success", true);

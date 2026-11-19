@@ -91,6 +91,12 @@
       "unique": 1
     },
     {
+      "fieldname": "logo_url",
+      "label": "Tenant Logo",
+      "fieldtype": "Attach",
+      "reqd": 0
+    },
+    {
       "fieldname": "status_token",
       "label": "Public Status Token",
       "fieldtype": "Data",

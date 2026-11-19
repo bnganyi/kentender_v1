@@ -146,7 +146,11 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 	elif bid:
 		action = {"kind": "view_bid", "label": "View bid", "href": bid["href"]}
 	elif state == "open" and not signed_in:
-		action = {"kind": "sign_in", "label": "Sign in to start bid", "href": f"/login?redirect-to={href}"}
+		try:
+			tenant_origin = frappe.request.url_root.rstrip("/")
+		except AttributeError:
+			tenant_origin = frappe.utils.get_url().rstrip("/")
+		action = {"kind": "sign_in", "label": "Sign in to start bid", "href": f"{tenant_origin}/login?redirect-to={href}"}
 	elif state == "open" and not assignment:
 		action = {"kind": "set_up_account", "label": "Set up your supplier account", "href": "/account"}
 	elif state == "open":
@@ -196,8 +200,11 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 				action, start = None, None
 	actions = release_actions or ([{**action, "tone": "secondary" if action["kind"] == "view_notice" else "primary"}] if action else [])
 	if action and action["kind"] == "sign_in" and not release_actions and _signup_enabled():
-		# a new supplier has no login yet: the sign-up form of the same login page, back to this Tender
-		actions.append({"kind": "create_login", "label": "New supplier? Create a login", "href": f"{action['href']}#signup", "tone": "secondary"})
+		try:
+			tenant_origin = frappe.request.url_root.rstrip("/")
+		except AttributeError:
+			tenant_origin = frappe.utils.get_url().rstrip("/")
+		actions.append({"kind": "create_login", "label": "New supplier? Create a login", "href": f"{tenant_origin}/account/register", "tone": "secondary"})
 	candidate = bool(bid) and frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", bid["bid_reference"], "bidder_arrangement"), "status") == "Active"
 	clarification_deadline = labels.datetime_label(published.get("clarification_deadline"))
 	from kentender_procurement.bid_submission.services import clarification as own_clarification

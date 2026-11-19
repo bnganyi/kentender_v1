@@ -717,6 +717,7 @@ def _provision_registration_locked(registration_name):
         "financial_year_start": (
             doc.financial_year_start or "07-01"
         ),
+        "logo_url": doc.logo_url or "",
         "abbr": (
             frappe.conf.get("tenant_registration_company_abbr")
             or "KT"

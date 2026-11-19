@@ -133,34 +133,6 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 .tender-results-state { border: 1px solid #e1e7ee; }
 .tender-load-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #f1c7c7; background: #fff7f7; color: #8f2424; }
 .tender-results-state[hidden], .tender-load-error[hidden] { display: none !important; }
-#tender-detail-modal { width: min(920px, calc(100vw - 32px)); max-width: none; max-height: min(88vh, 900px); margin: auto; padding: 0; overflow: visible; border: 0; border-radius: 16px; background: transparent; color: #1f2937; }
-#tender-detail-modal::backdrop { background: rgba(10,25,41,.6); backdrop-filter: blur(3px); }
-.tender-modal-shell { display: flex; max-height: min(88vh, 900px); flex-direction: column; overflow: hidden; border: 1px solid #e1e7ee; border-radius: 16px; background: #fff; box-shadow: 0 24px 70px rgba(10,25,41,.28); }
-.tender-modal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 24px; border-bottom: 1px solid #e5e7eb; }
-.tender-modal-header h2 { margin: 10px 0 8px; color: #1f2937; font-size: 24px; line-height: 1.3; }
-.tender-modal-description { margin: 0; color: #4b5563; line-height: 1.5; }
-.tender-modal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.tender-modal-actions[hidden] { display: none !important; }
-.tender-modal-close { display: grid; width: 40px; height: 40px; flex: none; place-items: center; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; color: #374151; cursor: pointer; }
-.tender-modal-close:hover { border-color: #2563eb; color: #2563eb; }
-.tender-modal-content { display: grid; gap: 20px; overflow: auto; padding: 24px; }
-.tender-modal-section { padding: 18px; border: 1px solid #e5eaf0; border-radius: 10px; background: #fff; }
-.tender-modal-section h3 { margin: 0 0 14px; color: #1f2937; font-size: 17px; }
-.tender-modal-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
-.tender-modal-fact-label { display: block; margin-bottom: 4px; color: #667085; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-.tender-modal-fact-value { color: #1f2937; font-size: 14px; overflow-wrap: anywhere; }
-.tender-modal-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.tender-modal-list-item { display: grid; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid #eef0f3; }
-.tender-modal-list-item:last-child { padding-bottom: 0; border-bottom: 0; }
-.tender-modal-document { grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 16px; }
-.tender-modal-list-title { color: #1f2937; font-weight: 600; }
-.tender-modal-list-meta { color: #667085; font-size: 13px; }
-.tender-modal-links { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; font-weight: 600; }
-.tender-modal-links a { color: #126ac2; text-decoration: none; }
-.tender-modal-links a:hover { color: #0047ab; text-decoration: underline; text-underline-offset: 3px; }
-.tender-modal-answer { display: grid; gap: 5px; }
-.tender-modal-answer + .tender-modal-answer { margin-top: 14px; padding-top: 14px; border-top: 1px solid #eef0f3; }
-@media (max-width: 600px) { #tender-detail-modal { width: calc(100vw - 20px); max-height: 92vh; } .tender-modal-shell { max-height: 92vh; } .tender-modal-header, .tender-modal-content { padding: 18px; } .tender-modal-facts { grid-template-columns: 1fr; gap: 12px; } .tender-modal-header h2 { font-size: 20px; } .tender-modal-document { grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; } .tender-modal-document .tender-modal-list-meta { grid-column: 1; } .tender-modal-document .tender-modal-links { grid-column: 2; grid-row: 1 / span 2; } }
 #all-tenders-footer { padding: 28px 16px; background: #0b1f3b; color: #fff; }
 .footer-inner { width: min(1200px, 100%); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
@@ -257,21 +229,6 @@ select option { background-color: #f3f4f6; color: #1f2937; }
   </div>
 </main>
 
-<dialog id="tender-detail-modal" aria-labelledby="tender-detail-title" aria-describedby="tender-detail-description">
-  <div class="tender-modal-shell">
-    <header class="tender-modal-header">
-      <div>
-        <span id="tender-detail-status" class="badge badge-active" hidden></span>
-        <h2 id="tender-detail-title">Tender details</h2>
-        <p id="tender-detail-description" class="tender-modal-description"></p>
-        <div id="tender-detail-actions" class="tender-modal-actions" role="group" aria-label="Tender actions" hidden></div>
-      </div>
-      <button id="tender-modal-close" class="tender-modal-close" type="button" aria-label="Close tender details"><i class="fas fa-times" aria-hidden="true"></i></button>
-    </header>
-    <div id="tender-detail-content" class="tender-modal-content" aria-live="polite"></div>
-  </div>
-</dialog>
-
 <button id="scrollTop" class="neon-glow" type="button" aria-label="Back to top"><i class="fas fa-arrow-up text-2xl" aria-hidden="true"></i></button>
 
 <footer class="bg-[#0b1f3b] text-white pt-16 pb-8 mt-16">
@@ -312,6 +269,6 @@ select option { background-color: #f3f4f6; color: #1f2937; }
   scrollTop.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 })();
 </script>
-<script src="/assets/frontend/js/all_tenders.js?v=8"></script>
+<script src="/assets/frontend/js/all_tenders.js?v=10"></script>
 <script src="/assets/frontend/js/public_profile_menu.js?v=1"></script>
 """

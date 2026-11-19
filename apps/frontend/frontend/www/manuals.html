@@ -2,7 +2,7 @@
 {% block page_content %}
 <script src="https://cdn.tailwindcss.com"></script>
 <link
-	href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap"
+	href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
 	rel="stylesheet"
 />
 <link rel="stylesheet" href="/assets/frontend/css/public_site_header.css?v=5" />
@@ -180,16 +180,17 @@
 	.manuals-intro h1 {
 		margin: 0;
 		color: #203044;
-		font-size: 34px;
+		font-size: 48px;
 		font-weight: 800;
 		line-height: 1.15;
 	}
 	.manuals-intro p {
-		max-width: 700px;
+		max-width: 768px;
 		margin: 10px auto 0;
-		color: var(--muted);
-		font-size: 15px;
-		line-height: 1.55;
+		color: #4b5563;
+		font-size: 24px;
+		font-weight: 400;
+		line-height: 1.5;
 	}
 	.manuals-content {
 		box-sizing: border-box;
@@ -248,13 +249,14 @@
 	.manuals-guide-head h2 {
 		margin: 0;
 		color: #203044;
-		font-size: 21px;
+		font-size: 24px;
 		font-weight: 800;
 	}
 	.manuals-guide-head p {
 		margin: 6px 0 0;
-		color: var(--muted);
-		font-size: 13px;
+		color: #4b5563;
+		font-size: 18px;
+		line-height: 1.5;
 	}
 	.manuals-cta {
 		flex: none;
@@ -321,13 +323,13 @@
 	.manuals-steps h3 {
 		margin: 2px 0 4px;
 		color: #25364a;
-		font-size: 14px;
+		font-size: 20px;
 		font-weight: 700;
 	}
 	.manuals-steps p {
 		margin: 0;
-		color: #5d6b7b;
-		font-size: 13px;
+		color: #4b5563;
+		font-size: 16px;
 		line-height: 1.55;
 	}
 	.manuals-note {
@@ -340,12 +342,12 @@
 	.manuals-note h3 {
 		margin: 0 0 7px;
 		color: #235a42;
-		font-size: 13px;
+		font-size: 18px;
 		font-weight: 800;
 	}
 	.manuals-note p {
 		margin: 0;
-		font-size: 12px;
+		font-size: 16px;
 		line-height: 1.55;
 	}
 	.manuals-note p + p {
@@ -443,57 +445,109 @@
 			<div class="absolute inset-0 pattern-dots opacity-30"></div>
 			<div class="container mx-auto px-4 py-2 relative z-10">
 				<div class="flex items-center gap-4 text-sm">
-					<span class="mono"><i class="far fa-clock mr-2"></i><span id="live-time">Loading...</span></span>
+					<span class="mono"
+						><i class="far fa-clock mr-2"></i
+						><span id="live-time">Loading...</span></span
+					>
 					<span class="hidden md:inline">|</span>
-					<span class="hidden md:inline"><i class="fas fa-phone mr-2"></i>+254 700 000 000</span>
+					<span class="hidden md:inline"
+						><i class="fas fa-phone mr-2"></i>+254 700 000 000</span
+					>
 				</div>
 			</div>
 		</div>
 
 		<nav class="container mx-auto px-4 py-4 flex items-center justify-between">
 			<a href="/" class="flex items-center">
-				<img src="https://ik.imagekit.io/kltovsgah/kentender_logo.png" alt="KenyaTenders" class="h-12 object-contain">
+				<img
+					src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
+					alt="KenyaTenders"
+					class="h-12 object-contain"
+				/>
 			</a>
 
 			<div id="mainNav">
-				<a href="/" class="text-gray-700 font-medium hover:text-blue-600 transition-colors">Home</a>
-				<a href="/about" class="text-gray-700 font-medium hover:text-blue-600 transition-colors">About</a>
+				<a href="/" class="text-gray-700 font-medium hover:text-blue-600 transition-colors"
+					>Home</a
+				>
+				<a
+					href="/about"
+					class="text-gray-700 font-medium hover:text-blue-600 transition-colors"
+					>About</a
+				>
 				<div class="dropdown">
-					<button class="dropdown-toggle" type="button">Tenders <i class="fas fa-chevron-down dropdown-arrow"></i></button>
+					<button class="dropdown-toggle" type="button">
+						Tenders <i class="fas fa-chevron-down dropdown-arrow"></i>
+					</button>
 					<div class="dropdown-menu">
 						<a href="/all-tenders" class="dropdown-item">All Tenders</a>
 						<a href="/contracts" class="dropdown-item">Awarded Contracts</a>
 					</div>
 				</div>
 				<div class="dropdown">
-					<button class="dropdown-toggle" type="button">Industries <i class="fas fa-chevron-down dropdown-arrow"></i></button>
+					<button class="dropdown-toggle" type="button">
+						Industries <i class="fas fa-chevron-down dropdown-arrow"></i>
+					</button>
 					<div class="dropdown-menu">
 						<a href="/industry/public" class="dropdown-item">Public Sector</a>
 						<a href="/industry/private" class="dropdown-item">Private Sector</a>
 						<a href="/industry/donor" class="dropdown-item">Donor Funded</a>
 					</div>
 				</div>
-				<a href="/manuals" class="text-gray-700 font-medium hover:text-blue-600 transition-colors" aria-current="page">Manuals</a>
+				<a
+					href="/manuals"
+					class="text-gray-700 font-medium hover:text-blue-600 transition-colors"
+					aria-current="page"
+					>Manuals</a
+				>
 			</div>
 
 			<div id="kt-header-actions" class="kt-header-actions">
-				<a href="/app/home" id="kt-dashboard-button" class="kt-action-button" style="width:180px;height:49px;min-height:49px">
+				<a
+					href="/app/home"
+					id="kt-dashboard-button"
+					class="kt-action-button"
+					style="width: 180px; height: 49px; min-height: 49px"
+				>
 					<i class="fas fa-table-columns"></i><span>Go to Dashboard</span>
 				</a>
 				{% if frappe.session.user == 'Guest' %}
-				<a href="/tenant_registration" id="kt-start-trial" class="kt-action-button" style="width:141px;height:49px;min-height:49px">
+				<a
+					href="/tenant_registration"
+					id="kt-start-trial"
+					class="kt-action-button"
+					style="width: 141px; height: 49px; min-height: 49px"
+				>
 					<i class="fas fa-rocket"></i><span>Get Started</span>
 				</a>
 				{% else %}
 				<div class="kt-profile-wrap">
-					<button type="button" id="kt-profile-button" aria-haspopup="menu" aria-expanded="false">
-						<span class="kt-profile-avatar" aria-hidden="true">{{ frappe.session.user[0:1]|upper }}</span>
+					<button
+						type="button"
+						id="kt-profile-button"
+						aria-haspopup="menu"
+						aria-expanded="false"
+					>
+						<span class="kt-profile-avatar" aria-hidden="true"
+							>{{ frappe.session.user[0:1]|upper }}</span
+						>
 						<span>{{ frappe.session.user }}</span>
 						<i class="fas fa-chevron-down kt-profile-chevron"></i>
 					</button>
 					<div id="kt-profile-menu" role="menu" hidden>
-						<a href="/account" role="menuitem"><i class="fas fa-user"></i><span>Profile</span></a>
-						<button type="button" role="menuitem" onclick="frappe.logout(); return false;"><i class="fas fa-right-from-bracket"></i><span>Log out</span></button>
+						<a href="/account" role="menuitem"
+							><i class="fas fa-user"></i><span>Profile</span></a
+						>
+						<button
+							type="button"
+							role="menuitem"
+							onclick="
+								frappe.logout();
+								return false;
+							"
+						>
+							<i class="fas fa-right-from-bracket"></i><span>Log out</span>
+						</button>
 					</div>
 				</div>
 				{% endif %}
@@ -509,14 +563,26 @@
 				<a href="/" class="block text-gray-700 font-medium py-2">Home</a>
 				<a href="/about" class="block text-gray-700 font-medium py-2">About</a>
 				<a href="/all-tenders" class="block text-gray-700 font-medium py-2">All Tenders</a>
-				<a href="/contracts" class="block text-gray-700 font-medium py-2">Awarded Contracts</a>
-				<a href="/industry/public" class="block text-gray-700 font-medium py-2">Public Sector</a>
-				<a href="/industry/private" class="block text-gray-700 font-medium py-2">Private Sector</a>
-				<a href="/industry/donor" class="block text-gray-700 font-medium py-2">Donor Funded</a>
+				<a href="/contracts" class="block text-gray-700 font-medium py-2"
+					>Awarded Contracts</a
+				>
+				<a href="/industry/public" class="block text-gray-700 font-medium py-2"
+					>Public Sector</a
+				>
+				<a href="/industry/private" class="block text-gray-700 font-medium py-2"
+					>Private Sector</a
+				>
+				<a href="/industry/donor" class="block text-gray-700 font-medium py-2"
+					>Donor Funded</a
+				>
 				<a href="/manuals" class="block text-gray-700 font-medium py-2">Manuals</a>
-				<a href="/app/home" class="kt-action-button"><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a>
+				<a href="/app/home" class="kt-action-button"
+					><i class="fas fa-table-columns"></i><span>Go to Dashboard</span></a
+				>
 				{% if frappe.session.user == 'Guest' %}
-				<a href="/tenant_registration" class="kt-action-button"><i class="fas fa-rocket"></i><span>Get Started</span></a>
+				<a href="/tenant_registration" class="kt-action-button"
+					><i class="fas fa-rocket"></i><span>Get Started</span></a
+				>
 				{% endif %}
 			</div>
 		</div>
@@ -717,8 +783,11 @@
 	(() => {
 		const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
 		const dropdowns = Array.from(document.querySelectorAll(".manuals-nav .dropdown"));
-		const menuToggle = document.getElementById("mobileMenuBtn") || document.getElementById("manuals-mobile-toggle");
-		const mobileMenu = document.getElementById("mobileMenu") || document.getElementById("manuals-mobile-nav");
+		const menuToggle =
+			document.getElementById("mobileMenuBtn") ||
+			document.getElementById("manuals-mobile-toggle");
+		const mobileMenu =
+			document.getElementById("mobileMenu") || document.getElementById("manuals-mobile-nav");
 		dropdowns.forEach((dropdown) => {
 			const button = dropdown.querySelector(".dropdown-toggle");
 			button.addEventListener("click", (event) => {
@@ -754,7 +823,10 @@
 			} else if (mobileMenu) {
 				mobileMenu.hidden = !mobileMenu.hidden;
 			}
-			menuToggle.setAttribute("aria-expanded", String(!mobileMenu.classList.contains("hidden")));
+			menuToggle.setAttribute(
+				"aria-expanded",
+				String(!mobileMenu.classList.contains("hidden")),
+			);
 		});
 		const activate = (tab) => {
 			tabs.forEach((item) => {

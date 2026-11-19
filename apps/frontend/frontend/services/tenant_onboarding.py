@@ -19,6 +19,7 @@ def initialize_tenant(
     phone=None,
     currency=None,
     financial_year_start="07-01",
+    logo_url="",
     abbr="KT",
 ):
     """Create the tenant company and named System Manager user."""
@@ -96,6 +97,15 @@ def initialize_tenant(
         # This field can vary by ERPNext version/setup; company and user creation
         # are the essential onboarding operations.
         pass
+
+    logo_url = (logo_url or "").strip()
+    if logo_url and (logo_url.startswith("/") or logo_url.startswith(("http://", "https://"))):
+        try:
+            website_settings = frappe.get_single("Website Settings")
+            website_settings.app_logo = logo_url
+            website_settings.save(ignore_permissions=True)
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "Tenant logo application failed")
 
     frappe.db.commit()
     return {"company": company_name, "administrator": email}

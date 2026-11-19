@@ -1,4 +1,5 @@
 import re
+import base64
 import secrets
 import hashlib
 from datetime import datetime
@@ -6,6 +7,7 @@ from datetime import datetime
 import frappe
 from frappe import _
 from frappe.utils import cint, now_datetime, validate_email_address
+from frappe.utils.file_manager import save_file
 
 
 REGISTRATION_DOCTYPE = "Tenant Registration"
@@ -287,6 +289,65 @@ def validate_registration(company_name, workspace_name, email, phone, country=No
 
 
 # ---------------------------------------------------------------------
+# TENANT LOGO UPLOAD
+# ---------------------------------------------------------------------
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def upload_tenant_logo(verification_token, filename, content):
+	"""Upload a tenant logo after email and SMS verification."""
+	if not verification_token or not filename or not content:
+		frappe.throw(_("Logo, filename, and verification token are required."))
+
+	allowed_names = (
+		filename.lower().endswith(".png")
+		or filename.lower().endswith(".jpg")
+		or filename.lower().endswith(".jpeg")
+		or filename.lower().endswith(".webp")
+		or filename.lower().endswith(".svg")
+	)
+	if not allowed_names:
+		frappe.throw(_("Choose a PNG, JPG, WEBP, or SVG logo."))
+
+	challenge_name = frappe.db.get_value(
+		OTP_DOCTYPE,
+		{"verification_token": verification_token},
+		"name",
+	)
+	if not challenge_name:
+		frappe.throw(_("Verify your email and phone before uploading a logo."))
+
+	challenge = frappe.get_doc(OTP_DOCTYPE, challenge_name)
+	if not challenge.expires_at or challenge.expires_at < now_datetime():
+		frappe.throw(_("Your verification session expired. Please verify again."))
+	if not challenge.email_verified or not challenge.sms_verified:
+		frappe.throw(_("Verify both email and phone before uploading a logo."))
+
+	if len(content) > 2_800_000:
+		frappe.throw(_("The tenant logo must be 2 MB or smaller."))
+
+	try:
+		header, encoded = content.split(",", 1)
+		mime_type = header.split(";", 1)[0].replace("data:", "").strip().lower()
+		base64.b64decode(encoded, validate=True)
+	except (ValueError, base64.binascii.Error):
+		frappe.throw(_("The tenant logo contains invalid image data."))
+
+	allowed_mime_types = {"image/png", "image/jpeg", "image/webp", "image/svg+xml"}
+	if mime_type not in allowed_mime_types:
+		frappe.throw(_("Choose a PNG, JPG, WEBP, or SVG logo."))
+
+	attachment = save_file(
+		filename,
+		content,
+		"Tenant Registration",
+		None,
+		decode=True,
+		is_private=0,
+	)
+	return {"file_url": attachment.file_url}
+
+
+# ---------------------------------------------------------------------
 # FINAL REGISTRATION
 # ---------------------------------------------------------------------
 
@@ -305,6 +366,7 @@ def register_tenant(
     organization_size=None,
     financial_year_start="07-01",
     currency=None,
+    logo_url=None,
 ):
     """Save registration centrally and queue tenant provisioning."""
 
@@ -457,6 +519,7 @@ def register_tenant(
             "organization_size": (organization_size or "").strip() or None,
             "financial_year_start": financial_year_start,
             "currency": currency or None,
+            "logo_url": (logo_url or "").strip() or None,
             "terms_accepted": 1,
             "terms_accepted_at": now_datetime(),
             "status_token": secrets.token_urlsafe(32),
@@ -466,6 +529,15 @@ def register_tenant(
         })
 
         doc.insert(ignore_permissions=True)
+
+        if logo_url:
+            frappe.db.set_value(
+                "File",
+                {"file_url": logo_url},
+                {"attached_to_doctype": REGISTRATION_DOCTYPE, "attached_to_name": doc.name},
+                update_modified=False,
+            )
+
         frappe.db.commit()
 
         # Consume the OTP challenge after the registration is saved.

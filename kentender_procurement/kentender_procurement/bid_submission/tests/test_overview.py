@@ -30,7 +30,7 @@ class TestTenderOverview(ChangeCase):
 			guest = self.view("Guest")
 			signed_in = self.view(DAVID)
 		self.assertEqual([a["kind"] for a in guest["actions"]], ["sign_in", "create_login"])
-		self.assertEqual(guest["actions"][1]["href"], f"/login?redirect-to=/tenders/{self.reference}#signup")
+		self.assertEqual(guest["actions"][1]["href"], f"{frappe.utils.get_url().rstrip('/')}/account/register")
 		self.assertEqual((guest["actions"][0]["tone"], guest["actions"][1]["tone"]), ("primary", "secondary"))
 		self.assertNotIn("create_login", [a["kind"] for a in signed_in["actions"]])
 		# sign-up switched off: no link that would lead nowhere
@@ -41,7 +41,7 @@ class TestTenderOverview(ChangeCase):
 		# the submission case world: Afya (David, Mary) holds a ready Draft
 		guest = self.view("Guest")
 		self.assertEqual((guest["action"]["kind"], guest["bid"], guest["organisation"]), ("sign_in", None, None))
-		self.assertEqual(guest["action"]["href"], f"/login?redirect-to=/tenders/{self.reference}")
+		self.assertEqual(guest["action"]["href"], f"{frappe.utils.get_url().rstrip('/')}/login?redirect-to=/tenders/{self.reference}")
 		self.assertTrue(guest["documents"] and all(d["view_href"].startswith("/api/method/") for d in guest["documents"]))
 		david = self.view(DAVID)
 		self.assertEqual((david["action"]["kind"], david["bid"]["bid_reference"], david["bid"]["status_text"]), ("continue_bid", self.bid, "Ready to submit"))

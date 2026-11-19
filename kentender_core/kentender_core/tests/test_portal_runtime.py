@@ -138,6 +138,7 @@ class TestPortalRuntime(IntegrationTestCase):
 		self.assertIn(private.status_code, (301, 302, 303, 307, 308))
 		self.assertEqual(private.headers["Location"].split("?", 1)[1], "redirect-to=%2Ftenders%2Fprivate")
 		self.assertTrue(private.headers["Location"].endswith("/login?redirect-to=%2Ftenders%2Fprivate"))
+		self.assertTrue(private.headers["Location"].startswith(frappe.utils.get_url().rstrip("/") + "/login?"))
 		moved = self._render("/tenders/moved")
 		self.assertTrue(moved.headers["Location"].endswith("/tenders"))
 
