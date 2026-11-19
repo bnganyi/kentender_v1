@@ -140,7 +140,7 @@
 	border-bottom: 1px solid rgba(32, 52, 47, 0.18);
 }
 .kt-industry.kt-portal .kt-page[data-testid="acc-register"] .kt-page-title {
-	color: #1a2d2a;
+	color: #cbd5e1;
 	font-size: 2rem;
 	line-height: 1.08;
 	letter-spacing: -0.04em;
@@ -519,15 +519,15 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="acc-register"]) .kt-portal-
 	display: block;
 	margin: 0;
 	padding: 26px 32px;
-	background: linear-gradient(135deg, #0b1f3b 0%, #1e3a5f 60%, #0066ff 100%);
-	border: 1px solid rgba(255, 255, 255, 0.24);
+	background: #f1f5f9;
+	border: 1px solid #e2e8f0;
 	border-radius: var(--kt-radius);
-	box-shadow: 0 14px 30px rgb(0 71 171 / 16%);
+	box-shadow: none;
 	text-align: left;
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="acc-register"] .kt-page-title {
-	color: #fff;
+	color: #1f2937;
 	font-size: 32px;
 	font-weight: 700;
 	letter-spacing: 0;
@@ -536,7 +536,7 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="acc-register"]) .kt-portal-
 
 .kt-industry.kt-portal .kt-page[data-testid="acc-register"] .kt-page-desc {
 	margin: 10px 0 0;
-	color: rgba(255, 255, 255, 0.9);
+	color: #4b5563;
 	font-size: 16px;
 }
 
