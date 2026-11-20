@@ -315,9 +315,11 @@
 			if (tenantLogoPreviewUrl) URL.revokeObjectURL(tenantLogoPreviewUrl);
 			tenantLogoPreviewUrl = "";
 			tenantLogoPlaceholder.replaceChildren();
-			const label = document.createElement("span");
-			label.textContent = "Tenant logo placeholder";
-			tenantLogoPlaceholder.append(label);
+			tenantLogoPlaceholder.style.display = "grid";
+			const icon = document.createElement("i");
+			icon.className = "fas fa-image";
+			icon.setAttribute("aria-hidden", "true");
+			tenantLogoPlaceholder.append(icon);
 			if (tenantLogoPreview) {
 				tenantLogoPreview.replaceChildren();
 				const icon = document.createElement("i");
@@ -344,6 +346,7 @@
 		if (tenantLogoPreviewUrl) URL.revokeObjectURL(tenantLogoPreviewUrl);
 		tenantLogoPreviewUrl = URL.createObjectURL(file);
 		tenantLogoPlaceholder.replaceChildren();
+		tenantLogoPlaceholder.style.display = "grid";
 		const preview = document.createElement("img");
 		preview.src = tenantLogoPreviewUrl;
 		preview.alt = "Tenant logo preview";
