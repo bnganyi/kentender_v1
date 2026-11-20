@@ -1,5 +1,11 @@
 {% extends "templates/web.html" %} {% block title %}Create your Kentender workspace{% endblock %}
 {% block page_content %}
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+/>
+
+
 <style>
 	.navbar,
 	nav.navbar,
@@ -135,7 +141,8 @@
 		white-space: nowrap;
 	}
 	.tenant-logo-preview {
-		display: grid;
+		display: flex !important;
+		justify-content: center;
 		width: 82px;
 		height: 82px;
 		place-items: center;

@@ -181,7 +181,7 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bds-tender-overview"]) .kt-
 
 /* Public bid-opening page — styled in the loaded Tender overview override. */
 body.kt-industry.kt-portal:has(.kt-page[data-testid="bop-public"]) .kt-portal-body {
-	width: min(1504px, calc(100% - 64px));
+	width: min(1504px, calc(100% - 54px));
 	max-width: none;
 	margin: 0 auto;
 	padding: 32px 0;
@@ -193,12 +193,13 @@ body.kt-industry.kt-portal:has(.kt-page[data-testid="bop-public"]) .kt-portal-bo
 	margin: 0;
 	background: transparent;
 	gap: 20px;
+	border: none;
 }
 
 .kt-industry.kt-portal .kt-page[data-testid="bop-public"] .kt-page-head {
 	position: sticky;
-	top: 52px;
-	z-index: 20;
+	top: -3px;
+	z-index: -3;
 	width: 100%;
 	margin: 0 0 10px;
 	padding: 24px 32px;
