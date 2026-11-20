@@ -19,6 +19,8 @@
 	const confirmPasswordInput = document.getElementById("confirm_password");
 	const tenantLogoInput = document.getElementById("tenant_logo");
 	const tenantLogoPlaceholder = document.getElementById("tenant-logo-placeholder");
+	const tenantLogoPreview = document.querySelector(".tenant-logo-preview");
+	const tenantLogoFileName = document.querySelector(".tenant-logo-upload-text strong");
 	let tenantLogoUrl = "";
 	let tenantLogoPreviewUrl = "";
 
@@ -309,12 +311,20 @@
 		const file = tenantLogoInput.files?.[0];
 		if (!file) {
 			tenantLogoUrl = "";
+			if (tenantLogoFileName) tenantLogoFileName.textContent = "No file chosen";
 			if (tenantLogoPreviewUrl) URL.revokeObjectURL(tenantLogoPreviewUrl);
 			tenantLogoPreviewUrl = "";
 			tenantLogoPlaceholder.replaceChildren();
 			const label = document.createElement("span");
 			label.textContent = "Tenant logo placeholder";
 			tenantLogoPlaceholder.append(label);
+			if (tenantLogoPreview) {
+				tenantLogoPreview.replaceChildren();
+				const icon = document.createElement("i");
+				icon.className = "fas fa-image";
+				icon.setAttribute("aria-hidden", "true");
+				tenantLogoPreview.append(icon);
+			}
 			return;
 		}
 
@@ -330,6 +340,7 @@
 			return;
 		}
 
+		if (tenantLogoFileName) tenantLogoFileName.textContent = file.name;
 		if (tenantLogoPreviewUrl) URL.revokeObjectURL(tenantLogoPreviewUrl);
 		tenantLogoPreviewUrl = URL.createObjectURL(file);
 		tenantLogoPlaceholder.replaceChildren();
@@ -337,6 +348,10 @@
 		preview.src = tenantLogoPreviewUrl;
 		preview.alt = "Tenant logo preview";
 		tenantLogoPlaceholder.append(preview);
+		if (tenantLogoPreview) {
+			tenantLogoPreview.replaceChildren(preview.cloneNode());
+			tenantLogoPreview.querySelector("img").src = tenantLogoPreviewUrl;
+		}
 	});
 
 	async function callApi(method, args) {
