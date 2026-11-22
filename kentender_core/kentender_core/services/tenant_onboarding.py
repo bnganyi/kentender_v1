@@ -503,22 +503,38 @@ def _install_tenant_logo(
 
 def _configure_website_settings(organization_name):
     """Apply tenant-specific website branding and landing page."""
+
     organization_name = (organization_name or "").strip()
+
     if not organization_name:
-        frappe.throw(_("Organization name is required for Website Settings."))
+        frappe.throw(
+            _("Organization name is required for Website Settings.")
+        )
 
     settings = frappe.get_single("Website Settings")
+
     required_values = {
+        # Landing Page
         "home_page": "tenders",
+
+        # Browser title
         "title_prefix": "Tenders",
+
+        # Login page branding
         "app_name": organization_name,
+
+        # Login settings
+        "disable_signup": 1,
+        "show_footer_on_login": 0,
     }
 
     available_fields = {
         field.fieldname
         for field in frappe.get_meta("Website Settings").fields
     }
+
     missing_fields = set(required_values) - available_fields
+
     if missing_fields:
         frappe.throw(
             _("Website Settings is missing required fields: {0}").format(
@@ -530,10 +546,10 @@ def _configure_website_settings(organization_name):
         settings.set(fieldname, value)
 
     settings.save(ignore_permissions=True)
+
     frappe.clear_cache()
 
     return required_values
-
 
 
 def initialize_tenant(
