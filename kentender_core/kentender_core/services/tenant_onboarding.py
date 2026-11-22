@@ -1,12 +1,16 @@
 
 """Initialize a newly provisioned Kentender ERPNext tenant."""
+import base64
 import json
 import os
 from datetime import date, timedelta
 from pathlib import Path
 
+import re
+import xml.etree.ElementTree as ET
 import frappe
 from frappe import _
+from frappe.utils.file_manager import save_file
 from dateutil.relativedelta import relativedelta
 
 
@@ -375,6 +379,129 @@ def _ensure_procurement_onboarding():
 
     frappe.clear_cache()
 
+
+def _install_tenant_logo(
+    company_name,
+    logo_base64=None,
+    logo_filename=None,
+    logo_content_type=None,
+):
+    """Save the registration logo inside this tenant and apply it as app logo."""
+    if not logo_base64:
+        return None
+
+    try:
+        image_data = base64.b64decode(logo_base64, validate=True)
+    except Exception:
+        frappe.throw(_("The uploaded organisation logo could not be decoded."))
+
+    if not image_data:
+        frappe.throw(_("The uploaded organisation logo is empty."))
+
+    if len(image_data) > 2 * 1024 * 1024:
+        frappe.throw(_("The organisation logo must not exceed 2 MB."))
+
+    filename = Path(logo_filename or "organisation-logo.png").name
+    extension = Path(filename).suffix.lower()
+    content_type = (logo_content_type or "").split(";")[0].strip().lower()
+
+    allowed_types = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".svg": "image/svg+xml",
+    }
+
+    if extension not in allowed_types:
+        frappe.throw(_("Unsupported organisation logo format."))
+
+    expected_type = allowed_types[extension]
+    if content_type and content_type != expected_type:
+        frappe.throw(_("Organisation logo file type does not match its extension."))
+
+    # Verify the actual file signature instead of trusting the extension.
+    if extension == ".png" and not image_data.startswith(b"\x89PNG\r\n\x1a\n"):
+        frappe.throw(_("The organisation logo is not a valid PNG image."))
+    elif extension in {".jpg", ".jpeg"} and not image_data.startswith(b"\xff\xd8\xff"):
+        frappe.throw(_("The organisation logo is not a valid JPEG image."))
+    elif extension == ".webp" and not (
+        image_data.startswith(b"RIFF") and image_data[8:12] == b"WEBP"
+    ):
+        frappe.throw(_("The organisation logo is not a valid WebP image."))
+    elif extension == ".svg":
+        # Reject active or externally-referenced SVG content.
+        try:
+            root = ET.fromstring(image_data)
+        except ET.ParseError:
+            frappe.throw(_("The organisation logo is not a valid SVG image."))
+
+        forbidden_tags = {"script", "foreignobject", "iframe", "object", "embed"}
+        for element in root.iter():
+            local_tag = element.tag.rsplit("}", 1)[-1].lower()
+            if local_tag in forbidden_tags:
+                frappe.throw(_("The SVG logo contains unsupported active content."))
+
+            for attribute, value in element.attrib.items():
+                local_attribute = attribute.rsplit("}", 1)[-1].lower()
+                normalized_value = (value or "").strip().lower()
+
+                if local_attribute.startswith("on"):
+                    frappe.throw(_("The SVG logo contains an event handler."))
+
+                if local_attribute in {"href", "src"} and (
+                    ":" in normalized_value
+                    or normalized_value.startswith("//")
+                    or normalized_value.startswith("data:")
+                ):
+                    frappe.throw(_("The SVG logo cannot reference external content."))
+
+                if "url(" in normalized_value and not re.fullmatch(
+                    r".*url\(\s*#[a-z0-9_.:-]+\s*\).*",
+                    normalized_value,
+                ):
+                    frappe.throw(_("The SVG logo contains an external resource reference."))
+
+        image_data = ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+    # Reuse a prior tenant-local attachment on retries.
+    existing_file = frappe.db.get_value(
+        "File",
+        {
+            "attached_to_doctype": "Company",
+            "attached_to_name": company_name,
+            "file_name": filename,
+        },
+        ["name", "file_url"],
+        as_dict=True,
+    )
+
+    if existing_file:
+        logo_url = existing_file.file_url
+    else:
+        attachment = save_file(
+            filename,
+            base64.b64encode(image_data).decode("ascii"),
+            "Company",
+            company_name,
+            decode=True,
+            is_private=0,
+        )
+        logo_url = attachment.file_url
+
+
+    website_settings = frappe.get_single("Website Settings")
+    website_settings.app_logo = logo_url
+    website_settings.save(ignore_permissions=True)
+
+    navbar_settings = frappe.get_single("Navbar Settings")
+    navbar_settings.app_logo = logo_url
+    navbar_settings.save(ignore_permissions=True)
+
+    frappe.clear_cache()
+    return logo_url
+
+
 def initialize_tenant(
     company_name,
     country,
@@ -385,6 +512,10 @@ def initialize_tenant(
     currency=None,
     financial_year_start="07-01",
     abbr="KT",
+    logo_url="",
+    logo_base64=None,
+    logo_filename=None,
+    logo_content_type=None,
 ):
     """Run native Frappe/ERPNext setup, then Kentender-specific initialization."""
     email = (email or "").strip().lower()
@@ -431,12 +562,22 @@ def initialize_tenant(
 
     # Install the Procurement onboarding checklist for this tenant.
     _ensure_procurement_onboarding()
+
+    # Copy the uploaded registration logo into this tenant and apply it.
+    tenant_logo_url = _install_tenant_logo(
+        company_name=setup["company"],
+        logo_base64=logo_base64,
+        logo_filename=logo_filename,
+        logo_content_type=logo_content_type,
+    )
+
     frappe.db.commit()
 
     return {
         "company": setup["company"],
         "administrator": email,
         "contact": contact,
+        "logo_url": tenant_logo_url,
         "setup_complete": True,
     }
 

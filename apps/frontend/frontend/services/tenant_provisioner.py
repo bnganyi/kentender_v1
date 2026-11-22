@@ -5,6 +5,7 @@ Run this only as the OS account that owns the Bench. Never expose it directly
 as a guest-whitelisted method.
 """
 
+import base64
 import json
 import os
 import re
@@ -246,6 +247,62 @@ def _create_site(bench, site):
     ]
 
     _run(bench, args, timeout=1200)
+
+
+
+
+def _get_tenant_logo_payload(logo_url):
+    """Read a registration logo and include it safely in the tenant payload."""
+    if not logo_url:
+        return {}
+
+    if not isinstance(logo_url, str) or not (
+        logo_url.startswith("/files/")
+        or logo_url.startswith("/private/files/")
+    ):
+        raise RuntimeError("Tenant logo must be a Frappe File URL.")
+
+    file_name = frappe.db.get_value("File", {"file_url": logo_url}, "name")
+    if not file_name:
+        raise RuntimeError(f"Tenant logo File record was not found: {logo_url}")
+
+    file_doc = frappe.get_doc("File", file_name)
+    file_path = Path(file_doc.get_full_path()).resolve()
+
+    if not file_path.is_file():
+        raise RuntimeError("The uploaded tenant logo file is missing.")
+
+    content = file_path.read_bytes()
+    if not content:
+        raise RuntimeError("The uploaded tenant logo file is empty.")
+    if len(content) > 2 * 1024 * 1024:
+        raise RuntimeError("Tenant logo exceeds the 2 MB size limit.")
+
+    filename = Path(file_doc.file_name or file_path.name).name
+    extension = Path(filename).suffix.lower()
+    allowed_types = {
+        ".png": {"image/png"},
+        ".jpg": {"image/jpeg"},
+        ".jpeg": {"image/jpeg"},
+        ".webp": {"image/webp"},
+        ".svg": {"image/svg+xml"},
+    }
+    if extension not in allowed_types:
+        raise RuntimeError(
+            f"Unsupported tenant logo file extension: {extension or 'none'}"
+        )
+
+    content_type = next(iter(allowed_types[extension]))
+    if content_type and content_type not in allowed_types[extension]:
+        raise RuntimeError(
+            "Tenant logo file extension and content type do not match."
+        )
+
+    return {
+        "logo_base64": base64.b64encode(content).decode("ascii"),
+        "logo_filename": filename,
+        "logo_content_type": content_type or next(iter(allowed_types[extension])),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -718,6 +775,7 @@ def _provision_registration_locked(registration_name):
             doc.financial_year_start or "07-01"
         ),
         "logo_url": doc.logo_url or "",
+        **_get_tenant_logo_payload(doc.logo_url),
         "abbr": (
             frappe.conf.get("tenant_registration_company_abbr")
             or "KT"
