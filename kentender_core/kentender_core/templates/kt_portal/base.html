@@ -63,11 +63,8 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 			</div>
 			<div class="kt-portal-bar">
 				<a class="kt-portal-brand" href="/tenders" aria-label="KenTender home">
-					<img
-						src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
-						alt="KenTender logo"
-					/>
-					<!-- <span>KenTender</span> -->
+					<img data-kt-tenant-logo alt="" style="display: none" />
+					<span data-kt-tenant-brand-fallback>KenTender</span>
 				</a>
 				<nav class="kt-portal-nav" aria-label="{{ _('Main') }}">
 					{%- for item in kt_portal.shell.nav %}
@@ -211,11 +208,8 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		<footer class="kt-portal-footer">
 			<div class="kt-portal-footer-inner">
 				<a class="kt-portal-footer-brand" href="/tenders" aria-label="KenTender home">
-					<img
-						src="https://ik.imagekit.io/kltovsgah/kentender_logo.png"
-						alt="KenTender logo"
-					/>
-					<!-- <span>KenTender</span> -->
+					<img data-kt-tenant-logo alt="" style="display: none" />
+					<span data-kt-tenant-brand-fallback>KenTender</span>
 				</a>
 				<nav aria-label="{{ _('Support and legal') }}">
 					{%- for link in kt_portal.shell.footer %}
@@ -244,6 +238,43 @@ skip link and footer are server-rendered; the owning surface's Vue app mounts on
 		<script>
 			frappe.boot = {{ frappe.utils.orjson_dumps(boot, default=frappe.json_handler) }};
 			frappe.sys_defaults = frappe.boot.sysdefaults;
+			(function () {
+				fetch("/api/method/kentender_core.api.branding.get_tenant_branding", {
+					credentials: "same-origin",
+					headers: { Accept: "application/json" },
+				})
+					.then(function (response) {
+						if (!response.ok) throw new Error("Tenant branding request failed.");
+						return response.json();
+					})
+					.then(function (result) {
+							if (!result.message || !result.message.success || !result.message.branding) return;
+
+							var branding = result.message.branding;
+							var organizationName = branding.organization_name || branding.app_name || "KenTender";
+						document.querySelectorAll("[data-kt-tenant-brand-fallback]").forEach(function (fallback) {
+								fallback.textContent = organizationName;
+							});
+
+							var logoUrl = branding.app_logo;
+							if (!logoUrl) return;
+
+						var resolvedLogoUrl = new URL(logoUrl, window.location.origin);
+						if (resolvedLogoUrl.protocol !== "http:" && resolvedLogoUrl.protocol !== "https:") return;
+
+						document.querySelectorAll("[data-kt-tenant-logo]").forEach(function (image) {
+							var fallback = image.parentElement.querySelector("[data-kt-tenant-brand-fallback]");
+							image.onload = function () {
+								image.style.display = "block";
+								if (fallback) fallback.style.display = "none";
+							};
+							image.src = resolvedLogoUrl.href;
+						});
+					})
+					.catch(function (error) {
+						console.error("Tenant branding could not be loaded:", error);
+					});
+			})();
 			(function () {
 				var clock = document.getElementById("kt-portal-live-time");
 				if (!clock) return;
