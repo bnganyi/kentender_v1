@@ -1,4 +1,3 @@
-
 """Initialize a newly provisioned Kentender ERPNext tenant."""
 import base64
 import json
@@ -502,6 +501,41 @@ def _install_tenant_logo(
     return logo_url
 
 
+def _configure_website_settings(organization_name):
+    """Apply tenant-specific website branding and landing page."""
+    organization_name = (organization_name or "").strip()
+    if not organization_name:
+        frappe.throw(_("Organization name is required for Website Settings."))
+
+    settings = frappe.get_single("Website Settings")
+    required_values = {
+        "home_page": "tenders",
+        "title_prefix": "Tenders",
+        "app_name": organization_name,
+    }
+
+    available_fields = {
+        field.fieldname
+        for field in frappe.get_meta("Website Settings").fields
+    }
+    missing_fields = set(required_values) - available_fields
+    if missing_fields:
+        frappe.throw(
+            _("Website Settings is missing required fields: {0}").format(
+                ", ".join(sorted(missing_fields))
+            )
+        )
+
+    for fieldname, value in required_values.items():
+        settings.set(fieldname, value)
+
+    settings.save(ignore_permissions=True)
+    frappe.clear_cache()
+
+    return required_values
+
+
+
 def initialize_tenant(
     company_name,
     country,
@@ -571,6 +605,17 @@ def initialize_tenant(
         logo_content_type=logo_content_type,
     )
 
+    # Use the actual Company name as the tenant's organization name.
+    organization_name = (
+        frappe.db.get_value("Company", setup["company"], "company_name")
+        or company_name
+    )
+
+    # Configure the website homepage, browser title prefix and login app name.
+    website_settings_result = _configure_website_settings(
+        organization_name
+    )
+
     frappe.db.commit()
 
     return {
@@ -578,6 +623,7 @@ def initialize_tenant(
         "administrator": email,
         "contact": contact,
         "logo_url": tenant_logo_url,
+        "website_settings": website_settings_result,
         "setup_complete": True,
     }
 
@@ -609,4 +655,3 @@ def initialize_tenant_from_file():
             pass
 
     return initialize_tenant(**payload)
-
