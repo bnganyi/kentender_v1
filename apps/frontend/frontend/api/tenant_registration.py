@@ -1,5 +1,8 @@
 import re
+import os
 import base64
+import binascii
+import xml.etree.ElementTree as ET
 import secrets
 import hashlib
 from datetime import datetime
@@ -292,59 +295,180 @@ def validate_registration(company_name, workspace_name, email, phone, country=No
 # TENANT LOGO UPLOAD
 # ---------------------------------------------------------------------
 
+def _sanitize_tenant_svg(content):
+    """Remove active content and external references from an SVG image."""
+
+    try:
+        svg_text = content.decode("utf-8-sig")
+        if re.search(r"<!DOCTYPE|<!ENTITY", svg_text, re.IGNORECASE):
+            frappe.throw(_("SVG files containing DTD or entity declarations are not allowed."))
+        root = ET.fromstring(svg_text)
+    except (UnicodeDecodeError, ET.ParseError):
+        frappe.throw(_("The uploaded SVG file is invalid."))
+
+    def local_name(value):
+        return value.rsplit("}", 1)[-1].lower()
+
+    if local_name(root.tag) != "svg":
+        frappe.throw(_("The uploaded file is not a valid SVG image."))
+
+    forbidden_elements = {
+        "script", "foreignobject", "iframe", "object", "embed",
+        "audio", "video", "style", "animate", "animatetransform",
+        "animatemotion", "set",
+    }
+
+    # Remove unsafe elements from the SVG tree.
+    for parent in root.iter():
+        for child in list(parent):
+            if local_name(child.tag) in forbidden_elements:
+                parent.remove(child)
+
+    # Remove event handlers, CSS and external resource references.
+    for element in root.iter():
+        for attribute, value in list(element.attrib.items()):
+            attr_name = local_name(attribute)
+            attr_value = str(value).strip()
+            lower_value = attr_value.lower()
+
+            if attr_name.startswith("on") or attr_name in {"style", "xml:base", "base"}:
+                del element.attrib[attribute]
+                continue
+
+            if attr_name in {"href", "src"}:
+                if attr_value and not attr_value.startswith("#"):
+                    del element.attrib[attribute]
+                continue
+
+            if "expression(" in lower_value or "javascript:" in lower_value:
+                del element.attrib[attribute]
+                continue
+
+            if "url(" in lower_value:
+                references = re.findall(r"url\((.*?)\)", attr_value, flags=re.IGNORECASE)
+                if any(
+                    not reference.strip(" \t\r\n'\"").startswith("#")
+                    for reference in references
+                ):
+                    del element.attrib[attribute]
+
+    return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
+
 @frappe.whitelist(allow_guest=True, methods=["POST"])
 def upload_tenant_logo(verification_token, filename, content):
-	"""Upload a tenant logo after email and SMS verification."""
-	if not verification_token or not filename or not content:
-		frappe.throw(_("Logo, filename, and verification token are required."))
+    """Upload a tenant logo after both email and phone OTPs are verified.
 
-	allowed_names = (
-		filename.lower().endswith(".png")
-		or filename.lower().endswith(".jpg")
-		or filename.lower().endswith(".jpeg")
-		or filename.lower().endswith(".webp")
-		or filename.lower().endswith(".svg")
-	)
-	if not allowed_names:
-		frappe.throw(_("Choose a PNG, JPG, WEBP, or SVG logo."))
+    Accepted formats: PNG, JPG, JPEG, WebP and SVG.
+    Maximum decoded file size: 2 MB.
+    The temporary File record is attached to the OTP challenge and is
+    transferred to Tenant Registration when registration is submitted.
+    """
 
-	challenge_name = frappe.db.get_value(
-		OTP_DOCTYPE,
-		{"verification_token": verification_token},
-		"name",
-	)
-	if not challenge_name:
-		frappe.throw(_("Verify your email and phone before uploading a logo."))
+    if not verification_token:
+        frappe.throw(_("Verification token is required."))
 
-	challenge = frappe.get_doc(OTP_DOCTYPE, challenge_name)
-	if not challenge.expires_at or challenge.expires_at < now_datetime():
-		frappe.throw(_("Your verification session expired. Please verify again."))
-	if not challenge.email_verified or not challenge.sms_verified:
-		frappe.throw(_("Verify both email and phone before uploading a logo."))
+    challenge_name = frappe.db.get_value(
+        OTP_DOCTYPE,
+        {"verification_token": verification_token},
+        "name",
+    )
+    if not challenge_name:
+        frappe.throw(_("Verify your email and phone before uploading a logo."))
 
-	if len(content) > 2_800_000:
-		frappe.throw(_("The tenant logo must be 2 MB or smaller."))
+    challenge = frappe.get_doc(OTP_DOCTYPE, challenge_name)
+    if not challenge.expires_at or challenge.expires_at < now_datetime():
+        frappe.throw(_("Your verification session expired. Please verify again."))
+    if not challenge.email_verified or not challenge.sms_verified:
+        frappe.throw(_("Verify both email and phone before uploading a logo."))
 
-	try:
-		header, encoded = content.split(",", 1)
-		mime_type = header.split(";", 1)[0].replace("data:", "").strip().lower()
-		base64.b64decode(encoded, validate=True)
-	except (ValueError, base64.binascii.Error):
-		frappe.throw(_("The tenant logo contains invalid image data."))
+    if not isinstance(filename, str) or not filename.strip():
+        frappe.throw(_("A valid image filename is required."))
+    if not isinstance(content, str):
+        frappe.throw(_("Invalid image content."))
 
-	allowed_mime_types = {"image/png", "image/jpeg", "image/webp", "image/svg+xml"}
-	if mime_type not in allowed_mime_types:
-		frappe.throw(_("Choose a PNG, JPG, WEBP, or SVG logo."))
+    # Strip any client-supplied path and normalize the extension.
+    filename = filename.strip().replace("\\", "/").split("/")[-1]
+    file_stem, extension = os.path.splitext(filename)
+    extension = extension.lower()
 
-	attachment = save_file(
-		filename,
-		content,
-		"Tenant Registration",
-		None,
-		decode=True,
-		is_private=0,
-	)
-	return {"file_url": attachment.file_url}
+    allowed_formats = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+        ".svg": "image/svg+xml",
+    }
+    if extension not in allowed_formats:
+        frappe.throw(_("Unsupported image format. Upload PNG, JPG, JPEG, WEBP or SVG only."))
+
+    safe_stem = re.sub(r"[^A-Za-z0-9_-]+", "-", file_stem).strip("-_") or "tenant-logo"
+    filename = f"{safe_stem[:120]}{extension}"
+
+    # Reject oversized data URLs before decoding to limit memory use.
+    if len(content) > 4_000_000:
+        frappe.throw(_("The tenant logo must be 2 MB or smaller."))
+
+    try:
+        header, encoded = content.split(",", 1)
+        header_parts = header.split(";")
+        if (
+            not header_parts[0].lower().startswith("data:")
+            or "base64" not in [part.lower() for part in header_parts[1:]]
+        ):
+            frappe.throw(_("Invalid image data URL."))
+
+        mime_type = header_parts[0][5:].strip().lower()
+        decoded_content = base64.b64decode(encoded, validate=True)
+    except (ValueError, binascii.Error):
+        frappe.throw(_("The tenant logo contains invalid image data."))
+
+    if mime_type != allowed_formats[extension]:
+        frappe.throw(_("The image content does not match its file extension."))
+
+    if not decoded_content:
+        frappe.throw(_("The uploaded image is empty."))
+    if len(decoded_content) > 2 * 1024 * 1024:
+        frappe.throw(_("The tenant logo must be 2 MB or smaller."))
+
+    # Verify the actual file signature; do not trust extension or MIME alone.
+    if extension == ".png":
+        if not decoded_content.startswith(b"\x89PNG\r\n\x1a\n"):
+            frappe.throw(_("The uploaded file is not a valid PNG image."))
+
+    elif extension in {".jpg", ".jpeg"}:
+        if not decoded_content.startswith(b"\xff\xd8\xff"):
+            frappe.throw(_("The uploaded file is not a valid JPEG image."))
+
+    elif extension == ".webp":
+        if (
+            len(decoded_content) < 12
+            or decoded_content[0:4] != b"RIFF"
+            or decoded_content[8:12] != b"WEBP"
+        ):
+            frappe.throw(_("The uploaded file is not a valid WebP image."))
+
+    elif extension == ".svg":
+        decoded_content = _sanitize_tenant_svg(decoded_content)
+        if len(decoded_content) > 2 * 1024 * 1024:
+            frappe.throw(_("The sanitized SVG exceeds the 2 MB limit."))
+
+    # Attach to the verified OTP challenge, not to a missing Registration name.
+    attachment = save_file(
+        filename,
+        decoded_content,
+        OTP_DOCTYPE,
+        str(challenge.name),
+        is_private=0,
+    )
+
+    return {
+        "success": True,
+        "file_url": attachment.file_url,
+        "filename": attachment.file_name,
+        "file_type": mime_type,
+        "file_size": len(decoded_content),
+    }
 
 
 # ---------------------------------------------------------------------
@@ -468,6 +592,22 @@ def register_tenant(
             _("Verify both your email address and phone number before registering.")
         )
 
+    # A supplied logo must be the file uploaded against this exact OTP challenge.
+    logo_file_name = None
+    logo_url = (logo_url or "").strip()
+    if logo_url:
+        logo_file_name = frappe.db.get_value(
+            "File",
+            {
+                "file_url": logo_url,
+                "attached_to_doctype": OTP_DOCTYPE,
+                "attached_to_name": challenge.name,
+            },
+            "name",
+        )
+        if not logo_file_name:
+            frappe.throw(_("The uploaded logo is invalid or belongs to another verification session."))
+
     # Stable lock ordering prevents concurrent submissions racing each other.
     lock_keys = sorted({
         "tenant-reg:" + hashlib.sha256(
@@ -519,7 +659,7 @@ def register_tenant(
             "organization_size": (organization_size or "").strip() or None,
             "financial_year_start": financial_year_start,
             "currency": currency or None,
-            "logo_url": (logo_url or "").strip() or None,
+            "logo_url": logo_url or None,
             "terms_accepted": 1,
             "terms_accepted_at": now_datetime(),
             "status_token": secrets.token_urlsafe(32),
@@ -530,11 +670,17 @@ def register_tenant(
 
         doc.insert(ignore_permissions=True)
 
-        if logo_url:
+        # Move the File attachment onto the new registration before deleting
+        # the temporary OTP challenge that originally owned it.
+        if logo_file_name:
             frappe.db.set_value(
                 "File",
-                {"file_url": logo_url},
-                {"attached_to_doctype": REGISTRATION_DOCTYPE, "attached_to_name": doc.name},
+                logo_file_name,
+                {
+                    "attached_to_doctype": REGISTRATION_DOCTYPE,
+                    "attached_to_name": str(doc.name),
+                    "attached_to_field": "logo_url",
+                },
                 update_modified=False,
             )
 
