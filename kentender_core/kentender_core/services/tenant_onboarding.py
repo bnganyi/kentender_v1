@@ -502,8 +502,7 @@ def _install_tenant_logo(
 
 
 def _configure_website_settings(organization_name):
-    """Apply tenant-specific website branding and landing page."""
-
+    """Configure tenant branding and redirect the root URL to the tender portal."""
     organization_name = (organization_name or "").strip()
 
     if not organization_name:
@@ -512,29 +511,17 @@ def _configure_website_settings(organization_name):
         )
 
     settings = frappe.get_single("Website Settings")
-
-    required_values = {
-        # Landing Page
-        "home_page": "tenders",
-
-        # Browser title
-        "title_prefix": "Tenders",
-
-        # Login page branding
-        "app_name": organization_name,
-
-        # Login settings
-        "disable_signup": 1,
-        "show_footer_on_login": 0,
-    }
-
     available_fields = {
         field.fieldname
         for field in frappe.get_meta("Website Settings").fields
     }
 
+    # These fields are required for tenant branding.
+    required_values = {
+        "title_prefix": "Tenders",
+        "app_name": organization_name,
+    }
     missing_fields = set(required_values) - available_fields
-
     if missing_fields:
         frappe.throw(
             _("Website Settings is missing required fields: {0}").format(
@@ -545,11 +532,48 @@ def _configure_website_settings(organization_name):
     for fieldname, value in required_values.items():
         settings.set(fieldname, value)
 
-    settings.save(ignore_permissions=True)
+    # The custom /tenders route is not accepted by Website Settings.home_page.
+    # Keep this field empty and use the supported route redirect for the root.
+    if "home_page" in available_fields:
+        settings.home_page = ""
 
+    # Apply optional login settings when supported by this Frappe version.
+    optional_values = {
+        "disable_signup": 1,
+        "show_footer_on_login": 0,
+    }
+    for fieldname, value in optional_values.items():
+        if fieldname in available_fields:
+            settings.set(fieldname, value)
+
+    # Redirect / to /tenders. Preserve all other configured redirects.
+    root_redirect = next(
+        (
+            row for row in settings.route_redirects
+            if not (row.source or "").strip("/ ")
+        ),
+        None,
+    )
+
+    if root_redirect:
+        root_redirect.target = "/tenders"
+        root_redirect.redirect_http_status = 302
+    else:
+        settings.append("route_redirects", {
+            "source": "/",
+            "target": "/tenders",
+            "redirect_http_status": 302,
+        })
+
+    settings.save(ignore_permissions=True)
     frappe.clear_cache()
 
-    return required_values
+    return {
+        **required_values,
+        "home_page": "",
+        "root_redirect": "/tenders",
+        **optional_values,
+    }
 
 
 def initialize_tenant(
@@ -671,3 +695,4 @@ def initialize_tenant_from_file():
             pass
 
     return initialize_tenant(**payload)
+
