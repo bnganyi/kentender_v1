@@ -111,6 +111,11 @@ select option { background-color: #f3f4f6; color: #1f2937; }
 .card-hover { position: relative; overflow: hidden; transition: all .4s cubic-bezier(.4,0,.2,.5); }
 .card-hover:hover { transform: translateY(-8px); box-shadow: 0 20px 30px rgba(22,95,206,.2); }
 .tender-card-top { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tender-card-tenant { display: flex; align-items: center; gap: 10px; min-height: 48px; margin: 0 0 14px; }
+.tender-card-tenant-mark, .tender-card-tenant-logo { width: 48px; height: 48px; border: 1px solid #dfe3e8; border-radius: 10px; background: #f8fafc; }
+.tender-card-tenant-mark { display: inline-flex; align-items: center; justify-content: center; color: #0047ab; font-size: 15px; font-weight: 800; }
+.tender-card-tenant-logo { display: block; object-fit: contain; padding: 5px; background: #fff; }
+.tender-card-tenant-name { color: #374151; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
 .tender-card-title { margin: 0 0 16px; color: #1f2937; font-size: 20px; line-height: 1.35; font-weight: 700; }
 .tender-card-reference { margin: 0; color: #6b7280; font: 12px 'Space Mono', monospace; }
 .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
@@ -269,6 +274,6 @@ select option { background-color: #f3f4f6; color: #1f2937; }
   scrollTop.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
 })();
 </script>
-<script src="/assets/frontend/js/all_tenders.js?v=10"></script>
+<script src="/assets/frontend/js/all_tenders.js?v=11"></script>
 <script src="/assets/frontend/js/public_profile_menu.js?v=1"></script>
 """

@@ -64,6 +64,48 @@
 		deadlineWrap.append(deadlineLabel, deadline);
 		top.append(badges, deadlineWrap);
 
+		const tenantIdentity = document.createElement("div");
+		tenantIdentity.className = "tender-card-tenant";
+		const tenantMark = document.createElement("span");
+		tenantMark.className = "tender-card-tenant-mark";
+
+		const entityName = row.procuring_entity || row.tenant_site || "KenyaTenders";
+		const initials = entityName
+			.split(/\s+/)
+			.filter(Boolean)
+			.slice(0, 2)
+			.map((word) => word[0])
+			.join("")
+			.toUpperCase() || "KT";
+		tenantMark.textContent = initials;
+
+		const tenantImageUrl = typeof row.tenant_image_url === "string"
+			? row.tenant_image_url.trim()
+			: "";
+		if (tenantImageUrl) {
+			const tenantLogo = document.createElement("img");
+			tenantLogo.className = "tender-card-tenant-logo";
+			tenantLogo.src = tenantImageUrl;
+			tenantLogo.alt = "";
+			tenantLogo.loading = "lazy";
+			tenantLogo.decoding = "async";
+			tenantMark.hidden = true;
+			tenantIdentity.append(tenantMark);
+			tenantIdentity.append(tenantLogo);
+			tenantLogo.addEventListener("error", () => {
+				tenantLogo.remove();
+				tenantMark.hidden = false;
+			}, { once: true });
+		} else {
+			tenantMark.hidden = false;
+			tenantIdentity.append(tenantMark);
+		}
+
+		const tenantText = document.createElement("span");
+		tenantText.className = "tender-card-tenant-name";
+		tenantText.textContent = entityName;
+		tenantIdentity.append(tenantText);
+
 		const title = document.createElement("h3");
 		title.className = "text-xl font-bold mb-4 leading-tight tender-card-title";
 		title.textContent = row.title || "Untitled Tender";
@@ -97,7 +139,7 @@
 		detailLink.append(arrow);
 		actions.append(detailLink);
 		meta.append(facts, actions);
-		content.append(top, title, meta);
+		content.append(top, tenantIdentity, title, meta);
 		card.append(content);
 		return card;
 	}
