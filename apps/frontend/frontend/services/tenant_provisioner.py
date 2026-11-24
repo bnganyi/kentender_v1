@@ -45,8 +45,8 @@ DEFAULT_APPS = [
     "kentender_assets",
     "kentender_integrations",
     "kentender_transparency",
+    "frontend",
 ]
-
 
 # ---------------------------------------------------------------------------
 # PROVISIONING LOGGING
